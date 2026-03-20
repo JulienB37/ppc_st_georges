@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/svgdom": "^0.1.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@svgdotjs/svg.js": "^3.2.5",
+    "image-size": "^2.0.2",
+    "svgdom": "^0.1.23",
+    "zod": "^4.3.6"
+  }
+}
