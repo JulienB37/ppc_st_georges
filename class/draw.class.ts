@@ -58,7 +58,6 @@ export class SvgDraw {
                     .font({
                         family: 'Comic Sans MS',
                         size: this._teamFontSize,
-                        style: 'italic'
                     })
                     .move(x + this._teamHeigth + 4, (y + (this._teamHeigth - (this._teamFontSize + this._teamGap * 2)) / 2)  + ((this._teamHeigth + this._teamGap) * i))
 
@@ -66,16 +65,14 @@ export class SvgDraw {
                     .font({
                         family: 'Comic Sans MS',
                         size: this._teamFontSize,
-                        style: 'italic'
                     })
-                    .move(x + ((width - this._teamHeigth / 2) / 3) + this._teamHeigth 
+                    .move(x - 2 + ((width - this._teamHeigth / 2) / 3) + this._teamHeigth 
                     , (y + (this._teamHeigth - (this._teamFontSize + this._teamGap * 2)) / 2)  + ((this._teamHeigth + this._teamGap) * i))
 
                 this._canvas.text('VS')
                     .font({
                         family: 'Comic Sans MS',
                         size: this._teamFontSize,
-                        style: 'italic',
                         weight: 'bold'
                     })
                     .move(x + ((width - this._teamHeigth / 2) / 3) - this._teamHeigth / 4, (y + (this._teamHeigth - (this._teamFontSize + this._teamGap * 2)) / 2)  + ((this._teamHeigth + this._teamGap) * i))
@@ -103,7 +100,6 @@ export class SvgDraw {
                     .font({
                         family: 'Comic Sans MS',
                         size: this._teamFontSize,
-                        style: 'italic'
                     })
                     .move(x + this._teamHeigth + 4, (y + (this._teamHeigth - (this._teamFontSize + this._teamGap * 2)) / 2)  + ((this._teamHeigth + this._teamGap) * i))
             
@@ -111,15 +107,13 @@ export class SvgDraw {
                     .font({
                         family: 'Comic Sans MS',
                         size: this._teamFontSize,
-                        style: 'italic'
                     })
-                    .move(x + width - ((width - this._teamHeigth / 2) / 3) +  this._teamHeigth , (y + (this._teamHeigth - (this._teamFontSize + this._teamGap * 2)) / 2)  + ((this._teamHeigth + this._teamGap) * i))
+                    .move(x + width - 2 - ((width - this._teamHeigth / 2) / 3) +  this._teamHeigth , (y + (this._teamHeigth - (this._teamFontSize + this._teamGap * 2)) / 2)  + ((this._teamHeigth + this._teamGap) * i))
             
                 this._canvas.text('VS')
                     .font({
                         family: 'Comic Sans MS',
                         size: this._teamFontSize,
-                        style: 'italic',
                         weight: 'bold'
                     })
                     .move(x + width - ((width - this._teamHeigth / 2) / 3) - this._teamHeigth / 4, (y + (this._teamHeigth - (this._teamFontSize + this._teamGap * 2)) / 2)  + ((this._teamHeigth + this._teamGap) * i))
@@ -209,14 +203,15 @@ export class SvgDraw {
         const gap = 4
         let y = 176
         const dir = import.meta.dir
-        console.log('dir:', dir)
         const sponsorsDir = 'images/logo_sponsors'
         const glob = new Bun.Glob("**/*.{png,jpg,jpeg}");
 
         let images = await Array.fromAsync(glob.scan(sponsorsDir));
 
         for (let i = 0; i < 3; i++) {
+            
             const randomImage: string = images[Math.floor(Math.random() * images.length)] as string
+            try {
             
             const filePath = path.join(sponsorsDir, randomImage)
             const ext = path.extname(randomImage).slice(1).toLowerCase()
@@ -231,13 +226,16 @@ export class SvgDraw {
             const newWidth = heightFromWidth > maxHeight ? widthFromHeight : maxWidth
             const newHeight = heightFromWidth > maxHeight ? maxHeight : heightFromWidth
     
-            const base64 = Buffer.from(buffer).toString('base64')
-            this._canvas.image(`data:${mimeType};base64,${base64}`)
-                .size(newWidth, newHeight)
-                .move(230 + (maxWidth - newWidth) / 2, y)
-            y += newHeight + gap
+                const base64 = Buffer.from(buffer).toString('base64')
+                this._canvas.image(`data:${mimeType};base64,${base64}`)
+                    .size(newWidth, newHeight)
+                    .move(230 + (maxWidth - newWidth) / 2, y)
+                y += newHeight + gap
+                images = images.filter(img => img !== randomImage)
+            } catch (e) {
+                console.error('Error drawing sponsor image:',randomImage)
+            }
 
-            images = images.filter(img => img !== randomImage)
         }
     }
 }    
