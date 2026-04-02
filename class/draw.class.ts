@@ -154,11 +154,11 @@ export class SvgDraw {
         const dir = import.meta.dir
 
         equipe = equipe
-        .normalize('NFD') // Suppression des accents
+        .normalize('NFD')
         .toUpperCase()
         .toLowerCase()
-        .replace(/\p{Diacritic}/gu, '') // Suppression des caractères diacritique
-        .replace(/[\p{P}]/gu, '') // Suppression des caractères de ponctuation
+        .replace(/\p{Diacritic}/gu, '')
+        .replace(/[\p{P}]/gu, '')
         .replaceAll(/^(.*)\s+[0-9]+$/gm, '$1')
         .replaceAll(' ', '_')
         
@@ -174,7 +174,6 @@ export class SvgDraw {
 
         if (!filePath) {
             console.log('Aucun log club trouvé :', equipe)
-
             const fp = path.join(dir, '../images/logo_club/default.png')
             if (await Bun.file(fp).exists()) {
                 filePath = fp
@@ -184,16 +183,12 @@ export class SvgDraw {
 
         if (filePath) {
             const buffer = await Bun.file(filePath).arrayBuffer()
-            const meta = await imageSizeFromFile(filePath)
-            const ratio = meta.width / meta.height
-            const newHeight = Math.round(this._teamHeigth - 6) / ratio
-            
-            const yDelta = (this._teamHeigth - 6 - newHeight) / 2
-
             const base64 = Buffer.from(buffer).toString('base64')
+            const size = this._teamHeigth - 6
             this._canvas.image(`data:image/${fileext};base64,${base64}`)
-                .size(this._teamHeigth - 6, newHeight)
-                .move(x, y + yDelta)
+                .size(size, size)
+                .attr('preserveAspectRatio', 'xMidYMid meet')
+                .move(x, y)
         } 
     }
 

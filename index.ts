@@ -73,10 +73,16 @@ canvas.text(`${config.journee}${config.journee === 1 ? 'ere' : 'eme'} JOURNEE`)
 
 await draw.drawSponsors()
 
-const svgString = canvas.svg().replace(/(<svg[^>]*>)/, `$1${fontStyle}`)
+// Supprimer width/height pour que resvg respecte fitTo
+canvas.attr('width', null)
+canvas.attr('height', null)
+
+const rawSvg = canvas.svg()
+const svgString = rawSvg.replace(/<svg/, `<svg`) .replace(/(<svg[^>]*>)/, `$1${fontStyle}`)
 await Bun.write(`resultats/svg/${config.journee}_journee.svg`, svgString)
 
 const resvg = new Resvg(svgString, {
+    fitTo: { mode: 'width', value: 2400 },
     font: {
         fontFiles: [
             'fonts/ComicSansMS.ttf',

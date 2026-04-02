@@ -1,53 +1,53 @@
 {
-  "journee": 10,
+  "journee": 11,
   "groupes": [
       {
-      "domicile": false,
-      "date": "Samedi 21 Mars à 18h00",
+      "domicile": true,
+      "date": "Samedi 11 Avril à 18h00",
       "matches": [
         {
           "equipe_st_georges": "D1 (3)",
-          "equipe_adverse": "Aze TT 4"
+          "equipe_adverse": "Villerbon TT 1"
         },
         {
-          "equipe_st_georges": "D1 (4)",
-          "equipe_adverse": "Blois ping 41 6"
+          "equipe_st_georges": "D1 (5)",
+          "equipe_adverse": "Vineuil Suevres TT 7"
         },
         {
           "equipe_st_georges": "D3 (7)",
-          "equipe_adverse": "SC Morée TT 5"
+          "equipe_adverse": "Vineuil Suevres TT 11"
         }
       ]
     },
     {
-      "domicile": true,
-      "date": "Samedi 21 Mars à 18h00",
+      "domicile": false,
+      "date": "Samedi 11 Avril à 18h00",
       "matches": [
         {
-          "equipe_st_georges": "D1 (5)",
+          "equipe_st_georges": "D1 (4)",
           "equipe_adverse": "FL St Aignan 3"
         },
         {
           "equipe_st_georges": "D2 (6)",
-          "equipe_adverse": "Salbris Sologne TT 2"
+          "equipe_adverse": "Mont Près Chambord 1"
         },
         {
           "equipe_st_georges": "D4 (8)",
-          "equipe_adverse": "ESC Cour Cheverny TT 4"
+          "equipe_adverse": "ESC Cour Cheverny TT 5"
         }
       ]
     },
     {
-      "domicile": true,
-      "date": "Dimanche 22 Mars à 9h30",
+      "domicile": false,
+      "date": "Dimanche 12 Avril à 9h30",
       "matches": [
         {
           "equipe_st_georges": "R2 (1)",
-          "equipe_adverse": "Sud Loire TT 45 3"
+          "equipe_adverse": "AMO Mer TT 3"
         },
         {
           "equipe_st_georges": "R3 (2)",
-          "equipe_adverse": "St Marceau Orleans TT 1"
+          "equipe_adverse": "A.C. Amboise 1"
         }
       ]
     }
