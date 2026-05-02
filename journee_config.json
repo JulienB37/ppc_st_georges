@@ -1,54 +1,54 @@
 {
   "adulte": {
-    "journee": 11,
+    "journee": 12,
     "groupes": [
         {
-        "domicile": true,
-        "date": "Samedi 11 Avril à 18h00",
+        "domicile": false,
+        "date": "Samedi 09 Mai à 18h00",
         "matches": [
           {
             "equipe_st_georges": "D1 (3)",
-            "equipe_adverse": "Villerbon TT 1"
+            "equipe_adverse": "ESC Cour Cheverny TT 2"
           },
           {
             "equipe_st_georges": "D1 (5)",
-            "equipe_adverse": "Vineuil Suevres TT 7"
+            "equipe_adverse": "La Chaussée St Victor TT 2"
           },
           {
             "equipe_st_georges": "D3 (7)",
-            "equipe_adverse": "Vineuil Suevres TT 11"
+            "equipe_adverse": "AMO Mer TT 8"
           }
         ]
       },
       {
-        "domicile": false,
-        "date": "Samedi 11 Avril à 18h00",
+        "domicile": true,
+        "date": "Samedi 09 Mai à 18h00",
         "matches": [
           {
             "equipe_st_georges": "D1 (4)",
-            "equipe_adverse": "FL St Aignan 3"
+            "equipe_adverse": "Vineuil Suevres TT 8"
           },
           {
             "equipe_st_georges": "D2 (6)",
-            "equipe_adverse": "Mont Près Chambord 1"
+            "equipe_adverse": "US Chouzy TT 3"
           },
           {
             "equipe_st_georges": "D4 (8)",
-            "equipe_adverse": "ESC Cour Cheverny TT 5"
+            "equipe_adverse": "L'aigle Sellois TT 3"
           }
         ]
       },
       {
-        "domicile": false,
-        "date": "Dimanche 12 Avril à 9h30",
+        "domicile": true,
+        "date": "Dimanche 10 Mai à 9h30",
         "matches": [
           {
             "equipe_st_georges": "R2 (1)",
-            "equipe_adverse": "AMO Mer TT 3"
+            "equipe_adverse": "CMP JM Ingré TT 4"
           },
           {
             "equipe_st_georges": "R3 (2)",
-            "equipe_adverse": "A.C. Amboise 1"
+            "equipe_adverse": "Azé TT 2"
           }
         ]
       }

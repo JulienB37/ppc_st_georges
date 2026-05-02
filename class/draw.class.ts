@@ -6,7 +6,7 @@ import { svgvs } from '../data'
 
 export class SvgDraw {
     private _teamHeigth = 18
-    private _teamFontSize = 8
+    private _teamFontSize = 7
     private _teamGap = 2
     private _strokeWidth = 0.5
     private _strokeWidthChild = 1
