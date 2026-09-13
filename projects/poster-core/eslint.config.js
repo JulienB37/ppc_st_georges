@@ -20,6 +20,8 @@ module.exports = defineConfig([
         'error',
         {
           patterns: [
+            // (les tests desserrent l'interdiction du systeme de fichiers,
+            //  voir le bloc suivant)
             {
               group: ['@angular/*'],
               message:
@@ -29,6 +31,28 @@ module.exports = defineConfig([
               group: ['fs', 'node:fs', 'node:fs/*', 'path', 'node:path', 'url', 'node:url'],
               message:
                 "poster-core ne lit jamais le systeme de fichiers : passez l'asset deja resolu (data URL) en parametre.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    /**
+     * Les tests tournent dans Node et doivent charger de vraies polices pour
+     * mesurer du texte. La contrainte porte sur le code livre — qui doit
+     * pouvoir tourner dans un worker — pas sur ce qui le verifie. L'interdit
+     * d'Angular, lui, reste entier.
+     */
+    files: ['**/*.spec.ts', '**/*.fixture.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@angular/*'],
+              message: "poster-core doit rester agnostique d'Angular.",
             },
           ],
         },
