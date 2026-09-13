@@ -166,19 +166,16 @@ export const SEUILS = {
   doubleColonne: { portrait: 11, carre: 8 },
 } as const;
 
-/** Regles de cadrage d'un logo dans sa pastille, selon son rapport largeur/hauteur. */
+/** Regles de cadrage d'un logo dans sa pastille. */
 export const CADRAGE_LOGO = {
-  ratioCarreMin: 0.8,
-  ratioCarreMax: 1.25,
   /**
-   * Cote de la boite carree inscrite. Legerement au-dela du carre inscrit
-   * exact (0,707) : les angles de la boite sont presque toujours vides, et
-   * s'en tenir au carre exact laissait les logos flotter dans leur pastille.
+   * Surcote appliquee au plus grand rectangle inscriptible dans le disque.
+   *
+   * Les angles de la boite d'un logo sont presque toujours vides : s'en tenir
+   * au rectangle inscrit exact laisse le logo flotter. Au-dela de 1,1 en
+   * revanche, les logos a fond plein commencent a se faire rogner les coins.
    */
-  facteurCarre: 0.78,
-  facteurLargeW: 0.9,
-  facteurLargeHMax: 0.64,
-  facteurHaut: 0.86,
+  remplissage: 1.06,
   /** Corps du monogramme de repli, en fraction du diametre. */
   facteurMonogramme: 0.34,
 } as const;

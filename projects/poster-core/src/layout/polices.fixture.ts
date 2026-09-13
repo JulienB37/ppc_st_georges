@@ -10,8 +10,9 @@ import type { FacePolice } from './mesure';
  * injectes. Ce chargeur reproduit dans Node ce que l'application fera par
  * `fetch` et ce que le worker recevra par `postMessage`.
  */
-const RACINE = path.resolve(import.meta.dirname, '../../../..');
-const DOSSIER = path.join(RACINE, 'projects/app/public/assets/fonts');
+// `import.meta.dirname` ne survit pas au regroupement des tests : il y vaut
+// « / ». Le lanceur, lui, demarre toujours a la racine du workspace.
+const DOSSIER = path.resolve(process.cwd(), 'projects/app/public/assets/fonts');
 
 interface ManifestePolices {
   faces: { fichier: string; famille: string; graisse: number }[];

@@ -86,26 +86,24 @@ function styleDisplay(taille: number): StyleTexte {
 }
 
 /**
- * Cadre un logo dans sa pastille selon son rapport largeur/hauteur.
+ * Cadre un logo dans sa pastille.
  *
- * Les 33 logos livres vont du rapport 0,79 a 2,82, avec des fonds tantot
- * transparents, tantot blancs, tantot colores. Sans regle explicite, un
- * logotype large parait ecrase a cote d'une marque carree.
+ * Les 33 logos livres vont du rapport 0,79 a 2,82. Plutot que des bandes de
+ * rapport arbitraires, on calcule le **plus grand rectangle de ce rapport
+ * inscriptible dans le disque** : pour un rapport k et un diametre d,
+ * `l = d·k/√(1+k²)` et `h = d/√(1+k²)`. La formule redonne le carre inscrit
+ * (0,707·d) quand k vaut 1, et traite tous les autres rapports de la meme
+ * facon, sans seuil a regler.
+ *
+ * Une legere surcote reconnait que les angles d'un logo sont presque toujours
+ * vides.
  */
 export function cadrerLogo(logo: LogoResolu, diametre: number): Boite {
   const ratio = logo.hauteur > 0 ? logo.largeur / logo.hauteur : 1;
-
-  if (ratio >= CADRAGE_LOGO.ratioCarreMin && ratio <= CADRAGE_LOGO.ratioCarreMax) {
-    const cote = diametre * CADRAGE_LOGO.facteurCarre;
-    return { x: -cote / 2, y: -cote / 2, largeur: cote, hauteur: cote };
-  }
-  if (ratio > CADRAGE_LOGO.ratioCarreMax) {
-    const largeur = diametre * CADRAGE_LOGO.facteurLargeW;
-    const hauteur = Math.min(largeur / ratio, diametre * CADRAGE_LOGO.facteurLargeHMax);
-    return { x: -largeur / 2, y: -hauteur / 2, largeur, hauteur };
-  }
-  const hauteur = diametre * CADRAGE_LOGO.facteurHaut;
-  return { x: (-hauteur * ratio) / 2, y: -hauteur / 2, largeur: hauteur * ratio, hauteur };
+  const diagonale = Math.hypot(1, ratio);
+  const largeur = ((diametre * ratio) / diagonale) * CADRAGE_LOGO.remplissage;
+  const hauteur = (diametre / diagonale) * CADRAGE_LOGO.remplissage;
+  return { x: -largeur / 2, y: -hauteur / 2, largeur, hauteur };
 }
 
 /** Pastille + logo, ou pastille + monogramme quand aucun logo n'est livre. */
@@ -246,9 +244,11 @@ function bandeau(
 
   // Blason : anneau rouge meme sur l'affiche jeunes, l'identite du club ne se
   // decline pas.
-  const dBlason = 140;
-  const cxBlason = MARGE_X + 70;
-  const cyBlason = 118;
+  // Le blason est le meilleur actif graphique du club : il porte le bandeau et
+  // merite d'y occuper une vraie place.
+  const dBlason = 184;
+  const cxBlason = MARGE_X + dBlason / 2;
+  const cyBlason = 112;
   noeuds.push({
     type: 'cercle',
     role: 'blason-fond',
@@ -259,8 +259,8 @@ function bandeau(
     contour: COULEURS.rougePpc,
     epaisseur: TRAITS.anneauBlason,
   });
-  decoupes.push({ id: 'clip-blason', cercle: { cx: cxBlason, cy: cyBlason, r: dBlason / 2 - 6 } });
-  const cadre = cadrerLogo(assets.blason, dBlason - 12);
+  decoupes.push({ id: 'clip-blason', cercle: { cx: cxBlason, cy: cyBlason, r: dBlason / 2 - 5 } });
+  const cadre = cadrerLogo(assets.blason, dBlason - 18);
   noeuds.push({
     type: 'image',
     role: 'blason',

@@ -96,12 +96,12 @@ async function traiterLogoClub(source: Buffer): Promise<Buffer> {
     // on le garde tel quel plutot que de produire une image vide.
     rogne = sharp(source);
   }
+  // `inside` et non `contain` : `contain` remplit de transparent jusqu'au
+  // carre, si bien que tous les logos se declaraient en 256x256 et que leur
+  // rapport reel devenait invisible. Le cadrage dans la pastille les marginait
+  // alors une seconde fois, et ils flottaient au milieu d'un disque trop grand.
   return rogne
-    .resize(TAILLE_CLUB, TAILLE_CLUB, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-      withoutEnlargement: true,
-    })
+    .resize(TAILLE_CLUB, TAILLE_CLUB, { fit: 'inside', withoutEnlargement: true })
     .png({ palette: true, quality: 90, effort: 9 })
     .toBuffer();
 }
