@@ -170,11 +170,15 @@ export const SEUILS = {
 export const CADRAGE_LOGO = {
   ratioCarreMin: 0.8,
   ratioCarreMax: 1.25,
-  /** Cote du carre inscrit dans le disque. */
-  facteurCarre: 0.707,
-  facteurLargeW: 0.86,
-  facteurLargeHMax: 0.62,
-  facteurHaut: 0.82,
+  /**
+   * Cote de la boite carree inscrite. Legerement au-dela du carre inscrit
+   * exact (0,707) : les angles de la boite sont presque toujours vides, et
+   * s'en tenir au carre exact laissait les logos flotter dans leur pastille.
+   */
+  facteurCarre: 0.78,
+  facteurLargeW: 0.9,
+  facteurLargeHMax: 0.64,
+  facteurHaut: 0.86,
   /** Corps du monogramme de repli, en fraction du diametre. */
   facteurMonogramme: 0.34,
 } as const;

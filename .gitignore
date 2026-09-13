@@ -56,3 +56,6 @@ legacy/node_modules
 # Polices proprietaires Microsoft/Monotype : non redistribuables.
 # Conservees sur le poste pour rejouer legacy/, jamais versionnees.
 /fonts/
+
+# Bundles temporaires des outils
+.tmp
