@@ -242,13 +242,17 @@ function bandeau(
   const couleurAccent = accent(affiche.categorie);
   const noeuds: Noeud[] = [];
 
-  // Blason : anneau rouge meme sur l'affiche jeunes, l'identite du club ne se
-  // decline pas.
-  // Le blason est le meilleur actif graphique du club : il porte le bandeau et
-  // merite d'y occuper une vraie place.
-  const dBlason = 184;
+  // Blason et drapeau de journee encadrent le titre : ils partagent donc une
+  // meme hauteur et un meme axe median. Des tailles voisines mais inegales se
+  // lisent comme un defaut d'alignement, pas comme une hierarchie.
+  const hauteurBloc = 176;
+  const cyBloc = 114;
+  const hautBloc = cyBloc - hauteurBloc / 2;
+
+  // Anneau rouge meme sur l'affiche jeunes : l'identite du club ne se decline pas.
+  const dBlason = hauteurBloc;
   const cxBlason = MARGE_X + dBlason / 2;
-  const cyBlason = 112;
+  const cyBlason = cyBloc;
   noeuds.push({
     type: 'cercle',
     role: 'blason-fond',
@@ -280,9 +284,9 @@ function bandeau(
     type: 'rect',
     role: 'drapeau',
     x: xDrapeau,
-    y: 36,
+    y: hautBloc,
     largeur: largeurDrapeau,
-    hauteur: 164,
+    hauteur: hauteurBloc,
     rx: RAYONS.drapeau,
     remplissage: couleurAccent,
   });
@@ -296,7 +300,7 @@ function bandeau(
   const largeurChiffre = moteur.largeur(chiffre, styleChiffre);
   const largeurExposant = moteur.largeur(exposant, styleExposant);
   const xRang = cxDrapeau - (largeurChiffre + largeurExposant) / 2;
-  const baseRang = moteur.ligneDeBaseCentree(styleChiffre, 108);
+  const baseRang = moteur.ligneDeBaseCentree(styleChiffre, hautBloc + hauteurBloc * 0.42);
 
   noeuds.push({
     type: 'texte',
@@ -330,7 +334,7 @@ function bandeau(
     type: 'texte',
     role: 'libelle-journee',
     x: cxDrapeau,
-    y: 182,
+    y: hautBloc + hauteurBloc - 26,
     contenu: 'JOURNÉE',
     famille: POLICES.texte,
     graisse: GRAISSES.fort,
