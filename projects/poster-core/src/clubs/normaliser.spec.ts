@@ -3,11 +3,41 @@ import { describe, expect, it } from 'vitest';
 import {
   clubIdDepuisFichier,
   clubIdDepuisLibelle,
+  monogramme,
   normaliserNomClub,
   separerNumeroEquipe,
 } from './normaliser';
 
+describe('monogramme', () => {
+  it('reduit un nom compose a ses initiales', () => {
+    // Remplace `default.png` : un monogramme reste digne la ou un pictogramme
+    // generique ne l'est pas, et il identifie vraiment l'adversaire.
+    expect(monogramme('Vineuil Suèvres TT')).toBe('VST');
+    expect(monogramme('ASJ La Chaussée St Victor')).toBe('ALC');
+    expect(monogramme('Mont-près-Chambord')).toBe('MPC');
+  });
+
+  it('garde un sigle court tel quel', () => {
+    expect(monogramme('Bourges')).toBe('BOU');
+    expect(monogramme('Vierzon')).toBe('VIE');
+  });
+
+  it('ignore accents et ponctuation', () => {
+    expect(monogramme('Azé TT')).toBe('AT');
+    expect(monogramme("L'aigle Sellois TT")).toBe('LST');
+  });
+});
+
 describe('normaliserNomClub', () => {
+  it('traite le trait d union comme un separateur de mots', () => {
+    // « Mont-pres-Chambord » doit tomber sur le meme identifiant que son
+    // fichier `mont_pres_chambord.png`.
+    expect(normaliserNomClub('Mont-près-Chambord')).toBe('mont-pres-chambord');
+    expect(clubIdDepuisFichier('mont_pres_chambord.png')).toBe(
+      normaliserNomClub('Mont-près-Chambord'),
+    );
+  });
+
   it('supprime accents et ponctuation sans inserer de separateur', () => {
     // Comportement historique : la barre oblique disparait sans laisser d'espace,
     // et c'est ainsi que le fichier existant est nomme.

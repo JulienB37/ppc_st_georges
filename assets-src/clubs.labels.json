@@ -1,0 +1,77 @@
+{
+  "_lisezmoi": [
+    "Libellés d'affichage et alias des clubs, maintenus à la main.",
+    "La clé est l'identifiant canonique, déduit du nom de fichier du logo.",
+    "Les alias servent au rapprochement : ils doivent être écrits sous forme",
+    "normalisée (minuscules, sans accent ni ponctuation, mots séparés par des",
+    "tirets), car c'est à cette forme qu'un nom saisi est réduit avant",
+    "comparaison. Y mettre les variantes réellement rencontrées sur les",
+    "feuilles de match, pas des variantes imaginaires."
+  ],
+
+  "4s": { "libelle": "4S" },
+  "ac-amboise": { "libelle": "AC Amboise", "alias": ["amboise"] },
+  "amo-mer-tt": { "libelle": "AMO Mer TT", "alias": ["amo-mer", "mer-tt"] },
+  "asj-la-chaussee-st-victor": {
+    "libelle": "ASJ La Chaussée St Victor",
+    "alias": [
+      "la-chaussee-st-victor-tt",
+      "la-chaussee-st-victor",
+      "asj-la-chaussee-st-victor-tt",
+      "la-chaussee"
+    ]
+  },
+  "aze-tt": { "libelle": "Azé TT", "alias": ["aze"] },
+  "blois-ping-41": { "libelle": "Blois Ping 41", "alias": ["blois-ping", "blois"] },
+  "bourges": { "libelle": "Bourges" },
+  "chailles": { "libelle": "Chailles", "alias": ["chailles-tt"] },
+  "chateauneuf": { "libelle": "Châteauneuf", "alias": ["chateauneuf-tt"] },
+  "cmp-jm-ingre-tt": {
+    "libelle": "CMP JM Ingré TT",
+    "alias": ["ingre-tt", "ingre", "cmp-jm-ingre"]
+  },
+  "ctt-ouchamps": { "libelle": "CTT Ouchamps", "alias": ["ouchamps"] },
+  "es-mulsans": { "libelle": "ES Mulsans", "alias": ["mulsans"] },
+  "esc-cour-cheverny-tt": {
+    "libelle": "ESC Cour Cheverny TT",
+    "alias": ["cour-cheverny-tt", "cour-cheverny", "esc-cour-cheverny"]
+  },
+  "fl-st-aignan": { "libelle": "FL St Aignan", "alias": ["st-aignan"] },
+  "gien-as-tt": { "libelle": "Gien AS TT", "alias": ["gien", "as-gien-tt"] },
+  "laigle-sellois-tt": {
+    "libelle": "L'aigle Sellois TT",
+    "alias": ["aigle-sellois-tt", "aigle-sellois", "laigle-sellois"]
+  },
+  "mont-pres-chambord": {
+    "libelle": "Mont-près-Chambord",
+    "alias": ["montpreschambord", "mont-pres-chambord-tt"]
+  },
+  "orleans": { "libelle": "Orléans", "alias": ["orleans-tt"] },
+  "ping-sassay-loisirs": { "libelle": "Ping Sassay Loisirs", "alias": ["sassay"] },
+  "pong-vendomois": { "libelle": "Pong Vendômois", "alias": ["vendome", "pong-vendomois-tt"] },
+  "pp-st-georgescher": {
+    "libelle": "PP St Georges/Cher",
+    "alias": ["ppc-st-georges", "pp-st-georges", "st-georgescher", "ppc-st-georgescher"]
+  },
+  "salbris-sologne-tt": { "libelle": "Salbris Sologne TT", "alias": ["salbris"] },
+  "sc-moree-tt": { "libelle": "SC Morée TT", "alias": ["moree", "moree-tt"] },
+  "st-avertin": { "libelle": "St Avertin", "alias": ["st-avertin-tt", "saint-avertin"] },
+  "st-laurent": { "libelle": "St Laurent", "alias": ["st-laurent-tt", "saint-laurent"] },
+  "st-marceau-orleans-tt": {
+    "libelle": "St Marceau Orléans TT",
+    "alias": ["st-marceau", "st-marceau-orleans"]
+  },
+  "st-sulpice-tt": { "libelle": "St Sulpice TT", "alias": ["st-sulpice", "saint-sulpice-tt"] },
+  "sud-loire-tt-45": { "libelle": "Sud Loire TT 45", "alias": ["sud-loire-tt", "sud-loire"] },
+  "us-chouzy-tt": { "libelle": "US Chouzy TT", "alias": ["chouzy", "chouzy-tt"] },
+  "vierzon": { "libelle": "Vierzon", "alias": ["vierzon-tt"] },
+  "villefranchecher-tt": {
+    "libelle": "Villefranche/Cher TT",
+    "alias": ["villefranche-tt", "villefranche", "villefranchecher"]
+  },
+  "villerbon-tt": { "libelle": "Villerbon TT", "alias": ["villerbon"] },
+  "vineuil-suevres-tt": {
+    "libelle": "Vineuil Suèvres TT",
+    "alias": ["vineuil-suevres", "vineuil", "vs-tt"]
+  }
+}

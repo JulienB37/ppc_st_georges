@@ -35,6 +35,11 @@ jobs:
       - name: Verification des types
         run: npm run typecheck
 
+      # Attrape le cas banal : un logo depose dans images/ sans regeneration
+      # du registre, donc un club introuvable une fois en production.
+      - name: Registres d'assets à jour
+        run: npm run assets:verify
+
       - name: Tests
         run: npm run test:ci
 

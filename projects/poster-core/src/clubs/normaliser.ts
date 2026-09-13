@@ -28,13 +28,19 @@ const NUMERO_FINAL = /^(.*?)\s+(\d{1,2})$/;
  * `pp-st-georgescher`, et c'est bien ainsi que s'appelle le fichier existant.
  */
 export function normaliserNomClub(libelle: string): string {
-  return libelle
-    .normalize('NFD')
-    .toLowerCase()
-    .replace(/\p{Diacritic}/gu, '')
-    .replace(/\p{P}/gu, '')
-    .trim()
-    .replace(/\s+/g, '-');
+  return (
+    libelle
+      .normalize('NFD')
+      .toLowerCase()
+      .replace(/\p{Diacritic}/gu, '')
+      // Le trait d'union separe des mots — « Mont-pres-Chambord » compte pour
+      // trois. Les autres signes disparaissent sans laisser de trace, ce qui
+      // est le comportement historique dont dependent les fichiers livres.
+      .replace(/-/g, ' ')
+      .replace(/\p{P}/gu, '')
+      .trim()
+      .replace(/\s+/g, '-')
+  );
 }
 
 export interface NomEtNumero {
@@ -74,4 +80,23 @@ export function clubIdDepuisLibelle(libelle: string): string {
 export function clubIdDepuisFichier(nomFichier: string): string {
   const sansExtension = nomFichier.replace(/\.[^.]+$/, '');
   return normaliserNomClub(sansExtension.replace(/_/g, ' '));
+}
+
+/** Un club sans logo livre : l'affiche posera un monogramme a la place. */
+export function monogramme(libelle: string): string {
+  const mots = libelle
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .split(/[\s-]+/)
+    .filter((mot) => /[A-Za-z0-9]/.test(mot));
+
+  // Un sigle deja court se suffit a lui-meme : « AMO » plutot que « AMT ».
+  const premier = mots[0] ?? '';
+  if (mots.length === 1) return premier.slice(0, 3).toUpperCase();
+
+  return mots
+    .map((mot) => mot[0] ?? '')
+    .join('')
+    .slice(0, 3)
+    .toUpperCase();
 }

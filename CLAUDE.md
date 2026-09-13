@@ -20,7 +20,18 @@ mmadb exec "npm run typecheck"    # tsc -b
 mmadb exec "npm run render:legacy"  # rejoue l'ancien script (oracle de comparaison)
 ```
 
-`mmadb exec` **découpe la commande sur les espaces** : les commandes composées (`cd x && y`) ne fonctionnent pas. Passer par un script npm.
+Deux limites de `mmadb exec`, à connaître avant de s'y fier :
+
+1. Il **découpe la commande sur les espaces** : les commandes composées (`cd x && y`) ne fonctionnent pas. Passer par un script npm.
+2. Il **avale le code de sortie** et renvoie toujours 0, même quand la commande échoue (`mmadb exec "false"` rend 0). Une vérification qui se contente de tester `$?` est donc **aveugle aux échecs**.
+
+Pour tout ce qui doit échouer bruyamment — lint, tests, typecheck, vérification d'assets — passer par `docker exec`, qui propage correctement :
+
+```bash
+docker exec -u julien -w /home/julien/app mmadb_ping_svg_championat bash -lc "npm run lint"
+```
+
+Le `bash -lc` est nécessaire : sans shell de connexion, le `PATH` ne contient pas node et la commande rend 127. La CI, elle, lance npm directement et n'est pas concernée.
 
 ## Architecture
 
