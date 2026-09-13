@@ -19,24 +19,24 @@ mmadb exec "npm install"
 mmadb exec "npm run start"     # http://localhost:4200
 ```
 
-| Commande | Effet |
-| --- | --- |
-| `npm run start` | Serveur de développement |
-| `npm run build` | Build de production de l'application web |
-| `npm run test` | Tests (vitest) |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | Vérification des types |
-| `npm run format` | Prettier |
+| Commande            | Effet                                    |
+| ------------------- | ---------------------------------------- |
+| `npm run start`     | Serveur de développement                 |
+| `npm run build`     | Build de production de l'application web |
+| `npm run test`      | Tests (vitest)                           |
+| `npm run lint`      | ESLint                                   |
+| `npm run typecheck` | Vérification des types                   |
+| `npm run format`    | Prettier                                 |
 
 ## Structure
 
-| Chemin | Rôle |
-| --- | --- |
+| Chemin                  | Rôle                                                                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `projects/poster-core/` | Moteur d'affiches : modèle, mise en page, émission SVG, texte de publication. TypeScript pur, sans dépendance Angular ni accès fichier. |
-| `projects/app/` | Application Angular |
-| `images/logo_club/` | Logos des clubs adverses |
-| `images/logo_sponsors/` | Logos des sponsors |
-| `legacy/` | Ancien script Bun, gelé — sert de référence de comparaison visuelle |
+| `projects/app/`         | Application Angular                                                                                                                     |
+| `images/logo_club/`     | Logos des clubs adverses                                                                                                                |
+| `images/logo_sponsors/` | Logos des sponsors                                                                                                                      |
+| `legacy/`               | Ancien script Bun, gelé — sert de référence de comparaison visuelle                                                                     |
 
 ## L'ancien script
 

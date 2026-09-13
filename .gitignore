@@ -52,3 +52,7 @@ legacy/node_modules
 
 # Sorties de tsc -b (npm run typecheck)
 *.tsbuildinfo
+
+# Polices proprietaires Microsoft/Monotype : non redistribuables.
+# Conservees sur le poste pour rejouer legacy/, jamais versionnees.
+/fonts/
