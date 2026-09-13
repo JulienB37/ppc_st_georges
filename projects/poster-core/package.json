@@ -1,0 +1,7 @@
+{
+  "name": "poster-core",
+  "version": "0.0.1",
+  "description": "Moteur d'affiches PPC St Georges : modele, mise en page, emission SVG, texte de publication. TypeScript pur, sans dependance Angular ni acces fichier.",
+  "private": true,
+  "sideEffects": false
+}

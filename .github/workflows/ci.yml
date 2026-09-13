@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # npm 10.9.x (livre avec node 22) plante sur la resolution des peer deps
+      # de vitest : "Cannot read properties of null (reading 'edgesOut')".
+      # La meme version que le devbox est installee ici.
+      - name: Aligner npm sur la version du devbox
+        run: npm install -g npm@12
+
+      - name: Installer les dependances
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Verification des types
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm run test:ci
+
+      - name: Build web
+        run: npm run build

@@ -2,7 +2,7 @@
   "adulte": {
     "journee": 1,
     "groupes": [
-        {
+      {
         "domicile": false,
         "date": "Samedi 19 Septembre à 18h00",
         "matches": [
@@ -53,7 +53,6 @@
         ]
       }
     ]
-    
   },
   "enfant": {
     "journee": 8,
@@ -70,5 +69,3 @@
     }
   }
 }
-
-
