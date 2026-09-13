@@ -8,3 +8,6 @@
 
 export * from './format/ordinal';
 export * from './format/creneau';
+export * from './clubs/normaliser';
+export * from './model/journee';
+export * from './migrate/v1';
