@@ -15,7 +15,8 @@
     "importHelpers": true,
     /* Pointe sur les sources, pas sur dist/ : aucune etape de build intermediaire en dev. */
     "paths": {
-      "poster-core": ["./projects/poster-core/src/public-api.ts"]
+      "poster-core": ["./projects/poster-core/src/public-api.ts"],
+      "poster-core/rasterize": ["./projects/poster-core/src/rasterize/index.ts"]
     },
     "target": "ES2022",
     "module": "preserve"

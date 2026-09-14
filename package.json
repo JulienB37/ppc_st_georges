@@ -25,6 +25,7 @@
   "private": true,
   "packageManager": "npm@12.0.2",
   "dependencies": {
+    "@resvg/resvg-wasm": "^2.6.2",
     "@angular/common": "^22.1.0",
     "@angular/compiler": "^22.1.0",
     "@angular/core": "^22.1.0",
@@ -41,7 +42,6 @@
     "@angular/cli": "^22.1.8",
     "@angular/compiler-cli": "^22.1.0",
     "@eslint/js": "^10.0.1",
-    "@resvg/resvg-wasm": "^2.6.2",
     "@types/fontkit": "^2.0.9",
     "@types/node": "^26.5.1",
     "angular-eslint": "22.5.0",
