@@ -326,15 +326,16 @@ function bandeau(
   //
   // `cadrerLogo` inscrit le rapport du logo dans un cercle de diametre donne ;
   // pour un rapport de 1,29 la largeur vaut 0,839 fois ce diametre. Un diametre
-  // de 250 donne donc 210 de large, soit 95 % de l'espace libre — au plus pres
-  // de l'anneau sans le toucher.
-  const dBlason = 250;
+  // de 305 donne donc 256 de large : le blason effleure l'anneau, ce qui est
+  // l'effet voulu. Au-dela il le chevaucherait, et l'anneau cesserait de lire
+  // comme un cadre.
+  const dBlason = 305;
   const cadre = cadrerLogo(assets.blason, dBlason);
   noeuds.push({
     type: 'image',
     role: 'blason',
-    x: 177 + cadre.x,
-    y: 169 + cadre.y,
+    x: 183 + cadre.x,
+    y: 172 + cadre.y,
     largeur: cadre.largeur,
     hauteur: cadre.hauteur,
     source: assets.blason.source,
