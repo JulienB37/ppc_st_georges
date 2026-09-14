@@ -11,6 +11,13 @@ describe('ordinalJournee', () => {
     expect(ordinalJournee(21)).toBe('21e');
   });
 
+  it('reste regulier au-dela du premier rang', () => {
+    // Une saison compte une vingtaine de journees : tous les rangs d'une
+    // saison reelle sont donc couverts, pas seulement quelques echantillons.
+    const attendu = ['1re', ...Array.from({ length: 21 }, (_, i) => `${i + 2}e`)];
+    expect(Array.from({ length: 22 }, (_, i) => ordinalJournee(i + 1))).toEqual(attendu);
+  });
+
   it('refuse un rang qui ne peut pas exister', () => {
     expect(() => ordinalJournee(0)).toThrow(RangeError);
     expect(() => ordinalJournee(-1)).toThrow(RangeError);
@@ -34,7 +41,22 @@ describe('quantiemeMois', () => {
 describe('rangJourneeParties', () => {
   it("rend la forme longue du club, decoupee pour l'exposant", () => {
     expect(rangJourneeParties(1)).toEqual({ chiffre: '1', suffixe: 'ère' });
-    expect(rangJourneeParties(12)).toEqual({ chiffre: '12', suffixe: 'ème' });
+    expect(rangJourneeParties(2)).toEqual({ chiffre: '2', suffixe: 'ème' });
+    expect(rangJourneeParties(5)).toEqual({ chiffre: '5', suffixe: 'ème' });
+    expect(rangJourneeParties(11)).toEqual({ chiffre: '11', suffixe: 'ème' });
+  });
+
+  it('accorde les deux formes sur toute une saison', () => {
+    // La forme longue de l'affiche et la forme abregee de la prose doivent
+    // designer le meme rang : l'image et le texte de publication ne peuvent pas
+    // se contredire.
+    for (let rang = 1; rang <= 22; rang++) {
+      const { chiffre, suffixe } = rangJourneeParties(rang);
+      expect(chiffre).toBe(String(rang));
+      expect(suffixe).toBe(rang === 1 ? 'ère' : 'ème');
+      // Meme cas particulier de part et d'autre.
+      expect(ordinalJournee(rang).startsWith(String(rang))).toBe(true);
+    }
   });
 
   it('refuse un rang invalide, comme la forme abregee', () => {

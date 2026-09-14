@@ -111,7 +111,16 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const drapeauAnnee = args.indexOf('--annee');
   const anneeSaison = drapeauAnnee >= 0 ? Number(args[drapeauAnnee + 1]) : 2026;
-  const entree = args.find((a) => !a.startsWith('--') && a !== String(anneeSaison));
+  // `--journees 1,2,5,11` rend la meme journee sous plusieurs rangs. C'est la
+  // seule facon de verifier que l'ordinal et sa bande tiennent pour tous les
+  // rangs d'une saison, et pas seulement pour celui du fichier d'entree.
+  const drapeauJournees = args.indexOf('--journees');
+  const rangsDemandes =
+    drapeauJournees >= 0
+      ? args[drapeauJournees + 1]!.split(',').map((r) => Number(r.trim()))
+      : undefined;
+  const jetons = new Set([String(anneeSaison), args[drapeauJournees + 1] ?? '']);
+  const entree = args.find((a) => !a.startsWith('--') && !jetons.has(a));
 
   const chemin = entree
     ? path.resolve(RACINE, entree)
@@ -127,18 +136,15 @@ async function main(): Promise<void> {
   const moteur = creerMoteurTexte(faces);
   await mkdir(SORTIE, { recursive: true });
 
+  const rangs = rangsDemandes ?? [journee.numero];
+
   for (const [i, affiche] of journee.affiches.entries()) {
     const assets = await chargerAssets(journee, i);
-    {
-      const { scene, densite, diagnostics } = composerAffiche(
-        affiche,
-        journee.numero,
-        assets,
-        moteur,
-      );
+    for (const rang of rangs) {
+      const { scene, densite, diagnostics } = composerAffiche(affiche, rang, assets, moteur);
 
       const svg = emettreSvg(scene);
-      const base = `J${journee.numero}_${affiche.categorie}`;
+      const base = `J${rang}_${affiche.categorie}`;
       await writeFile(path.join(SORTIE, `${base}.svg`), svg);
 
       const rendu = new Resvg(svg, {

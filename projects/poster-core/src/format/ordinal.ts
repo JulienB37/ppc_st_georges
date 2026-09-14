@@ -1,15 +1,38 @@
 /**
  * Ordinaux francais.
  *
- * L'ancien script ecrivait `1ere` et `12eme` sur l'affiche. Les abreviations
- * correctes sont `1re` et `12e`. « Journee » etant feminin, le rang 1 donne
- * `1re` (premiere) et non `1er`.
+ * L'ancien script ecrivait `1ere` et `12eme` sur l'affiche.
  */
-export function ordinalJournee(rang: number): string {
+
+/**
+ * Forme ordinale que prend un rang de journee.
+ *
+ * Le seul cas particulier est le premier rang, et il vit ICI et nulle part
+ * ailleurs : deux fonctions rendent le rang, l'une abregee pour la prose et
+ * l'autre longue pour l'affiche. Si chacune portait sa propre liste de cas, il
+ * suffirait d'en corriger une pour que l'image et le texte de publication se
+ * contredisent.
+ *
+ * Le rang 2 n'en est PAS un : « seconde » serait recevable, le club prefere
+ * « 2eme », qui est aussi la forme reguliere.
+ */
+type FormeRang = 'premiere' | 'ordinaire';
+
+function formeDuRang(rang: number): FormeRang {
   if (!Number.isInteger(rang) || rang < 1) {
     throw new RangeError(`Rang de journee invalide : ${rang}`);
   }
-  return rang === 1 ? '1re' : `${rang}e`;
+  return rang === 1 ? 'premiere' : 'ordinaire';
+}
+
+/**
+ * Rang de journee abrege, pour la prose : `1re`, `2e`, `5e`, `11e`.
+ *
+ * Ce sont les abreviations correctes. « Journee » etant feminin, le rang 1
+ * donne `1re` (premiere) et non `1er`.
+ */
+export function ordinalJournee(rang: number): string {
+  return formeDuRang(rang) === 'premiere' ? '1re' : `${rang}e`;
 }
 
 /**
@@ -25,20 +48,18 @@ export function quantiemeMois(jour: number): string {
 }
 
 /**
- * Rang de journee tel que le club l'ecrit sur l'affiche, en deux morceaux.
+ * Rang de journee tel que le club l'ecrit sur l'affiche, en deux morceaux :
+ * `1ère`, `2ème`, `5ème`, `11ème`.
  *
- * L'abreviation strictement correcte est `1re` / `12e` : c'est ce que rend
- * `ordinalJournee`, et ce qui doit partir dans le texte de publication. Mais
- * le club ecrit `1ere` sur ses affiches et l'a demande explicitement. La forme
- * longue reste donc cantonnee au dessin, ou le suffixe est de toute facon pose
- * en exposant souligne — la ou l'usage typographique la tolere.
+ * La forme abregee ci-dessus est celle que recommande l'usage ; le club ecrit
+ * la forme longue sur ses affiches et l'a demande explicitement. Elle reste
+ * cantonnee au dessin, ou le suffixe est pose en exposant — la seule forme sous
+ * laquelle l'usage typographique tolere l'abreviation longue.
  *
- * Le decoupage en deux champs existe pour cela : l'exposant ne peut pas etre
- * obtenu par une balise, l'emetteur SVG n'ayant pas de `<tspan>` de style.
+ * Le decoupage en deux champs existe pour l'exposant, que l'emetteur SVG ne
+ * peut pas obtenir autrement, faute de `<tspan>` de style.
  */
 export function rangJourneeParties(rang: number): { chiffre: string; suffixe: string } {
-  if (!Number.isInteger(rang) || rang < 1) {
-    throw new RangeError(`Rang de journee invalide : ${rang}`);
-  }
-  return { chiffre: String(rang), suffixe: rang === 1 ? 'ère' : 'ème' };
+  const suffixe = formeDuRang(rang) === 'premiere' ? 'ère' : 'ème';
+  return { chiffre: String(rang), suffixe };
 }
