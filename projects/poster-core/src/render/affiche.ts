@@ -4,11 +4,12 @@ import { monogramme } from '../clubs/normaliser';
 import { formatCreneau } from '../format/creneau';
 import { ordinalJournee } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
-import { decorNocturne } from './decor';
+import { anneauPeint, bandeDechiree, decorNocturne, essaim } from './decor';
 import type { Boite, Decoupe, Degrade, Filtre, Noeud, NoeudTexte, Scene } from './scene';
 import {
   CADRAGE_LOGO,
   COULEURS,
+  PROJECTION,
   ESPACES,
   FORMATS,
   GRAISSES,
@@ -254,15 +255,40 @@ function bandeau(
   const dBlason = 150;
   const cxBlason = MARGE_X + dBlason / 2;
   const cyBlason = 104;
+  // Gerbe de projections derriere le blason, pour qu'il ne soit pas pose sur
+  // le fond comme une vignette decoupee.
+  noeuds.push(
+    ...essaim(
+      {
+        centre: { x: cxBlason, y: cyBlason },
+        etendue: { x: dBlason * 0.85, y: dBlason * 0.8 },
+        nombre: 46,
+        rayonMax: 9,
+        graine: 909,
+        partCoulures: 0.14,
+      },
+      PROJECTION,
+      'peinture-fine',
+    ),
+  );
+
+  // Disque et anneau peints plutot qu'un cercle au contour parfait : un
+  // contour net se lit comme un gabarit colle sur le fond.
   noeuds.push({
     type: 'cercle',
     role: 'blason-fond',
     cx: cxBlason,
     cy: cyBlason,
-    r: dBlason / 2,
+    r: dBlason / 2 - 2,
     remplissage: COULEURS.blanc,
-    contour: COULEURS.rougePpc,
-    epaisseur: TRAITS.anneauBlason,
+    filtre: 'peinture-objet',
+  });
+  noeuds.push({
+    type: 'chemin',
+    role: 'blason-anneau',
+    d: anneauPeint(cxBlason, cyBlason, dBlason / 2 + 3, TRAITS.anneauBlason + 3, 313),
+    remplissage: COULEURS.rougePpc,
+    filtre: 'peinture-objet',
   });
   decoupes.push({ id: 'clip-blason', cercle: { cx: cxBlason, cy: cyBlason, r: dBlason / 2 - 5 } });
   const cadre = cadrerLogo(assets.blason, dBlason - 16);
@@ -312,6 +338,21 @@ function bandeau(
     ),
   );
 
+  noeuds.push(
+    ...essaim(
+      {
+        centre: { x: xTitre + largeurTitre * 0.45, y: 96 },
+        etendue: { x: largeurTitre * 0.6, y: 92 },
+        nombre: 70,
+        rayonMax: 10,
+        graine: 717,
+        partCoulures: 0.16,
+      },
+      PROJECTION,
+      'peinture-fine',
+    ),
+  );
+
   noeuds.push({
     type: 'groupe',
     role: 'titre',
@@ -345,15 +386,19 @@ function bandeau(
     transform: `skewX(${INCLINAISON})`,
     enfants: [
       {
-        type: 'rect',
+        type: 'chemin',
         role: 'banniere-fond',
-        x: MARGE_X + compenser(yBanniere),
-        y: yBanniere,
-        largeur: largeurBanniere,
-        hauteur: hBanniere,
-        rx: 4,
+        d: bandeDechiree(
+          MARGE_X + compenser(yBanniere),
+          yBanniere,
+          largeurBanniere,
+          hBanniere,
+          515,
+          12,
+        ),
         remplissage: COULEURS.nuit,
-        opacite: 0.8,
+        opacite: 0.88,
+        filtre: 'peinture-bande',
       },
       texte(
         libelleRencontres,
@@ -365,14 +410,18 @@ function bandeau(
         { role: 'banniere-texte' },
       ),
       {
-        type: 'rect',
+        type: 'chemin',
         role: 'pastille-journee',
-        x: xJournee + compenser(yBanniere),
-        y: yBanniere + 7,
-        largeur: largeurJournee,
-        hauteur: hBanniere - 14,
-        rx: (hBanniere - 14) / 2,
+        d: bandeDechiree(
+          xJournee + compenser(yBanniere),
+          yBanniere + 7,
+          largeurJournee,
+          hBanniere - 14,
+          616,
+          10,
+        ),
         remplissage: couleurAccent,
+        filtre: 'peinture-bande',
       },
       texte(
         libelleJournee,

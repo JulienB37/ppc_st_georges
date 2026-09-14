@@ -56,7 +56,30 @@ export const COULEURS = {
   grisLigne: '#D9DEE5',
   /** Texte secondaire sur fond sombre. */
   brume: '#A8BCD6',
+
+  /**
+   * Couleurs de projection.
+   *
+   * Elles n'habillent aucun element d'information : elles ne servent qu'aux
+   * eclaboussures, aux coulures et aux bandes dechirees du fond. Une affiche
+   * d'evenement tient beaucoup de sa vitalite de cette gamme large, la ou deux
+   * teintes seules donnent un rendu monochrome et terne.
+   */
+  cyan: '#12C2C9',
+  magenta: '#E5007E',
+  violet: '#7B2FF7',
+  orange: '#FF7A18',
+  jauneVif: '#FFC300',
 } as const;
+
+/** Gamme projetee sur le fond, hors elements d'information. */
+export const PROJECTION = [
+  COULEURS.cyan,
+  COULEURS.magenta,
+  COULEURS.violet,
+  COULEURS.orange,
+  COULEURS.rougeHalo,
+] as const;
 
 export const OPACITES = {
   secondaire: 0.88,

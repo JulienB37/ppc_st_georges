@@ -58,6 +58,7 @@ function emettreNoeud(noeud: Noeud): string {
         ['stroke', noeud.contour],
         ['stroke-width', noeud.epaisseur],
         ['opacity', noeud.opacite],
+        ['filter', noeud.filtre ? `url(#${noeud.filtre})` : undefined],
       ])}/>`;
 
     case 'ellipse':

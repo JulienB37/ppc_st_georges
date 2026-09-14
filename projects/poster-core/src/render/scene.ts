@@ -40,6 +40,7 @@ export interface NoeudRect extends Commun {
 
 export interface NoeudCercle extends Commun {
   type: 'cercle';
+  filtre?: string;
   cx: number;
   cy: number;
   r: number;
