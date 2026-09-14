@@ -59,11 +59,12 @@ const FACES = [
     role: 'texte',
   },
   {
-    // Les titres du gabarit du club sont tracés au pinceau sec. Anton, une
-    // grotesque, ne peut pas s'en approcher : le rang de journee se pose sur
-    // la bande peinte du gabarit, il doit donc en partager la main.
-    fichier: 'ProtestStrike-Regular.ttf',
-    famille: 'Protest Strike',
+    // Les titres du gabarit du club sont traces au pinceau sec, fûts franges
+    // par les poils de la brosse. Anton, une grotesque, ne peut pas s'en
+    // approcher, et Protest Strike — essayee d'abord — avait des contours trop
+    // propres. Protest Revolution porte les bords ronges du gabarit.
+    fichier: 'ProtestRevolution-Regular.ttf',
+    famille: 'Protest Revolution',
     graisse: 400,
     role: 'pinceau',
   },

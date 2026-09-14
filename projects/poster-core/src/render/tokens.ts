@@ -175,7 +175,7 @@ export const POLICES = {
    * Les titres du gabarit du club sont traces au pinceau. Y poser une
    * grotesque comme Anton se voit immediatement : ce n'est pas la meme main.
    */
-  pinceau: 'Protest Strike',
+  pinceau: 'Protest Revolution',
 } as const;
 
 export type FamillePolice = (typeof POLICES)[keyof typeof POLICES];
@@ -202,6 +202,19 @@ export const GRAISSES = {
  * synthetise pas l'oblique — demander `font-style: italic` ne ferait rien.
  */
 export const INCLINAISON = -8;
+
+/**
+ * Rotation des textes poses sur les bandes peintes du gabarit, en degres.
+ *
+ * Mesuree par regression sur le centroide vertical des bandes, colonne par
+ * colonne : -7,24 deg sur la bande blanche de « LES RENCONTRES » (49 colonnes)
+ * et -7,42 deg sur la bande rouge (28 colonnes).
+ *
+ * C'est une ROTATION et non un `skewX`. Le cisaillement penche les futs mais
+ * laisse la ligne de base horizontale : sur une bande inclinee, le texte
+ * cisaille reste visiblement a plat.
+ */
+export const ROTATION_GABARIT = -7.3;
 
 /** Interlettrage, en fraction du corps. */
 export const INTERLETTRAGE = {

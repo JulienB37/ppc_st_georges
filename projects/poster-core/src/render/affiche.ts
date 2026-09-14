@@ -21,6 +21,7 @@ import {
   PLANCHERS,
   POLICES,
   RETRAIT_PANNEAU,
+  ROTATION_GABARIT,
   RAYONS,
   TRAITS,
   accent,
@@ -296,107 +297,126 @@ function bandeau(
   diagnostics: Diagnostic[],
 ): Noeud[] {
   const { chiffre, suffixe } = rangJourneeParties(numeroJournee);
-  const exposant = suffixe.toUpperCase();
-  const reste = affiche.categorie === 'jeunes' ? 'JOURNÉE JEUNES' : 'JOURNÉE';
-
   const famille = { famille: POLICES.pinceau, graisse: GRAISSES.pinceau };
   const metriques = moteur.metriques(famille);
 
+  /**
+   * Ecarts, en part du corps.
+   *
+   * Deux valeurs distinctes, et l'ecart entre mots est large : l'encre de
+   * cette brosse depasse son avance, si bien que la panse du « e » accentue
+   * mange le vide. A 0,22 « Journee jeunes » se lisait encore « Journeejeunes ».
+   */
+  const ECART_MOT = 0.44;
+  const ECART_EXPOSANT = 0.26;
+  /** Corps de l'exposant, en part du corps courant. */
+  const RAPPORT_EXPOSANT = 0.58;
+
+  /**
+   * Morceaux du libelle, poses cote a cote.
+   *
+   * Le decoupage a deux raisons. L'exposant, d'abord, que l'emetteur SVG ne
+   * peut pas obtenir autrement, faute de `<tspan>` de style. L'espace-mot,
+   * ensuite : celui de cette brosse est si serre que « Journee jeunes » se
+   * lisait « Journeejeunes ». L'ecart est donc pose ici, en part du corps.
+   *
+   * Bas de casse pour les mots : le gabarit reserve les capitales a ses
+   * propres titres, et tout en capitales le rang de journee criait plus fort
+   * que « LES RENCONTRES ».
+   */
+  const morceaux: { texte: string; exposant?: boolean; ecartAvant?: number }[] = [
+    { texte: chiffre },
+    { texte: suffixe, exposant: true },
+    { texte: 'Journée', ecartAvant: ECART_EXPOSANT },
+    ...(affiche.categorie === 'jeunes' ? [{ texte: 'jeunes', ecartAvant: ECART_MOT }] : []),
+  ];
+
+  const corpsDe = (taille: number, m: (typeof morceaux)[number]) =>
+    m.exposant ? taille * RAPPORT_EXPOSANT : taille;
+
+  const largeurTotale = (taille: number): number =>
+    morceaux.reduce(
+      (t, m) =>
+        t +
+        (m.ecartAvant ?? 0) * taille +
+        moteur.largeur(m.texte, { ...famille, taille: corpsDe(taille, m) }),
+      0,
+    );
+
   // Le corps se deduit de la bande : les capitales en occupent 62 % de la
-  // hauteur, puis la largeur mesuree le reduit si la mention « JEUNES »
+  // hauteur, puis la largeur mesuree le reduit si la mention « jeunes »
   // l'allonge. Le rapport est volontairement bas — le trace peint doit rester
   // visible autour du texte, sinon le rang de journee lit comme une etiquette
   // collee et non comme une inscription sur l'affiche.
+  //
+  // `ajuster` ne peut pas servir : il mesure une chaine unique. La reduction se
+  // fait donc a la main, sur les memes echelons.
   const tailleHaute = (BANDE_JOURNEE.hauteur * 0.62) / metriques.capitale;
-  const RAPPORT_EXPOSANT = 0.58;
-  const ECART_MOT = 0.2;
-
-  /** Largeur totale de la composition « 1 + ÈRE + JOURNÉE » a un corps donne. */
-  const largeurTotale = (taille: number): number =>
-    moteur.largeur(chiffre, { ...famille, taille }) +
-    moteur.largeur(exposant, { ...famille, taille: taille * RAPPORT_EXPOSANT }) +
-    taille * ECART_MOT +
-    moteur.largeur(reste, { ...famille, taille });
-
-  // `ajuster` mesure une chaine unique ; la composition en trois morceaux se
-  // reduit donc a la main, sur les memes echelons.
   const disponible = BANDE_JOURNEE.largeur * 0.82;
   const echelons = echelonsDepuis(tailleHaute, tailleHaute * 0.5);
   const taille = echelons.find((t) => largeurTotale(t) <= disponible) ?? echelons.at(-1)!;
   if (largeurTotale(taille) > disponible) {
     diagnostics.push({
       niveau: 'alerte',
-      message: `« ${chiffre}${suffixe} ${reste} » est trop long pour la bande du gabarit.`,
+      message: `« ${morceaux.map((m) => m.texte).join(' ')} » est trop long pour la bande du gabarit.`,
     });
   }
 
-  const styleBase: StyleTexte = { ...famille, taille };
-  const styleExposant: StyleTexte = { ...famille, taille: taille * RAPPORT_EXPOSANT };
   const cx = BANDE_JOURNEE.x + BANDE_JOURNEE.largeur / 2;
   const cy = BANDE_JOURNEE.y + BANDE_JOURNEE.hauteur / 2;
-
-  // Tout en capitales : la ligne de base se cale sur leur hauteur, et non sur
-  // la boite em, dont les reserves dependent de la face.
-  const base = moteur.ligneDeBaseCapitales(styleBase, cy);
-  // L'exposant s'aligne par le HAUT des capitales, pas par la ligne de base :
-  // c'est ce qui le fait lire comme un exposant et non comme un petit mot.
+  // La ligne de base se cale sur la hauteur de capitale, et non sur la boite
+  // em, dont les reserves dependent de la face.
+  const base = moteur.ligneDeBaseCapitales({ ...famille, taille }, cy);
   const hautCapitales = base - metriques.capitale * taille;
-  const baseExposant = hautCapitales + metriques.capitale * styleExposant.taille;
 
-  const largeurChiffre = moteur.largeur(chiffre, styleBase);
-  const largeurExposant = moteur.largeur(exposant, styleExposant);
+  const enfants: Noeud[] = [];
   let x = cx - largeurTotale(taille) / 2;
 
-  const lisere = {
-    contour: COULEURS.nuit,
-    epaisseurContour: taille * 0.07,
-  };
+  for (const m of morceaux) {
+    x += (m.ecartAvant ?? 0) * taille;
+    const style: StyleTexte = { ...famille, taille: corpsDe(taille, m) };
+    // L'exposant s'aligne par le HAUT des capitales, pas par la ligne de base :
+    // c'est ce qui le fait lire comme un exposant et non comme un petit mot.
+    const y = m.exposant ? hautCapitales + metriques.capitale * style.taille : base;
+    const largeur = moteur.largeur(m.texte, style);
 
-  const enfants: Noeud[] = [
-    texte(chiffre, x + compenser(base), base, styleBase, COULEURS.blanc, moteur, {
-      role: 'journee-chiffre',
-      ...lisere,
-    }),
+    enfants.push(
+      texte(m.texte, x, y, style, COULEURS.blanc, moteur, {
+        role: m.exposant ? 'journee-exposant' : 'journee-texte',
+        // Le trace peint est mouchete : le lisere sombre garantit la lisibilite
+        // la ou le rouge laisse voir le fond bleu.
+        contour: COULEURS.nuit,
+        epaisseurContour: taille * 0.07,
+      }),
+    );
+
+    if (m.exposant) {
+      // Soulignement de l'exposant : c'est la seule forme sous laquelle l'usage
+      // typographique tolere l'abreviation longue.
+      enfants.push({
+        type: 'rect',
+        role: 'journee-soulignement',
+        x,
+        y: y + style.taille * 0.1,
+        largeur,
+        hauteur: Math.max(2, style.taille * 0.11),
+        remplissage: COULEURS.blanc,
+      });
+    }
+    x += largeur;
+  }
+
+  return [
+    {
+      type: 'groupe',
+      role: 'journee',
+      // Rotation, et non `skewX` : le cisaillement penche les futs mais laisse
+      // la ligne de base horizontale, ce qui posait le texte a plat sur une
+      // bande qui monte de 7,3 degres.
+      transform: `rotate(${ROTATION_GABARIT} ${cx} ${cy})`,
+      enfants,
+    },
   ];
-  x += largeurChiffre;
-
-  enfants.push(
-    texte(
-      exposant,
-      x + compenser(baseExposant),
-      baseExposant,
-      styleExposant,
-      COULEURS.blanc,
-      moteur,
-      {
-        role: 'journee-exposant',
-        ...lisere,
-      },
-    ),
-  );
-  // Soulignement de l'exposant, comme sur les affiches du club : un filet sous
-  // l'abreviation, seul endroit ou l'usage tolere la forme longue.
-  const epaisseurFilet = Math.max(2, styleExposant.taille * 0.11);
-  const yFilet = baseExposant + styleExposant.taille * 0.1;
-  enfants.push({
-    type: 'rect',
-    role: 'journee-soulignement',
-    x: x + compenser(yFilet),
-    y: yFilet,
-    largeur: largeurExposant,
-    hauteur: epaisseurFilet,
-    remplissage: COULEURS.blanc,
-  });
-  x += largeurExposant + taille * ECART_MOT;
-
-  enfants.push(
-    texte(reste, x + compenser(base), base, styleBase, COULEURS.blanc, moteur, {
-      role: 'journee-texte',
-      ...lisere,
-    }),
-  );
-
-  return [{ type: 'groupe', role: 'journee', transform: `skewX(${INCLINAISON})`, enfants }];
 }
 
 interface Contexte {
