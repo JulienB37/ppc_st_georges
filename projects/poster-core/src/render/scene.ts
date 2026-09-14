@@ -48,6 +48,17 @@ export interface NoeudCercle extends Commun {
   opacite?: number;
 }
 
+export interface NoeudEllipse extends Commun {
+  type: 'ellipse';
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+  remplissage?: string;
+  opacite?: number;
+  transform?: string;
+}
+
 export interface NoeudChemin extends Commun {
   type: 'chemin';
   d: string;
@@ -104,7 +115,8 @@ export interface NoeudGroupe extends Commun {
   opacite?: number;
 }
 
-export type Noeud = NoeudRect | NoeudCercle | NoeudChemin | NoeudTexte | NoeudImage | NoeudGroupe;
+export type Noeud =
+  NoeudRect | NoeudCercle | NoeudEllipse | NoeudChemin | NoeudTexte | NoeudImage | NoeudGroupe;
 
 /** Une zone de decoupe, referencee par les noeuds via son identifiant. */
 export interface Decoupe {
@@ -113,10 +125,39 @@ export interface Decoupe {
   cercle: { cx: number; cy: number; r: number };
 }
 
+/** Une etape de degrade : position sur l'axe, couleur, et opacite eventuelle. */
+export interface EtapeDegrade {
+  position: number;
+  couleur: string;
+  opacite?: number;
+}
+
+/**
+ * Degrade lineaire ou radial, reference par `url(#id)`.
+ *
+ * Les halos de l'affiche sont des degrades radiaux dont l'etape exterieure est
+ * transparente, plutot que des flous gaussiens : moins couteux a rasteriser,
+ * et surtout d'un rendu previsible, la ou les filtres SVG varient d'un moteur
+ * a l'autre.
+ */
+export type Degrade =
+  | {
+      id: string;
+      type: 'lineaire';
+      /** Coordonnees en fraction de la boite englobante. */
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      etapes: EtapeDegrade[];
+    }
+  | { id: string; type: 'radial'; cx: number; cy: number; r: number; etapes: EtapeDegrade[] };
+
 export interface Scene {
   largeur: number;
   hauteur: number;
   decoupes: Decoupe[];
+  degrades: Degrade[];
   noeuds: Noeud[];
 }
 
@@ -138,6 +179,17 @@ export function boiteDe(noeud: Noeud): Boite | null {
         largeur: 2 * noeud.r,
         hauteur: 2 * noeud.r,
       };
+    case 'ellipse':
+      // Une ellipse transformee n'a pas de boite fiable sans composer la
+      // matrice : on prefere ne rien affirmer.
+      return noeud.transform
+        ? null
+        : {
+            x: noeud.cx - noeud.rx,
+            y: noeud.cy - noeud.ry,
+            largeur: 2 * noeud.rx,
+            hauteur: 2 * noeud.ry,
+          };
     case 'image':
       return { x: noeud.x, y: noeud.y, largeur: noeud.largeur, hauteur: noeud.hauteur };
     case 'chemin':
@@ -175,6 +227,22 @@ export function* parcourir(noeuds: Noeud[]): Generator<Noeud> {
   for (const noeud of noeuds) {
     yield noeud;
     if (noeud.type === 'groupe') yield* parcourir(noeud.enfants);
+  }
+}
+
+/**
+ * Parcours limite aux noeuds dont les coordonnees vivent dans le repere de la
+ * scene.
+ *
+ * Un groupe transforme — incline, tourne — place ses enfants dans un autre
+ * repere : leur `x` brut ne veut plus rien dire dans le cadre de l'affiche.
+ * Les verifications geometriques doivent donc s'arreter a la frontiere d'un
+ * tel groupe, sous peine de comparer des coordonnees incomparables.
+ */
+export function* parcourirPlanaire(noeuds: Noeud[]): Generator<Noeud> {
+  for (const noeud of noeuds) {
+    yield noeud;
+    if (noeud.type === 'groupe' && !noeud.transform) yield* parcourirPlanaire(noeud.enfants);
   }
 }
 

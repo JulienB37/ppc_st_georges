@@ -1,4 +1,4 @@
-import type { Decoupe, Noeud, Scene } from './scene';
+import type { Decoupe, Degrade, Noeud, Scene } from './scene';
 
 /**
  * Emission du SVG.
@@ -57,6 +57,17 @@ function emettreNoeud(noeud: Noeud): string {
         ['stroke', noeud.contour],
         ['stroke-width', noeud.epaisseur],
         ['opacity', noeud.opacite],
+      ])}/>`;
+
+    case 'ellipse':
+      return `<ellipse${attributs([
+        ['cx', noeud.cx],
+        ['cy', noeud.cy],
+        ['rx', noeud.rx],
+        ['ry', noeud.ry],
+        ['fill', noeud.remplissage ?? 'none'],
+        ['opacity', noeud.opacite],
+        ['transform', noeud.transform],
       ])}/>`;
 
     case 'chemin':
@@ -118,8 +129,40 @@ function emettreNoeud(noeud: Noeud): string {
   }
 }
 
+function emettreDegrades(degrades: Degrade[]): string {
+  return degrades
+    .map((d) => {
+      const etapes = d.etapes
+        .map(
+          (e) =>
+            `<stop${attributs([
+              ['offset', e.position],
+              ['stop-color', e.couleur],
+              ['stop-opacity', e.opacite],
+            ])}/>`,
+        )
+        .join('');
+
+      if (d.type === 'lineaire') {
+        return `<linearGradient${attributs([
+          ['id', d.id],
+          ['x1', d.x1],
+          ['y1', d.y1],
+          ['x2', d.x2],
+          ['y2', d.y2],
+        ])}>${etapes}</linearGradient>`;
+      }
+      return `<radialGradient${attributs([
+        ['id', d.id],
+        ['cx', d.cx],
+        ['cy', d.cy],
+        ['r', d.r],
+      ])}>${etapes}</radialGradient>`;
+    })
+    .join('');
+}
+
 function emettreDecoupes(decoupes: Decoupe[]): string {
-  if (decoupes.length === 0) return '';
   const contenu = decoupes
     .map(
       (d) =>
@@ -131,7 +174,7 @@ function emettreDecoupes(decoupes: Decoupe[]): string {
         ])}/></clipPath>`,
     )
     .join('');
-  return `<defs>${contenu}</defs>`;
+  return contenu;
 }
 
 export interface OptionsEmission {
@@ -161,10 +204,12 @@ export function emettreSvg(scene: Scene, options: OptionsEmission = {}): string 
     `<svg xmlns="http://www.w3.org/2000/svg" ` +
     `viewBox="0 0 ${n(scene.largeur)} ${n(scene.hauteur)}">`;
 
+  const defs = emettreDegrades(scene.degrades) + emettreDecoupes(scene.decoupes);
+
   return (
     ouverture +
     style +
-    emettreDecoupes(scene.decoupes) +
+    (defs ? `<defs>${defs}</defs>` : '') +
     scene.noeuds.map(emettreNoeud).join('') +
     `</svg>`
   );

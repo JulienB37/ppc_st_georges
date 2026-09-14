@@ -45,6 +45,15 @@
       "octets": 23832,
       "unitsPerEm": 1000,
       "source": "BarlowSemiCondensed-Bold.ttf"
+    },
+    {
+      "fichier": "Caveat-700.woff2",
+      "famille": "Caveat",
+      "graisse": 700,
+      "role": "manuscrit",
+      "octets": 50436,
+      "unitsPerEm": 1000,
+      "source": "Caveat[wght].ttf"
     }
   ]
 }

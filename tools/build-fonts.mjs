@@ -58,6 +58,16 @@ const FACES = [
     graisse: 700,
     role: 'texte',
   },
+  {
+    // Caveat n'existe qu'en police variable chez Google Fonts. resvg rendrait
+    // silencieusement l'instance par defaut : on fige donc la graisse au
+    // sous-ensemblage, ce qui produit une face statique ordinaire.
+    fichier: 'Caveat[wght].ttf',
+    famille: 'Caveat',
+    graisse: 700,
+    role: 'manuscrit',
+    axes: { wght: 700 },
+  },
 ];
 
 /** Nom de famille typographique (name ID 16), absent des faces Regular/Bold. */
@@ -111,6 +121,7 @@ async function main() {
 
     const sousEnsemble = await subsetFont(source, texte, {
       targetFormat: 'woff2',
+      ...(face.axes ? { variationAxes: face.axes } : {}),
       // Sans cela l'outil peut tronquer la table `name`. Une famille vide et
       // resvg ne retrouverait jamais `font-family="Barlow Semi Condensed"` :
       // il rendrait avec une police de repli, en silence.

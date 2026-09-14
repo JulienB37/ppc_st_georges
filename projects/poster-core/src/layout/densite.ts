@@ -81,16 +81,22 @@ export function calculerDensite(
   nbRencontres: number,
   nbGroupes: number,
   format: NomFormat = 'portrait',
+  /**
+   * Hauteur reellement offerte au contenu. La composition la connait mieux que
+   * les jetons : elle depend de la disposition des partenaires et du pied
+   * d'affiche. A defaut, on retombe sur la valeur deduite du format.
+   */
+  hauteurDispo = hauteurDisponible(format),
 ): Densite {
   const souhaitee = choisirVariante(nbRencontres, format);
-  const essai = composer(souhaitee, nbRencontres, nbGroupes, format);
+  const essai = composer(souhaitee, nbRencontres, nbGroupes, format, hauteurDispo);
   if (essai.tient || souhaitee === 'doubleColonne') return essai.densite;
 
   // Les planchers de lisibilite de l'en-tete de groupe ne suivent pas le
   // facteur : sur une journee tres fragmentee, ils peuvent consommer plus que
   // ce que le modele de demande prevoyait. Plutot que de rogner en silence —
   // le defaut exact de l'ancien moteur — on passe a la variante suivante.
-  return composer('doubleColonne', nbRencontres, nbGroupes, format).densite;
+  return composer('doubleColonne', nbRencontres, nbGroupes, format, hauteurDispo).densite;
 }
 
 function composer(
@@ -98,10 +104,9 @@ function composer(
   nbRencontres: number,
   nbGroupes: number,
   format: NomFormat,
+  disponible: number,
 ): { densite: Densite; tient: boolean } {
   const colonnes = variante === 'doubleColonne' ? 2 : 1;
-
-  const disponible = hauteurDisponible(format);
   // En double colonne, chaque colonne ne porte que la moitie du contenu.
   const demande = hauteurDemandee(nbRencontres, nbGroupes) / colonnes;
   const brut = demande > 0 ? disponible / demande : ECHELLE.max;

@@ -4,7 +4,8 @@ import { monogramme } from '../clubs/normaliser';
 import { formatCreneau } from '../format/creneau';
 import { ordinalJournee } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
-import type { Boite, Decoupe, Noeud, Scene } from './scene';
+import { decorNocturne } from './decor';
+import type { Boite, Decoupe, Degrade, Noeud, NoeudTexte, Scene } from './scene';
 import {
   CADRAGE_LOGO,
   COULEURS,
@@ -12,27 +13,25 @@ import {
   FORMATS,
   GRAISSES,
   HAUTEUR_BANDEAU,
-  HAUTEUR_SPONSORS,
-  INTERLETTRAGE,
-  LARGEUR_UTILE,
+  INCLINAISON,
   MARGE_X,
-  OPACITES,
   PADDING_CONTENU_Y,
   PLANCHERS,
   POLICES,
   RAYONS,
-  SPONSORS_MEP,
   TRAITS,
   accent,
+  type FamillePolice,
   type NomFormat,
 } from './tokens';
 
 /**
  * Composition de l'affiche : domaine + assets -> scene positionnee.
  *
- * Toutes les images arrivent deja resolues en data URL. La librairie ne lit
- * jamais un fichier, ce qui lui permet de tourner a l'identique dans un
- * worker, dans Node et dans Electron.
+ * Registre d'affiche d'evenement : fond nocturne entierement dessine, titres
+ * inclines, halos, accents manuscrits. Toutes les images arrivent deja
+ * resolues en data URL — la librairie ne lit jamais un fichier, ce qui lui
+ * permet de tourner a l'identique dans un worker, dans Node et dans Electron.
  */
 
 export interface LogoResolu {
@@ -46,20 +45,22 @@ export interface SponsorResolu extends LogoResolu {
 }
 
 export interface AssetsAffiche {
-  /** Blason du club, affiche dans le bandeau et sur chaque rangee. */
   blason: LogoResolu;
-  /** Logos adverses, par identifiant de club. Absent : monogramme. */
   logos: ReadonlyMap<string, LogoResolu>;
-  /** Sponsors deja tires et ordonnes, au plus trois. */
   sponsors: SponsorResolu[];
 }
 
+/** Ou poser les logos partenaires. */
+export type DispositionSponsors = 'bande' | 'colonne';
+
 export interface OptionsComposition {
   format?: NomFormat;
-  /** Nom imprime pour les equipes du club. */
   nomClub?: string;
-  /** Titre de rappel, en petites capitales au-dessus du titre principal. */
-  surtitre?: string;
+  /** Titre principal, une ligne par saut de ligne. */
+  titre?: string;
+  dispositionSponsors?: DispositionSponsors;
+  accrocheHaute?: string;
+  accrocheBasse?: string;
 }
 
 export interface Diagnostic {
@@ -71,11 +72,25 @@ export interface Composition {
   scene: Scene;
   densite: Densite;
   diagnostics: Diagnostic[];
-  /** Rectangle reserve au contenu, utilise par les tests d'invariants. */
   zoneContenu: Boite;
 }
 
-const NOM_CLUB_DEFAUT = 'PPC St Georges';
+const NOM_CLUB_DEFAUT = 'St Georges';
+const TITRE_DEFAUT = 'CHAMPIONNAT\nPAR ÉQUIPE';
+const ACCROCHE_HAUTE = 'Du jeu, du partage\net de la passion !';
+const ACCROCHE_BASSE = 'Ensemble pour la passion du Ping !';
+
+/** Hauteur reservee a la signature manuscrite, en pied d'affiche. */
+const HAUTEUR_SIGNATURE = 84;
+const HAUTEUR_BANDE_SPONSORS = 168;
+const LARGEUR_COLONNE_SPONSORS = 208;
+const ECART_COLONNE = 28;
+
+/** Decalage horizontal induit par `skewX` a une ordonnee donnee. */
+const PENTE = Math.tan((-INCLINAISON * Math.PI) / 180);
+function compenser(y: number): number {
+  return y * PENTE;
+}
 
 function styleTexte(taille: number, graisse: number, interlettrage = 0): StyleTexte {
   return { famille: POLICES.texte, graisse, taille, interlettrage };
@@ -85,18 +100,48 @@ function styleDisplay(taille: number): StyleTexte {
   return { famille: POLICES.display, graisse: GRAISSES.display, taille };
 }
 
+function styleManuscrit(taille: number): StyleTexte {
+  return { famille: POLICES.manuscrit, graisse: GRAISSES.manuscrit, taille };
+}
+
+interface OptionsTexte {
+  role?: string;
+  ancre?: NoeudTexte['ancre'];
+  opacite?: number;
+}
+
+/** Fabrique un noeud texte en reportant la mesure, dont dependent les invariants. */
+function texte(
+  contenu: string,
+  x: number,
+  y: number,
+  style: StyleTexte,
+  couleur: string,
+  moteur: MoteurTexte,
+  options: OptionsTexte = {},
+): NoeudTexte {
+  return {
+    type: 'texte',
+    contenu,
+    x,
+    y,
+    famille: style.famille as FamillePolice,
+    graisse: style.graisse,
+    taille: style.taille,
+    couleur,
+    interlettrage: style.interlettrage,
+    largeurMesuree: moteur.largeur(contenu, style),
+    hauteurMesuree: moteur.hauteurLigne(style),
+    ...options,
+  };
+}
+
 /**
  * Cadre un logo dans sa pastille.
  *
- * Les 33 logos livres vont du rapport 0,79 a 2,82. Plutot que des bandes de
- * rapport arbitraires, on calcule le **plus grand rectangle de ce rapport
- * inscriptible dans le disque** : pour un rapport k et un diametre d,
- * `l = d·k/√(1+k²)` et `h = d/√(1+k²)`. La formule redonne le carre inscrit
- * (0,707·d) quand k vaut 1, et traite tous les autres rapports de la meme
- * facon, sans seuil a regler.
- *
- * Une legere surcote reconnait que les angles d'un logo sont presque toujours
- * vides.
+ * Plus grand rectangle du rapport donne inscriptible dans le disque :
+ * `l = d·k/√(1+k²)`. La formule redonne le carre inscrit quand le rapport vaut
+ * 1 et traite tous les autres de la meme facon, sans seuil a regler.
  */
 export function cadrerLogo(logo: LogoResolu, diametre: number): Boite {
   const ratio = logo.hauteur > 0 ? logo.largeur / logo.hauteur : 1;
@@ -106,7 +151,6 @@ export function cadrerLogo(logo: LogoResolu, diametre: number): Boite {
   return { x: -largeur / 2, y: -hauteur / 2, largeur, hauteur };
 }
 
-/** Pastille + logo, ou pastille + monogramme quand aucun logo n'est livre. */
 function pastille(
   cx: number,
   cy: number,
@@ -116,6 +160,7 @@ function pastille(
   moteur: MoteurTexte,
   decoupes: Decoupe[],
   idDecoupe: string,
+  couleurAnneau: string,
 ): Noeud[] {
   const r = diametre / 2;
   const noeuds: Noeud[] = [
@@ -126,7 +171,7 @@ function pastille(
       cy,
       r,
       remplissage: COULEURS.blanc,
-      contour: COULEURS.grisLigne,
+      contour: couleurAnneau,
       epaisseur: TRAITS.contourPastille,
     },
   ];
@@ -149,86 +194,47 @@ function pastille(
     return noeuds;
   }
 
-  const texte = monogramme(libelle);
+  const mono = monogramme(libelle);
   const style = styleDisplay(diametre * CADRAGE_LOGO.facteurMonogramme);
-  noeuds.push({
-    type: 'texte',
-    role: 'monogramme',
-    x: cx,
-    y: moteur.ligneDeBaseCentree(style, cy),
-    contenu: texte,
-    famille: POLICES.display,
-    graisse: GRAISSES.display,
-    taille: style.taille,
-    couleur: COULEURS.bleuTable,
-    ancre: 'middle',
-    largeurMesuree: moteur.largeur(texte, style),
-    hauteurMesuree: moteur.hauteurLigne(style),
-  });
+  noeuds.push(
+    texte(mono, cx, moteur.ligneDeBaseCentree(style, cy), style, COULEURS.bleuNuit, moteur, {
+      role: 'monogramme',
+      ancre: 'middle',
+    }),
+  );
   return noeuds;
 }
 
-function fond(format: NomFormat, couleurAccent: string): Noeud[] {
-  const { largeur, hauteur } = FORMATS[format];
-  const yContenu = HAUTEUR_BANDEAU;
-  const ySponsors = hauteur - HAUTEUR_SPONSORS;
+/** Petite maison, pour un creneau a domicile. Chemin normalise sur 24 x 24. */
+function iconeMaison(x: number, y: number, taille: number, couleur: string): Noeud {
+  const k = taille / 24;
+  const p = (a: number, b: number) => `${x + a * k} ${y + b * k}`;
+  return {
+    type: 'chemin',
+    role: 'icone',
+    d: `M ${p(12, 3)} L ${p(22, 11)} L ${p(19, 11)} L ${p(19, 21)} L ${p(14, 21)} L ${p(14, 15)} L ${p(10, 15)} L ${p(10, 21)} L ${p(5, 21)} L ${p(5, 11)} L ${p(2, 11)} Z`,
+    remplissage: couleur,
+  };
+}
 
-  return [
-    {
-      type: 'rect',
-      role: 'fond-bandeau',
-      x: 0,
-      y: 0,
-      largeur,
-      hauteur: yContenu,
-      remplissage: COULEURS.bleuProfond,
-    },
-    {
-      type: 'rect',
-      role: 'fond-contenu',
-      x: 0,
-      y: yContenu,
-      largeur,
-      hauteur: ySponsors - yContenu,
-      remplissage: COULEURS.bleuTable,
-    },
-    {
-      type: 'rect',
-      role: 'fond-sponsors',
-      x: 0,
-      y: ySponsors,
-      largeur,
-      hauteur: HAUTEUR_SPONSORS,
-      remplissage: COULEURS.ivoire,
-    },
-    // Trajectoire de balle : unique decoration du bandeau.
-    {
-      type: 'chemin',
-      role: 'motif',
-      d: `M -40 ${yContenu - 26} Q ${largeur / 2} -60 ${largeur + 40} 60`,
-      contour: COULEURS.blanc,
-      epaisseur: TRAITS.motif,
-      opacite: OPACITES.motif,
-    },
-    {
-      type: 'rect',
-      role: 'regle-haute',
-      x: 0,
-      y: yContenu - TRAITS.regle,
-      largeur,
-      hauteur: TRAITS.regle,
-      remplissage: couleurAccent,
-    },
-    {
-      type: 'rect',
-      role: 'regle-basse',
-      x: 0,
-      y: ySponsors,
-      largeur,
-      hauteur: TRAITS.regle,
-      remplissage: couleurAccent,
-    },
-  ];
+/** Goutte de localisation, pour un deplacement. */
+function iconeRepere(x: number, y: number, taille: number, couleur: string): Noeud {
+  const k = taille / 24;
+  const p = (a: number, b: number) => `${x + a * k} ${y + b * k}`;
+  return {
+    type: 'chemin',
+    role: 'icone',
+    d:
+      `M ${p(12, 2)} C ${p(7.6, 2)} ${p(4, 5.6)} ${p(4, 10)} ` +
+      `C ${p(4, 15)} ${p(12, 22)} ${p(12, 22)} ` +
+      `C ${p(12, 22)} ${p(20, 15)} ${p(20, 10)} ` +
+      `C ${p(20, 5.6)} ${p(16.4, 2)} ${p(12, 2)} Z ` +
+      `M ${p(12, 13)} C ${p(10.3, 13)} ${p(9, 11.7)} ${p(9, 10)} ` +
+      `C ${p(9, 8.3)} ${p(10.3, 7)} ${p(12, 7)} ` +
+      `C ${p(13.7, 7)} ${p(15, 8.3)} ${p(15, 10)} ` +
+      `C ${p(15, 11.7)} ${p(13.7, 13)} ${p(12, 13)} Z`,
+    remplissage: couleur,
+  };
 }
 
 function bandeau(
@@ -240,19 +246,14 @@ function bandeau(
   options: OptionsComposition,
 ): Noeud[] {
   const couleurAccent = accent(affiche.categorie);
+  const largeurAffiche = FORMATS.portrait.largeur;
   const noeuds: Noeud[] = [];
 
-  // Blason et drapeau de journee encadrent le titre : ils partagent donc une
-  // meme hauteur et un meme axe median. Des tailles voisines mais inegales se
-  // lisent comme un defaut d'alignement, pas comme une hierarchie.
-  const hauteurBloc = 176;
-  const cyBloc = 114;
-  const hautBloc = cyBloc - hauteurBloc / 2;
-
-  // Anneau rouge meme sur l'affiche jeunes : l'identite du club ne se decline pas.
-  const dBlason = hauteurBloc;
+  // Blason. Anneau rouge meme sur l'affiche jeunes : l'identite du club ne se
+  // decline pas, seul l'accent de l'affiche change.
+  const dBlason = 150;
   const cxBlason = MARGE_X + dBlason / 2;
-  const cyBlason = cyBloc;
+  const cyBlason = 104;
   noeuds.push({
     type: 'cercle',
     role: 'blason-fond',
@@ -264,7 +265,7 @@ function bandeau(
     epaisseur: TRAITS.anneauBlason,
   });
   decoupes.push({ id: 'clip-blason', cercle: { cx: cxBlason, cy: cyBlason, r: dBlason / 2 - 5 } });
-  const cadre = cadrerLogo(assets.blason, dBlason - 18);
+  const cadre = cadrerLogo(assets.blason, dBlason - 16);
   noeuds.push({
     type: 'image',
     role: 'blason',
@@ -276,122 +277,111 @@ function bandeau(
     clip: 'clip-blason',
   });
 
-  // Drapeau de journee : la seule information qui change chaque semaine.
-  const largeurDrapeau = 188;
-  const xDrapeau = FORMATS.portrait.largeur - MARGE_X - largeurDrapeau;
-  const cxDrapeau = xDrapeau + largeurDrapeau / 2;
+  // Accroche manuscrite, en haut a droite.
+  const lignesAccroche = (options.accrocheHaute ?? ACCROCHE_HAUTE).split('\n');
+  const styleAccroche = styleManuscrit(38);
   noeuds.push({
-    type: 'rect',
-    role: 'drapeau',
-    x: xDrapeau,
-    y: hautBloc,
-    largeur: largeurDrapeau,
-    hauteur: hauteurBloc,
-    rx: RAYONS.drapeau,
-    remplissage: couleurAccent,
+    type: 'groupe',
+    role: 'accroche-haute',
+    transform: `rotate(-6 ${largeurAffiche - MARGE_X} 60)`,
+    enfants: lignesAccroche.map((ligne, i) =>
+      texte(ligne, largeurAffiche - MARGE_X, 52 + i * 40, styleAccroche, COULEURS.blanc, moteur, {
+        ancre: 'end',
+        opacite: 0.95,
+      }),
+    ),
   });
 
-  // « 1re », « 12e » : le rang et son exposant forment un seul bloc, centre
-  // d'ensemble. Les couper sur deux lignes donnerait a lire « 1 / RE JOURNÉE ».
-  const chiffre = String(numeroJournee);
-  const exposant = ordinalJournee(numeroJournee).slice(chiffre.length);
-  const styleChiffre = styleDisplay(100);
-  const styleExposant = styleDisplay(38);
-  const largeurChiffre = moteur.largeur(chiffre, styleChiffre);
-  const largeurExposant = moteur.largeur(exposant, styleExposant);
-  const xRang = cxDrapeau - (largeurChiffre + largeurExposant) / 2;
-  const baseRang = moteur.ligneDeBaseCentree(styleChiffre, hautBloc + hauteurBloc * 0.42);
-
-  noeuds.push({
-    type: 'texte',
-    role: 'numero-journee',
-    x: xRang,
-    y: baseRang,
-    contenu: chiffre,
-    famille: POLICES.display,
-    graisse: GRAISSES.display,
-    taille: styleChiffre.taille,
-    couleur: COULEURS.blanc,
-    largeurMesuree: largeurChiffre,
-    hauteurMesuree: moteur.hauteurLigne(styleChiffre),
-  });
-  noeuds.push({
-    type: 'texte',
-    role: 'exposant-journee',
-    x: xRang + largeurChiffre,
-    y: baseRang - styleChiffre.taille * 0.52,
-    contenu: exposant,
-    famille: POLICES.display,
-    graisse: GRAISSES.display,
-    taille: styleExposant.taille,
-    couleur: COULEURS.blanc,
-    largeurMesuree: largeurExposant,
-    hauteurMesuree: moteur.hauteurLigne(styleExposant),
-  });
-
-  const styleSuffixe = styleTexte(22, GRAISSES.fort, INTERLETTRAGE.capitales);
-  noeuds.push({
-    type: 'texte',
-    role: 'libelle-journee',
-    x: cxDrapeau,
-    y: hautBloc + hauteurBloc - 26,
-    contenu: 'JOURNÉE',
-    famille: POLICES.texte,
-    graisse: GRAISSES.fort,
-    taille: styleSuffixe.taille,
-    couleur: COULEURS.blanc,
-    ancre: 'middle',
-    interlettrage: INTERLETTRAGE.capitales,
-    opacite: 0.85,
-    largeurMesuree: moteur.largeur('JOURNÉE', styleSuffixe),
-    hauteurMesuree: moteur.hauteurLigne(styleSuffixe),
-  });
-
-  // Bloc titre, ajuste a la place reellement disponible entre blason et drapeau.
+  // Bloc titre incline. `skewX` sur le groupe : Anton n'a pas d'italique, et
+  // resvg ne synthetise pas l'oblique — `font-style: italic` ne ferait rien.
   const xTitre = cxBlason + dBlason / 2 + ESPACES.s4;
-  const largeurTitre = xDrapeau - ESPACES.s4 - xTitre;
+  const largeurTitre = 440;
+  const lignes = (options.titre ?? TITRE_DEFAUT).toUpperCase().split('\n');
+  const styleTitre = styleDisplay(72);
+  const tailleTitre = Math.min(
+    ...lignes.map(
+      (l) => moteur.ajuster(l, largeurTitre, styleTitre, echelonsDepuis(72, 34)).taille,
+    ),
+  );
 
-  const surtitre = (options.surtitre ?? 'CHAMPIONNAT PAR ÉQUIPES').toUpperCase();
-  const styleSur = styleTexte(30, GRAISSES.fort, INTERLETTRAGE.capitales);
-  const surAjuste = moteur.ajuster(surtitre, largeurTitre, styleSur, echelonsDepuis(30, 18));
   noeuds.push({
-    type: 'texte',
-    role: 'surtitre',
-    x: xTitre,
-    y: 92,
-    contenu: surtitre,
-    famille: POLICES.texte,
-    graisse: GRAISSES.fort,
-    taille: surAjuste.taille,
-    couleur: COULEURS.blanc,
-    interlettrage: INTERLETTRAGE.capitales,
-    opacite: 0.78,
-    largeurMesuree: surAjuste.largeur,
-    hauteurMesuree: moteur.hauteurLigne({ ...styleSur, taille: surAjuste.taille }),
+    type: 'groupe',
+    role: 'titre',
+    transform: `skewX(${INCLINAISON})`,
+    enfants: lignes.map((ligne, i) => {
+      const style = { ...styleTitre, taille: tailleTitre };
+      const y = 74 + i * (tailleTitre + 4);
+      return texte(ligne, xTitre + compenser(y), y, style, COULEURS.blanc, moteur, {
+        role: 'titre-ligne',
+      });
+    }),
   });
 
-  const titre =
-    affiche.categorie === 'jeunes' ? 'LES RENCONTRES JEUNES' : 'LES RENCONTRES DU WEEK-END';
-  const styleTitre = styleDisplay(58);
-  const titreAjuste = moteur.ajuster(titre, largeurTitre, styleTitre, echelonsDepuis(58, 30));
+  // Banniere « LES RENCONTRES » et pastille de journee, sur une meme ligne.
+  const yBanniere = 236;
+  const hBanniere = 64;
+  const cyBanniere = yBanniere + hBanniere / 2;
+  const libelleRencontres =
+    affiche.categorie === 'jeunes' ? 'LES RENCONTRES JEUNES' : 'LES RENCONTRES';
+  const styleBanniere = styleDisplay(44);
+  const largeurBanniere = moteur.largeur(libelleRencontres, styleBanniere) + ESPACES.s6;
+
+  const libelleJournee = `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE`;
+  const styleJournee = styleDisplay(30);
+  const largeurJournee = moteur.largeur(libelleJournee, styleJournee) + ESPACES.s5;
+  const xJournee = MARGE_X + largeurBanniere + ESPACES.s3;
+
   noeuds.push({
-    type: 'texte',
-    role: 'titre',
-    x: xTitre,
-    y: 168,
-    contenu: titre,
-    famille: POLICES.display,
-    graisse: GRAISSES.display,
-    taille: titreAjuste.taille,
-    couleur: COULEURS.blanc,
-    largeurMesuree: titreAjuste.largeur,
-    hauteurMesuree: moteur.hauteurLigne({ ...styleTitre, taille: titreAjuste.taille }),
+    type: 'groupe',
+    role: 'banniere',
+    transform: `skewX(${INCLINAISON})`,
+    enfants: [
+      {
+        type: 'rect',
+        role: 'banniere-fond',
+        x: MARGE_X + compenser(yBanniere),
+        y: yBanniere,
+        largeur: largeurBanniere,
+        hauteur: hBanniere,
+        rx: 4,
+        remplissage: COULEURS.nuit,
+        opacite: 0.8,
+      },
+      texte(
+        libelleRencontres,
+        MARGE_X + ESPACES.s4 + compenser(cyBanniere),
+        moteur.ligneDeBaseCentree(styleBanniere, cyBanniere),
+        styleBanniere,
+        COULEURS.blanc,
+        moteur,
+        { role: 'banniere-texte' },
+      ),
+      {
+        type: 'rect',
+        role: 'pastille-journee',
+        x: xJournee + compenser(yBanniere),
+        y: yBanniere + 7,
+        largeur: largeurJournee,
+        hauteur: hBanniere - 14,
+        rx: (hBanniere - 14) / 2,
+        remplissage: couleurAccent,
+      },
+      texte(
+        libelleJournee,
+        xJournee + largeurJournee / 2 + compenser(cyBanniere),
+        moteur.ligneDeBaseCentree(styleJournee, cyBanniere),
+        styleJournee,
+        COULEURS.blanc,
+        moteur,
+        { role: 'journee-texte', ancre: 'middle' },
+      ),
+    ],
   });
 
   return noeuds;
 }
 
-interface ContexteRangee {
+interface Contexte {
   densite: Densite;
   moteur: MoteurTexte;
   assets: AssetsAffiche;
@@ -401,6 +391,73 @@ interface ContexteRangee {
   diagnostics: Diagnostic[];
 }
 
+function enteteGroupe(groupe: Groupe, x: number, y: number, ctx: Contexte): Noeud[] {
+  const { densite, moteur } = ctx;
+  const h = Math.min(46, densite.hauteurEnteteGroupe * 0.74);
+  const cy = y + h / 2;
+
+  const date = groupe.creneau.libelleOverride ?? formatCreneau(groupe.creneau.debutIso);
+  const lieu = groupe.domicile ? 'À domicile' : "À l'extérieur";
+  const styleDate = styleTexte(Math.max(19, h * 0.46), GRAISSES.fort);
+  const styleLieu = styleTexte(Math.max(16, h * 0.38), GRAISSES.appuye);
+
+  const tailleIcone = h * 0.5;
+  const largeurDate = moteur.largeur(date, styleDate);
+  const largeurLieu = moteur.largeur(lieu, styleLieu);
+  const largeurPilule =
+    ESPACES.s4 + tailleIcone + ESPACES.s2 + largeurDate + ESPACES.s3 + largeurLieu + ESPACES.s4;
+
+  const noeuds: Noeud[] = [
+    {
+      type: 'rect',
+      role: 'entete-groupe',
+      x,
+      y,
+      largeur: largeurPilule,
+      hauteur: h,
+      rx: h / 2,
+      remplissage: groupe.domicile ? ctx.couleurAccent : COULEURS.bleuNuit,
+      contour: groupe.domicile ? undefined : COULEURS.carteBord,
+      epaisseur: groupe.domicile ? undefined : 1.5,
+    },
+  ];
+
+  let curseur = x + ESPACES.s4;
+  noeuds.push(
+    groupe.domicile
+      ? iconeMaison(curseur, cy - tailleIcone / 2, tailleIcone, COULEURS.blanc)
+      : iconeRepere(curseur, cy - tailleIcone / 2, tailleIcone, COULEURS.blanc),
+  );
+  curseur += tailleIcone + ESPACES.s2;
+
+  noeuds.push(
+    texte(
+      date,
+      curseur,
+      moteur.ligneDeBaseCentree(styleDate, cy),
+      styleDate,
+      COULEURS.blanc,
+      moteur,
+      { role: 'date' },
+    ),
+  );
+  curseur += largeurDate + ESPACES.s3;
+
+  noeuds.push(
+    texte(
+      lieu,
+      curseur,
+      moteur.ligneDeBaseCentree(styleLieu, cy),
+      styleLieu,
+      COULEURS.blanc,
+      moteur,
+      { role: 'lieu', opacite: 0.82 },
+    ),
+  );
+
+  return noeuds;
+}
+
 function rangee(
   rencontre: Rencontre,
   domicile: boolean,
@@ -408,7 +465,7 @@ function rangee(
   y: number,
   largeur: number,
   indice: string,
-  ctx: ContexteRangee,
+  ctx: Contexte,
 ): Noeud[] {
   const { densite, moteur } = ctx;
   const h = densite.hauteurRangee;
@@ -423,33 +480,19 @@ function rangee(
     largeur,
     hauteur: h,
     rx: RAYONS.carte,
-    remplissage: COULEURS.blanc,
-  });
-
-  // Le filet porte la couleur du lieu : l'information est ainsi encodee par la
-  // forme et par la couleur, donc lisible en vignette et sans distinction fine
-  // des teintes.
-  const xFilet = x + largeur / 2 - densite.largeurFilet / 2;
-  noeuds.push({
-    type: 'rect',
-    role: 'filet',
-    x: xFilet,
-    y: y + 10,
-    largeur: densite.largeurFilet,
-    hauteur: h - 20,
-    rx: RAYONS.filet,
-    remplissage: domicile ? ctx.couleurAccent : COULEURS.bleuProfond,
+    remplissage: COULEURS.carte,
+    contour: COULEURS.carteBord,
+    epaisseur: 1.5,
   });
 
   const d = densite.diametreLogo;
-  const marge = 10;
+  const marge = 8;
   const cxGauche = x + marge + d / 2;
   const cxDroite = x + largeur - marge - d / 2;
 
-  // Le blason du club reste toujours a gauche, au lieu de changer de cote
-  // selon le lieu comme sur les anciennes affiches : l'oeil retrouve « nous »
-  // au meme endroit sur chaque ligne, et les logos adverses heterogenes sont
-  // confines a une seule colonne.
+  // Le blason du club reste toujours a gauche : l'oeil retrouve « nous » au
+  // meme endroit sur chaque ligne, et les logos adverses heterogenes sont
+  // confines a une seule colonne. Le lieu est porte par l'en-tete de groupe.
   noeuds.push(
     ...pastille(
       cxGauche,
@@ -460,6 +503,7 @@ function rangee(
       moteur,
       ctx.decoupes,
       `clip-l-${indice}`,
+      domicile ? ctx.couleurAccent : COULEURS.carteBord,
     ),
   );
 
@@ -480,20 +524,41 @@ function rangee(
       moteur,
       ctx.decoupes,
       `clip-r-${indice}`,
+      COULEURS.carteBord,
     ),
   );
+
+  // Le « VS » revient, mais comme une marque inclinee a l'accent de l'affiche,
+  // et non comme du texte de sept points perdu au milieu de la ligne.
+  const styleVs = styleDisplay(Math.max(18, densite.tailleNom * 0.78));
+  const largeurVs = moteur.largeur('VS', styleVs);
+  const cxVs = x + largeur / 2;
+  noeuds.push({
+    type: 'groupe',
+    role: 'vs',
+    transform: `skewX(${INCLINAISON})`,
+    enfants: [
+      texte(
+        'VS',
+        cxVs + compenser(cy),
+        moteur.ligneDeBaseCentree(styleVs, cy),
+        styleVs,
+        ctx.couleurAccent,
+        moteur,
+        { ancre: 'middle', role: 'vs-texte' },
+      ),
+    ],
+  });
 
   const styleNom = styleTexte(densite.tailleNom, GRAISSES.fort);
   const echelons = echelonsDepuis(densite.tailleNom, PLANCHERS.tailleNom);
 
   // Champ gauche : pastille de division puis nom du club.
-  const xTexteGauche = cxGauche + d / 2 + ESPACES.s2;
-  let curseur = xTexteGauche;
-
+  let curseur = cxGauche + d / 2 + ESPACES.s2;
   if (rencontre.equipeLocale.division) {
     const stylePuce = styleTexte(densite.taillePuce, GRAISSES.fort, 0.03);
     const largeurTexte = moteur.largeur(rencontre.equipeLocale.division, stylePuce);
-    const largeurPuce = largeurTexte + ESPACES.s2 * 1.5;
+    const largeurPuce = largeurTexte + ESPACES.s2 * 1.4;
     noeuds.push({
       type: 'rect',
       role: 'puce-division',
@@ -502,195 +567,182 @@ function rangee(
       largeur: largeurPuce,
       hauteur: densite.hauteurPuce,
       rx: RAYONS.puce,
-      remplissage: COULEURS.encre,
+      remplissage: ctx.couleurAccent,
     });
-    noeuds.push({
-      type: 'texte',
-      role: 'division',
-      x: curseur + largeurPuce / 2,
-      y: moteur.ligneDeBaseCentree(stylePuce, cy),
-      contenu: rencontre.equipeLocale.division,
-      famille: POLICES.texte,
-      graisse: GRAISSES.fort,
-      taille: stylePuce.taille,
-      couleur: COULEURS.blanc,
-      ancre: 'middle',
-      interlettrage: 0.03,
-      largeurMesuree: largeurTexte,
-      hauteurMesuree: moteur.hauteurLigne(stylePuce),
-    });
+    noeuds.push(
+      texte(
+        rencontre.equipeLocale.division,
+        curseur + largeurPuce / 2,
+        moteur.ligneDeBaseCentree(stylePuce, cy),
+        stylePuce,
+        COULEURS.blanc,
+        moteur,
+        { role: 'division', ancre: 'middle' },
+      ),
+    );
     curseur += largeurPuce + ESPACES.s2;
   }
 
   const nomLocal = `${ctx.nomClub} ${rencontre.equipeLocale.numero}`;
-  const placeGauche = xFilet - ESPACES.s3 - curseur;
-  const localAjuste = moteur.ajuster(nomLocal, placeGauche, styleNom, echelons);
-  noeuds.push({
-    type: 'texte',
-    role: 'nom-local',
-    x: curseur,
-    y: moteur.ligneDeBaseCentree({ ...styleNom, taille: localAjuste.taille }, cy),
-    contenu: nomLocal,
-    famille: POLICES.texte,
-    graisse: GRAISSES.fort,
-    taille: localAjuste.taille,
-    couleur: COULEURS.encre,
-    largeurMesuree: localAjuste.largeur,
-    hauteurMesuree: moteur.hauteurLigne({ ...styleNom, taille: localAjuste.taille }),
-  });
+  const bordGaucheVs = cxVs - largeurVs / 2 - ESPACES.s3;
+  const local = moteur.ajuster(nomLocal, bordGaucheVs - curseur, styleNom, echelons);
+  noeuds.push(
+    texte(
+      nomLocal,
+      curseur,
+      moteur.ligneDeBaseCentree({ ...styleNom, taille: local.taille }, cy),
+      { ...styleNom, taille: local.taille },
+      COULEURS.blanc,
+      moteur,
+      { role: 'nom-local' },
+    ),
+  );
 
-  // Champ droit : aligne a droite, le texte croit donc vers le filet.
-  const xTexteDroite = cxDroite - d / 2 - ESPACES.s2;
-  const placeDroite = xTexteDroite - (xFilet + densite.largeurFilet + ESPACES.s3);
+  const xDroite = cxDroite - d / 2 - ESPACES.s2;
+  const bordDroitVs = cxVs + largeurVs / 2 + ESPACES.s3;
   const styleAdverse = styleTexte(densite.tailleNom, GRAISSES.courant);
-  const adverseAjuste = moteur.ajuster(
+  const adverse = moteur.ajuster(
     rencontre.adversaire.libelle,
-    placeDroite,
+    xDroite - bordDroitVs,
     styleAdverse,
     echelons,
   );
-  if (adverseAjuste.deborde) {
+  if (adverse.deborde) {
     ctx.diagnostics.push({
       niveau: 'alerte',
       message: `« ${rencontre.adversaire.libelle} » est trop long pour sa ligne.`,
     });
   }
-  noeuds.push({
-    type: 'texte',
-    role: 'nom-adverse',
-    x: xTexteDroite,
-    y: moteur.ligneDeBaseCentree({ ...styleAdverse, taille: adverseAjuste.taille }, cy),
-    contenu: rencontre.adversaire.libelle,
-    famille: POLICES.texte,
-    graisse: GRAISSES.courant,
-    taille: adverseAjuste.taille,
-    couleur: COULEURS.encre,
-    ancre: 'end',
-    opacite: 0.92,
-    largeurMesuree: adverseAjuste.largeur,
-    hauteurMesuree: moteur.hauteurLigne({ ...styleAdverse, taille: adverseAjuste.taille }),
-  });
+  noeuds.push(
+    texte(
+      rencontre.adversaire.libelle,
+      xDroite,
+      moteur.ligneDeBaseCentree({ ...styleAdverse, taille: adverse.taille }, cy),
+      { ...styleAdverse, taille: adverse.taille },
+      COULEURS.brume,
+      moteur,
+      { role: 'nom-adverse', ancre: 'end' },
+    ),
+  );
 
   return noeuds;
 }
 
-function enteteGroupe(groupe: Groupe, x: number, y: number, ctx: ContexteRangee): Noeud[] {
-  const { densite, moteur } = ctx;
-  const libelleLieu = groupe.domicile ? 'À DOMICILE' : "À L'EXTÉRIEUR";
-  const hOnglet = Math.min(38, densite.hauteurEnteteGroupe * 0.62);
-  const styleOnglet = styleTexte(hOnglet * 0.58, GRAISSES.fort, INTERLETTRAGE.capitales);
-  const largeurTexte = moteur.largeur(libelleLieu, styleOnglet);
-  const largeurOnglet = largeurTexte + ESPACES.s5;
-  const cyOnglet = y + hOnglet / 2;
+/** Une cellule blanche portant un logo partenaire. */
+function celluleSponsor(
+  sponsor: SponsorResolu,
+  x: number,
+  y: number,
+  largeur: number,
+  hauteur: number,
+): Noeud[] {
+  const retrait = Math.min(14, hauteur * 0.18);
+  const utileL = largeur - 2 * retrait;
+  const utileH = hauteur - 2 * retrait;
+  const ratio = sponsor.hauteur > 0 ? sponsor.largeur / sponsor.hauteur : 1;
 
-  const noeuds: Noeud[] = [
+  let l = utileL;
+  let h = utileL / ratio;
+  if (h > utileH) {
+    h = utileH;
+    l = utileH * ratio;
+  }
+
+  return [
+    // Carte blanche systematique : elle donne un champ neutre commun a des
+    // logos dont les fonds sont tantot transparents, tantot opaques.
     {
       type: 'rect',
-      role: 'onglet-lieu',
+      role: 'cellule-sponsor',
       x,
       y,
-      largeur: largeurOnglet,
-      hauteur: hOnglet,
-      rx: hOnglet / 2,
-      remplissage: groupe.domicile ? ctx.couleurAccent : 'none',
-      contour: groupe.domicile ? undefined : COULEURS.blanc,
-      epaisseur: groupe.domicile ? undefined : TRAITS.ongletExterieur,
-    },
-    {
-      type: 'texte',
-      role: 'lieu',
-      x: x + largeurOnglet / 2,
-      y: moteur.ligneDeBaseCentree(styleOnglet, cyOnglet),
-      contenu: libelleLieu,
-      famille: POLICES.texte,
-      graisse: GRAISSES.fort,
-      taille: styleOnglet.taille,
-      couleur: COULEURS.blanc,
-      ancre: 'middle',
-      interlettrage: INTERLETTRAGE.capitales,
-      largeurMesuree: largeurTexte,
-      hauteurMesuree: moteur.hauteurLigne(styleOnglet),
-    },
-  ];
-
-  // Le libelle saisi a la main prime, pour que les journees importees
-  // impriment exactement le texte d'origine.
-  const date = groupe.creneau.libelleOverride ?? formatCreneau(groupe.creneau.debutIso);
-  const styleDate = styleTexte(Math.max(18, hOnglet * 0.66), GRAISSES.appuye);
-  noeuds.push({
-    type: 'texte',
-    role: 'date',
-    x: x + largeurOnglet + ESPACES.s3,
-    y: moteur.ligneDeBaseCentree(styleDate, cyOnglet),
-    contenu: date,
-    famille: POLICES.texte,
-    graisse: GRAISSES.appuye,
-    taille: styleDate.taille,
-    couleur: COULEURS.blanc,
-    opacite: OPACITES.secondaire,
-    largeurMesuree: moteur.largeur(date, styleDate),
-    hauteurMesuree: moteur.hauteurLigne(styleDate),
-  });
-
-  return noeuds;
-}
-
-function bandeSponsors(assets: AssetsAffiche, format: NomFormat, moteur: MoteurTexte): Noeud[] {
-  const yBande = FORMATS[format].hauteur - HAUTEUR_SPONSORS;
-  const cyCellules = yBande + 88;
-  const noeuds: Noeud[] = [];
-
-  const mention = 'Ils font vivre le club';
-  const styleMention = styleTexte(22, GRAISSES.appuye);
-  noeuds.push({
-    type: 'texte',
-    role: 'mention-sponsors',
-    x: MARGE_X,
-    y: moteur.ligneDeBaseCentree(styleMention, cyCellules),
-    contenu: mention,
-    famille: POLICES.texte,
-    graisse: GRAISSES.appuye,
-    taille: styleMention.taille,
-    couleur: COULEURS.encre,
-    opacite: OPACITES.tertiaire,
-    largeurMesuree: moteur.largeur(mention, styleMention),
-    hauteurMesuree: moteur.hauteurLigne(styleMention),
-  });
-
-  assets.sponsors.slice(0, 3).forEach((sponsor, i) => {
-    const xCellule = SPONSORS_MEP.x0 + i * (SPONSORS_MEP.largeurCellule + SPONSORS_MEP.ecart);
-    const utileL = SPONSORS_MEP.largeurCellule - 2 * SPONSORS_MEP.retrait;
-    const utileH = SPONSORS_MEP.hauteurCellule - 2 * SPONSORS_MEP.retrait;
-    const ratio = sponsor.hauteur > 0 ? sponsor.largeur / sponsor.hauteur : 1;
-
-    let largeur = utileL;
-    let hauteur = utileL / ratio;
-    if (hauteur > utileH) {
-      hauteur = utileH;
-      largeur = utileH * ratio;
-    }
-    // Un logotype presque carre parait plus lourd qu'un logotype large a
-    // surface egale : on le reduit legerement pour egaliser le poids optique.
-    if (ratio < SPONSORS_MEP.ratioLarge) {
-      largeur *= SPONSORS_MEP.reductionCarre;
-      hauteur *= SPONSORS_MEP.reductionCarre;
-    }
-
-    noeuds.push({
-      type: 'image',
-      role: 'sponsor',
-      x: xCellule + (SPONSORS_MEP.largeurCellule - largeur) / 2,
-      y: cyCellules - hauteur / 2,
       largeur,
       hauteur,
+      rx: 10,
+      remplissage: COULEURS.blanc,
+    },
+    {
+      type: 'image',
+      role: 'sponsor',
+      x: x + (largeur - l) / 2,
+      y: y + (hauteur - h) / 2,
+      largeur: l,
+      hauteur: h,
       source: sponsor.source,
-    });
-  });
+    },
+  ];
+}
 
+function sponsorsEnBande(assets: AssetsAffiche, y: number, moteur: MoteurTexte): Noeud[] {
+  const style = styleManuscrit(36);
+  const noeuds: Noeud[] = [
+    texte('Ils font vivre le club', MARGE_X, y + 34, style, COULEURS.blanc, moteur, {
+      role: 'titre-sponsors',
+      opacite: 0.92,
+    }),
+  ];
+
+  const n = Math.max(1, assets.sponsors.length);
+  const largeurUtile = FORMATS.portrait.largeur - 2 * MARGE_X;
+  const ecart = 14;
+  const largeurCellule = (largeurUtile - (n - 1) * ecart) / n;
+
+  assets.sponsors.forEach((sponsor, i) => {
+    noeuds.push(
+      ...celluleSponsor(
+        sponsor,
+        MARGE_X + i * (largeurCellule + ecart),
+        y + 50,
+        largeurCellule,
+        HAUTEUR_BANDE_SPONSORS - 62,
+      ),
+    );
+  });
   return noeuds;
 }
 
-/** Hauteur occupee par un groupe, en-tete comprise. */
+function sponsorsEnColonne(
+  assets: AssetsAffiche,
+  x: number,
+  y: number,
+  hauteur: number,
+  moteur: MoteurTexte,
+): Noeud[] {
+  const style = styleManuscrit(36);
+  const noeuds: Noeud[] = [
+    texte(
+      'Nos partenaires',
+      x + LARGEUR_COLONNE_SPONSORS / 2,
+      y + 30,
+      style,
+      COULEURS.blanc,
+      moteur,
+      {
+        role: 'titre-sponsors',
+        ancre: 'middle',
+      },
+    ),
+  ];
+
+  const n = Math.max(1, assets.sponsors.length);
+  const hautCellules = y + 48;
+  const ecart = 12;
+  const hauteurCellule = (hauteur - 48 - (n - 1) * ecart) / n;
+
+  assets.sponsors.forEach((sponsor, i) => {
+    noeuds.push(
+      ...celluleSponsor(
+        sponsor,
+        x,
+        hautCellules + i * (hauteurCellule + ecart),
+        LARGEUR_COLONNE_SPONSORS,
+        hauteurCellule,
+      ),
+    );
+  });
+  return noeuds;
+}
+
 function hauteurGroupe(groupe: Groupe, densite: Densite): number {
   return (
     densite.hauteurEnteteGroupe + groupe.rencontres.length * densite.pasRangee + densite.ecartGroupe
@@ -705,15 +757,29 @@ export function composerAffiche(
   options: OptionsComposition = {},
 ): Composition {
   const format = options.format ?? 'portrait';
+  const enBande = (options.dispositionSponsors ?? 'bande') === 'bande';
   const { largeur, hauteur } = FORMATS[format];
   const couleurAccent = accent(affiche.categorie);
 
+  const basContenu = hauteur - HAUTEUR_SIGNATURE - (enBande ? HAUTEUR_BANDE_SPONSORS : 0);
+  const zoneContenu: Boite = {
+    x: MARGE_X,
+    y: HAUTEUR_BANDEAU + PADDING_CONTENU_Y,
+    largeur: largeur - 2 * MARGE_X - (enBande ? 0 : LARGEUR_COLONNE_SPONSORS + ECART_COLONNE),
+    hauteur: basContenu - HAUTEUR_BANDEAU - 2 * PADDING_CONTENU_Y,
+  };
+
   const nbRencontres = affiche.groupes.reduce((t, g) => t + g.rencontres.length, 0);
-  const densite = calculerDensite(nbRencontres, affiche.groupes.length, format);
+  const densite = calculerDensite(
+    nbRencontres,
+    affiche.groupes.length,
+    format,
+    zoneContenu.hauteur,
+  );
 
   const decoupes: Decoupe[] = [];
   const diagnostics: Diagnostic[] = [];
-  const ctx: ContexteRangee = {
+  const ctx: Contexte = {
     densite,
     moteur,
     assets,
@@ -723,15 +789,13 @@ export function composerAffiche(
     diagnostics,
   };
 
-  const zoneContenu: Boite = {
-    x: MARGE_X,
-    y: HAUTEUR_BANDEAU + PADDING_CONTENU_Y,
-    largeur: LARGEUR_UTILE,
-    hauteur: hauteur - HAUTEUR_BANDEAU - HAUTEUR_SPONSORS - 2 * PADDING_CONTENU_Y,
-  };
-
+  const decor = decorNocturne(format, couleurAccent, HAUTEUR_BANDEAU);
+  const degrades: Degrade[] = [...decor.degrades];
   const noeuds: Noeud[] = [
-    ...fond(format, couleurAccent),
+    // Le decor est regroupe et non disperse : il deborde volontairement du
+    // cadre — halos, coups de pinceau, raquette — et les invariants de mise en
+    // page doivent pouvoir l'ecarter sans ecarter le contenu.
+    { type: 'groupe', role: 'decor', enfants: decor.arriere },
     ...bandeau(affiche, numeroJournee, assets, moteur, decoupes, options),
   ];
 
@@ -739,12 +803,11 @@ export function composerAffiche(
     densite.colonnes === 2
       ? repartirEnColonnes(affiche.groupes, (g) => hauteurGroupe(g, densite))
       : [affiche.groupes, []];
-
   const largeurColonne =
-    densite.colonnes === 2 ? (zoneContenu.largeur - ESPACES.s6) / 2 : zoneContenu.largeur;
+    densite.colonnes === 2 ? (zoneContenu.largeur - ESPACES.s5) / 2 : zoneContenu.largeur;
 
   colonnes.forEach((groupes, iColonne) => {
-    const xColonne = zoneContenu.x + iColonne * (largeurColonne + ESPACES.s6);
+    const xColonne = zoneContenu.x + iColonne * (largeurColonne + ESPACES.s5);
     let y = zoneContenu.y;
 
     groupes.forEach((groupe, iGroupe) => {
@@ -765,12 +828,39 @@ export function composerAffiche(
         );
         y += densite.pasRangee;
       });
-
       y += densite.ecartGroupe;
     });
   });
 
-  noeuds.push(...bandeSponsors(assets, format, moteur));
+  noeuds.push(
+    ...(enBande
+      ? sponsorsEnBande(assets, basContenu, moteur)
+      : sponsorsEnColonne(
+          assets,
+          largeur - MARGE_X - LARGEUR_COLONNE_SPONSORS,
+          zoneContenu.y,
+          zoneContenu.hauteur,
+          moteur,
+        )),
+  );
+
+  const styleSignature = styleManuscrit(46);
+  noeuds.push({
+    type: 'groupe',
+    role: 'accroche-basse',
+    transform: `rotate(-3 ${largeur / 2} ${hauteur - 34})`,
+    enfants: [
+      texte(
+        options.accrocheBasse ?? ACCROCHE_BASSE,
+        largeur / 2,
+        hauteur - 30,
+        styleSignature,
+        COULEURS.blanc,
+        moteur,
+        { ancre: 'middle', opacite: 0.92 },
+      ),
+    ],
+  });
 
   if (densite.strategie === 'reduit') {
     diagnostics.push({
@@ -784,12 +874,11 @@ export function composerAffiche(
       message: `${nbRencontres} rencontres : mise en page sur deux colonnes.`,
     });
   }
-  if (assets.sponsors.length < 3) {
-    diagnostics.push({
-      niveau: 'alerte',
-      message: `Seulement ${assets.sponsors.length} sponsor(s) sur 3.`,
-    });
-  }
 
-  return { scene: { largeur, hauteur, decoupes, noeuds }, densite, diagnostics, zoneContenu };
+  return {
+    scene: { largeur, hauteur, decoupes, degrades, noeuds },
+    densite,
+    diagnostics,
+    zoneContenu,
+  };
 }

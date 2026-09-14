@@ -114,34 +114,39 @@ async function main(): Promise<void> {
   const moteur = creerMoteurTexte(faces);
   await mkdir(SORTIE, { recursive: true });
 
+  const dispositions = ['bande', 'colonne'] as const;
+
   for (const [i, affiche] of journee.affiches.entries()) {
     const assets = await chargerAssets(journee, i);
-    const { scene, densite, diagnostics } = composerAffiche(
-      affiche,
-      journee.numero,
-      assets,
-      moteur,
-    );
+    for (const dispositionSponsors of dispositions) {
+      const { scene, densite, diagnostics } = composerAffiche(
+        affiche,
+        journee.numero,
+        assets,
+        moteur,
+        { dispositionSponsors },
+      );
 
-    const svg = emettreSvg(scene);
-    const base = `J${journee.numero}_${affiche.categorie}`;
-    await writeFile(path.join(SORTIE, `${base}.svg`), svg);
+      const svg = emettreSvg(scene);
+      const base = `J${journee.numero}_${affiche.categorie}_${dispositionSponsors}`;
+      await writeFile(path.join(SORTIE, `${base}.svg`), svg);
 
-    const rendu = new Resvg(svg, {
-      fitTo: { mode: 'width', value: 1080 },
-      font: { fontBuffers: tampons, loadSystemFonts: false },
-    });
-    const png = rendu.render().asPng();
-    await writeFile(path.join(SORTIE, `${base}.png`), png);
+      const rendu = new Resvg(svg, {
+        fitTo: { mode: 'width', value: 1080 },
+        font: { fontBuffers: tampons, loadSystemFonts: false },
+      });
+      const png = rendu.render().asPng();
+      await writeFile(path.join(SORTIE, `${base}.png`), png);
 
-    console.log(
-      `${base.padEnd(18)} ${affiche.groupes.length} créneau(x), ` +
-        `${affiche.groupes.reduce((t, g) => t + g.rencontres.length, 0)} rencontre(s), ` +
-        `variante ${densite.variante} (${densite.strategie}, ×${densite.facteur.toFixed(2)}), ` +
-        `SVG ${(svg.length / 1024).toFixed(0)} Ko, PNG ${(png.length / 1024).toFixed(0)} Ko`,
-    );
-    for (const d of diagnostics)
-      console.log(`   ${d.niveau === 'alerte' ? '!' : '-'} ${d.message}`);
+      console.log(
+        `${base.padEnd(18)} ${affiche.groupes.length} créneau(x), ` +
+          `${affiche.groupes.reduce((t, g) => t + g.rencontres.length, 0)} rencontre(s), ` +
+          `variante ${densite.variante} (${densite.strategie}, ×${densite.facteur.toFixed(2)}), ` +
+          `SVG ${(svg.length / 1024).toFixed(0)} Ko, PNG ${(png.length / 1024).toFixed(0)} Ko`,
+      );
+      for (const d of diagnostics)
+        console.log(`   ${d.niveau === 'alerte' ? '!' : '-'} ${d.message}`);
+    }
   }
 
   console.log(`\nSorties dans ${path.relative(RACINE, SORTIE)}/`);

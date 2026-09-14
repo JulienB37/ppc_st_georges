@@ -21,7 +21,7 @@ export type NomFormat = keyof typeof FORMATS;
 export const MARGE_X = 48;
 /** Largeur utile entre marges. */
 export const LARGEUR_UTILE = FORMATS.portrait.largeur - 2 * MARGE_X;
-export const HAUTEUR_BANDEAU = 236;
+export const HAUTEUR_BANDEAU = 330;
 export const HAUTEUR_SPONSORS = 176;
 export const PADDING_CONTENU_Y = 24;
 
@@ -30,24 +30,32 @@ export function hauteurContenu(format: NomFormat): number {
 }
 
 /**
- * Palette.
+ * Palette nocturne.
  *
- * Le contraste de la zone de contenu passe de 1,6:1 (gelules blanches sur
- * panneau #cbcbcb) a 8,9:1. A la taille ou l'affiche est reellement vue —
- * vignette d'environ 400 px dans un fil mobile — c'etait le defaut le plus
- * couteux de l'ancienne maquette.
+ * Registre d'affiche d'evenement : fond sombre, halos colores, accents vifs.
+ * On perd un peu du confort de lecture de la version claire, ce qui est
+ * assume, mais le texte reste blanc sur fond tres sombre — soit un contraste
+ * superieur a 12:1, tres au-dessus du 1,6:1 des anciennes affiches.
  */
 export const COULEURS = {
-  bleuProfond: '#0A2C4C',
-  bleuTable: '#12497A',
-  bleuLigne: '#1C5E96',
+  nuit: '#04070E',
+  nuitHaute: '#0A1424',
+  bleuNuit: '#0E2542',
+  bleuHalo: '#1C6FD9',
   rougePpc: '#E4032E',
-  rougeOmbre: '#B00224',
+  rougeHalo: '#FF1F4B',
+  magentaHalo: '#B3179B',
   vertJeunes: '#00B25B',
+  vertHalo: '#12E07E',
+  /** Fond des cartes de rencontre, pose sur le fond nocturne. */
+  carte: '#0C1B31',
+  carteBord: '#2E5480',
   encre: '#101820',
   blanc: '#FFFFFF',
   ivoire: '#F4F6F8',
   grisLigne: '#D9DEE5',
+  /** Texte secondaire sur fond sombre. */
+  brume: '#A8BCD6',
 } as const;
 
 export const OPACITES = {
@@ -68,6 +76,8 @@ export const OPACITES = {
 export const POLICES = {
   display: 'Anton',
   texte: 'Barlow Semi Condensed',
+  /** Accents manuscrits : la chaleur que portait le Comic Sans, en tenue. */
+  manuscrit: 'Caveat',
 } as const;
 
 export type FamillePolice = (typeof POLICES)[keyof typeof POLICES];
@@ -83,7 +93,16 @@ export const GRAISSES = {
   courant: 500,
   appuye: 600,
   fort: 700,
+  manuscrit: 700,
 } as const;
+
+/**
+ * Inclinaison des blocs de titre, en degres.
+ *
+ * Appliquee par `skewX` sur le groupe : Anton n'a pas d'italique, et resvg ne
+ * synthetise pas l'oblique — demander `font-style: italic` ne ferait rien.
+ */
+export const INCLINAISON = -8;
 
 /** Interlettrage, en fraction du corps. */
 export const INTERLETTRAGE = {

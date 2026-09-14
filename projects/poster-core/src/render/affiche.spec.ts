@@ -8,7 +8,14 @@ import type { Affiche, Groupe, Rencontre } from '../model/journee';
 import { creerAffiche, nouvelId } from '../model/journee';
 import { cadrerLogo, composerAffiche, type AssetsAffiche, type LogoResolu } from './affiche';
 import { emettreSvg } from './emettre';
-import { boiteDe, contient, parcourir, seChevauchent, type Boite } from './scene';
+import {
+  boiteDe,
+  contient,
+  parcourir,
+  parcourirPlanaire,
+  seChevauchent,
+  type Boite,
+} from './scene';
 import { FORMATS } from './tokens';
 
 const moteur = creerMoteurTexte(chargerPolicesLivrees());
@@ -102,7 +109,10 @@ describe('composerAffiche — invariants de mise en page', () => {
   for (const [nom, affiche] of cas) {
     describe(nom, () => {
       const { scene, zoneContenu } = composerAffiche(affiche, 12, assets(['club-test']), moteur);
-      const noeuds = [...parcourir(scene.noeuds)];
+      // Deux exclusions, chacune pour une raison distincte : le decor deborde
+      // du cadre par construction, et les sous-arbres inclines expriment leurs
+      // coordonnees dans un autre repere.
+      const noeuds = [...parcourirPlanaire(scene.noeuds.filter((n) => n.role !== 'decor'))];
       const cadre: Boite = { x: 0, y: 0, largeur: scene.largeur, hauteur: scene.hauteur };
 
       it('ne place rien hors du cadre', () => {
@@ -130,6 +140,18 @@ describe('composerAffiche — invariants de mise en page', () => {
             expect(seChevauchent(cartes[i]!, cartes[j]!, 0.5), `cartes ${i} et ${j}`).toBe(false);
           }
         }
+      });
+
+      it('couvre entierement le cadre avec le decor', () => {
+        // Contrepartie de l'exclusion ci-dessus : le fond doit bien couvrir
+        // toute l'affiche, sans laisser de bord non peint.
+        const fond = [...parcourir(scene.noeuds)].find((n) => n.role === 'fond');
+        expect(boiteDe(fond!)).toEqual({
+          x: 0,
+          y: 0,
+          largeur: scene.largeur,
+          hauteur: scene.hauteur,
+        });
       });
 
       it('contient chaque texte dans sa carte', () => {
@@ -194,7 +216,7 @@ describe('composerAffiche — sur les donnees reelles du club', () => {
       expect(cartes).toHaveLength(nbRencontres);
 
       const cadre: Boite = { x: 0, y: 0, largeur: scene.largeur, hauteur: scene.hauteur };
-      for (const noeud of parcourir(scene.noeuds)) {
+      for (const noeud of parcourirPlanaire(scene.noeuds.filter((n) => n.role !== 'decor'))) {
         const boite = boiteDe(noeud);
         if (boite) expect(contient(cadre, boite, 1), `${noeud.role}`).toBe(true);
       }
