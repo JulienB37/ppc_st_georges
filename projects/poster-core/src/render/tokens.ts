@@ -188,14 +188,6 @@ export const GRAISSES = {
 } as const;
 
 /**
- * Inclinaison des blocs de titre, en degres.
- *
- * Appliquee par `skewX` sur le groupe : Anton n'a pas d'italique, et resvg ne
- * synthetise pas l'oblique — demander `font-style: italic` ne ferait rien.
- */
-export const INCLINAISON = -8;
-
-/**
  * Rotation des textes poses sur les bandes peintes du gabarit, en degres.
  *
  * Mesuree par regression sur le centroide vertical des bandes, colonne par
@@ -204,7 +196,8 @@ export const INCLINAISON = -8;
  *
  * C'est une ROTATION et non un `skewX`. Le cisaillement penche les futs mais
  * laisse la ligne de base horizontale : sur une bande inclinee, le texte
- * cisaille reste visiblement a plat.
+ * cisaille reste visiblement a plat. C'est l'erreur que portait le jeton
+ * `INCLINAISON` qu'il remplace, et qui a disparu avec lui.
  */
 export const ROTATION_GABARIT = -7.3;
 

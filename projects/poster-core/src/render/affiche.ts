@@ -6,6 +6,7 @@ import { rangJourneeParties } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
 import { decorPhoto, type FondPhoto } from './decor';
 import { PINCEAU, transformPinceau } from './pinceau.generated';
+import { VS, transformVs } from './vs.generated';
 import type { Boite, Decoupe, Degrade, Filtre, Noeud, NoeudTexte, Scene } from './scene';
 import {
   BANDE_JOURNEE,
@@ -16,7 +17,6 @@ import {
   ESPACES,
   FORMATS,
   GRAISSES,
-  INCLINAISON,
   PANNEAUX,
   PLANCHERS,
   POLICES,
@@ -74,12 +74,6 @@ export interface Composition {
 }
 
 const NOM_CLUB_DEFAUT = 'St Georges';
-
-/** Decalage horizontal induit par `skewX` a une ordonnee donnee. */
-const PENTE = Math.tan((-INCLINAISON * Math.PI) / 180);
-function compenser(y: number): number {
-  return y * PENTE;
-}
 
 function styleTexte(taille: number, graisse: number, interlettrage = 0): StyleTexte {
   return { famille: POLICES.texte, graisse, taille, interlettrage };
@@ -510,6 +504,28 @@ function enteteGroupe(
   return noeuds;
 }
 
+/**
+ * Marque « VS », l'eclaboussure vectorielle fournie par le club.
+ *
+ * Elle remplace le texte « VS » : a la taille ou l'affiche est reellement vue,
+ * deux lettres au milieu d'une ligne passaient pour du bruit, la ou une tache
+ * se lit d'un coup d'oeil.
+ *
+ * Les lettres sont AJOUREES dans le trace : le remplissage colore la tache, et
+ * les lettres prennent la couleur de ce qu'il y a derriere — ici le fond de la
+ * carte. C'est pourquoi la tache est blanche et non coloree : sur une carte
+ * sombre, cela donne des lettres sombres sur tache claire, le contraste le plus
+ * fort disponible.
+ */
+function marqueVs(cx: number, cy: number, hauteur: number): Noeud {
+  return {
+    type: 'groupe',
+    role: 'vs',
+    transform: transformVs(cx, cy, hauteur),
+    enfants: VS.chemins.map((d) => ({ type: 'chemin' as const, d, remplissage: COULEURS.blanc })),
+  };
+}
+
 function rangee(
   rencontre: Rencontre,
   domicile: boolean,
@@ -582,34 +598,12 @@ function rangee(
     ),
   );
 
-  // Le « VS » revient, mais comme une marque inclinee a l'accent de l'affiche,
-  // et non comme du texte de sept points perdu au milieu de la ligne.
-  // « VS » nettement plus grand que les noms, contoure de sombre : c'est une
-  // marque graphique, pas du texte courant.
-  const styleVs = styleDisplay(Math.max(26, densite.tailleNom * 1.15));
-  const largeurVs = moteur.largeur('VS', styleVs);
+  // La marque « VS » occupe l'essentiel de la hauteur de rangee : c'est elle
+  // qui donne le rythme de la liste, les noms se rangeant de part et d'autre.
+  const hauteurVs = h * 0.92;
+  const largeurVs = hauteurVs * VS.rapport;
   const cxVs = x + largeur / 2;
-  noeuds.push({
-    type: 'groupe',
-    role: 'vs',
-    transform: `skewX(${INCLINAISON})`,
-    enfants: [
-      texte(
-        'VS',
-        cxVs + compenser(cy),
-        moteur.ligneDeBaseCentree(styleVs, cy),
-        styleVs,
-        COULEURS.blanc,
-        moteur,
-        {
-          ancre: 'middle',
-          role: 'vs-texte',
-          contour: COULEURS.nuit,
-          epaisseurContour: styleVs.taille * 0.16,
-        },
-      ),
-    ],
-  });
+  noeuds.push(marqueVs(cxVs, cy, hauteurVs));
 
   const styleNom = styleTexte(densite.tailleNom, GRAISSES.fort);
   const echelons = echelonsDepuis(densite.tailleNom, PLANCHERS.tailleNom);
@@ -767,30 +761,10 @@ function rangeeDuel(
     ),
   );
 
-  // Le « VS » du duel est la marque graphique de la carte : il se cale sur la
-  // place laissee entre les deux blasons, pas sur la taille des noms.
-  const styleVs = styleDisplay(Math.min(h * 0.3, (cxDroite - cxGauche - d) * 0.75));
-  noeuds.push({
-    type: 'groupe',
-    role: 'vs',
-    transform: `skewX(${INCLINAISON})`,
-    enfants: [
-      texte(
-        'VS',
-        x + largeur / 2 + compenser(cy),
-        moteur.ligneDeBaseCentree(styleVs, cy),
-        styleVs,
-        COULEURS.blanc,
-        moteur,
-        {
-          ancre: 'middle',
-          role: 'vs-texte',
-          contour: COULEURS.nuit,
-          epaisseurContour: styleVs.taille * 0.12,
-        },
-      ),
-    ],
-  });
+  // Au duel, la marque se cale sur l'espace laisse entre les deux blasons,
+  // pas sur la taille des noms.
+  const hauteurVs = Math.min(h * 0.4, (cxDroite - cxGauche - d) / VS.rapport);
+  noeuds.push(marqueVs(x + largeur / 2, cy, hauteurVs));
 
   // Noms sous chaque camp, centres sur leur blason et ajustes a la moitie de
   // la carte pour qu'ils ne se rejoignent jamais au centre.

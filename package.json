@@ -13,6 +13,7 @@
     "format:check": "prettier --check .",
     "assets:fonts": "node tools/build-fonts.mjs",
     "assets:build": "node --experimental-strip-types tools/build-assets.mts",
+    "assets:vs": "esbuild tools/build-vs.mts --bundle --platform=node --format=esm --packages=external --outfile=.tmp/vs.mjs --log-level=warning && node .tmp/vs.mjs",
     "assets:pinceau": "esbuild tools/build-pinceau.mts --bundle --platform=node --format=esm --packages=external --outfile=.tmp/pinceau.mjs --log-level=warning && node .tmp/pinceau.mjs",
     "assets:verify": "node --experimental-strip-types tools/verify-assets.mts",
     "render": "esbuild tools/render.mts --bundle --platform=node --format=esm --packages=external --outfile=.tmp/render.mjs --log-level=warning && node .tmp/render.mjs",
