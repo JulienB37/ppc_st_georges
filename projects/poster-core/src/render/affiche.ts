@@ -485,15 +485,21 @@ function enteteGroupe(
   // Le debord gauche est borne : au-dela, la pointe effilee sort du panneau
   // noir du gabarit et bave sur la photo.
   const debordGauche = Math.min(debordH * 0.45, RETRAIT_PANNEAU - 2);
+  // Le fond peint ne prend plus que deux tiers de la hauteur allouee au
+  // creneau : la bande etait bien plus haute que son texte ne le demandait, et
+  // ce qui restait n'etait que du remplissage colore. La hauteur allouee, elle,
+  // ne change pas — c'est elle qui dimensionne le texte et les icones, et elle
+  // qui est comptee par la loi de densite.
+  const hauteurTracee = (h + debordV) * (2 / 3);
   const noeuds: Noeud[] = [
     {
       type: 'groupe',
       role: 'entete-groupe',
       transform: transformPinceau(
         x - debordGauche,
-        y - debordV / 2,
+        cy - hauteurTracee / 2,
         largeurBande + debordH,
-        h + debordV,
+        hauteurTracee,
       ),
       enfants: [{ type: 'chemin', d: PINCEAU.chemin, remplissage: teinte }],
     },
