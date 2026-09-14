@@ -169,13 +169,6 @@ export const POLICES = {
   texte: 'Barlow Semi Condensed',
   /** Accents manuscrits : la chaleur que portait le Comic Sans, en tenue. */
   manuscrit: 'Caveat',
-  /**
-   * Pinceau sec, pour le rang de journee.
-   *
-   * Les titres du gabarit du club sont traces au pinceau. Y poser une
-   * grotesque comme Anton se voit immediatement : ce n'est pas la meme main.
-   */
-  pinceau: 'Protest Revolution',
 } as const;
 
 export type FamillePolice = (typeof POLICES)[keyof typeof POLICES];
@@ -192,7 +185,6 @@ export const GRAISSES = {
   appuye: 600,
   fort: 700,
   manuscrit: 700,
-  pinceau: 400,
 } as const;
 
 /**

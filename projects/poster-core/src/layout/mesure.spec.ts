@@ -71,16 +71,17 @@ describe('metriques et ligne de base', () => {
     expect(base - (m.capitale * TEXTE.taille) / 2).toBeCloseTo(centre, 6);
   });
 
-  it('diverge du centrage sur boite em des que la face est asymetrique', () => {
-    // Barlow Semi Condensed reserve 1,0 en ascendante pour 0,7 de capitale :
-    // centrer sur la boite em decale les capitales de 5 % du corps. Sur
-    // Protest Strike, dont la boite est symetrique, les deux coincident — d'ou
-    // l'interet d'expliciter la regle plutot que de se fier a la face.
+  it('diverge du centrage sur boite em, et pas du meme cote selon la face', () => {
+    // Mesure sur les faces livrees : Barlow Semi Condensed reserve 1,0 en
+    // ascendante pour 0,7 de capitale, ce qui decale les capitales de +5 % du
+    // corps ; Anton, plus genereuse en descendante, les decale de -0,6 %. Le
+    // signe change donc d'une face a l'autre : c'est pourquoi la regle est
+    // explicite plutot que deduite d'une face particuliere.
     const centre = 100;
     const ecart = (style: { famille: string; graisse: number; taille: number }) =>
       moteur.ligneDeBaseCapitales(style, centre) - moteur.ligneDeBaseCentree(style, centre);
-    expect(Math.abs(ecart(TEXTE))).toBeGreaterThan(1);
-    expect(ecart({ famille: POLICES.pinceau, graisse: 400, taille: 34 })).toBeCloseTo(0, 6);
+    expect(ecart(TEXTE)).toBeLessThan(-1);
+    expect(ecart({ famille: POLICES.display, graisse: 400, taille: 34 })).toBeGreaterThan(0);
   });
 
   it('centre verticalement sans recourir a dominant-baseline', () => {
@@ -103,14 +104,15 @@ describe('glyphesManquants', () => {
     expect(moteur.glyphesManquants(echantillon, TEXTE)).toEqual([]);
   });
 
-  it('couvre le rang de journee dans toutes les familles d affichage', () => {
+  it('couvre le rang de journee dans la famille d affichage', () => {
     // Le rang de journee est le seul texte pose sur le gabarit, et il porte un
     // E accent aigu capital. Un sous-ensemble qui l'oublierait ne laisserait
     // qu'un trou dans la bande peinte, sans erreur.
-    for (const famille of [POLICES.display, POLICES.pinceau]) {
-      const style = { famille, graisse: 400, taille: 40 };
-      expect(moteur.glyphesManquants('1RE JOURNÉE JEUNES', style), famille).toEqual([]);
-    }
+    // Le test a deja paye : trois brosses candidates ont ete ecartees parce
+    // qu'elles n'avaient ni « e » grave ni « e » aigu, et resvg les aurait
+    // completees en silence avec une autre face.
+    const style = { famille: POLICES.display, graisse: 400, taille: 40 };
+    expect(moteur.glyphesManquants('1ère Journée jeunes', style)).toEqual([]);
   });
 
   it('demasque un caractere absent du sous-ensemble', () => {

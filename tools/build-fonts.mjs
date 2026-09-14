@@ -59,16 +59,6 @@ const FACES = [
     role: 'texte',
   },
   {
-    // Les titres du gabarit du club sont traces au pinceau sec, fûts franges
-    // par les poils de la brosse. Anton, une grotesque, ne peut pas s'en
-    // approcher, et Protest Strike — essayee d'abord — avait des contours trop
-    // propres. Protest Revolution porte les bords ronges du gabarit.
-    fichier: 'ProtestRevolution-Regular.ttf',
-    famille: 'Protest Revolution',
-    graisse: 400,
-    role: 'pinceau',
-  },
-  {
     // Caveat n'existe qu'en police variable chez Google Fonts. resvg rendrait
     // silencieusement l'instance par defaut : on fige donc la graisse au
     // sous-ensemblage, ce qui produit une face statique ordinaire.

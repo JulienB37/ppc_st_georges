@@ -297,18 +297,17 @@ function bandeau(
   diagnostics: Diagnostic[],
 ): Noeud[] {
   const { chiffre, suffixe } = rangJourneeParties(numeroJournee);
-  const famille = { famille: POLICES.pinceau, graisse: GRAISSES.pinceau };
+  const famille = { famille: POLICES.display, graisse: GRAISSES.display };
   const metriques = moteur.metriques(famille);
 
   /**
    * Ecarts, en part du corps.
    *
-   * Deux valeurs distinctes, et l'ecart entre mots est large : l'encre de
-   * cette brosse depasse son avance, si bien que la panse du « e » accentue
-   * mange le vide. A 0,22 « Journee jeunes » se lisait encore « Journeejeunes ».
+   * Poses par la composition et non delegues a l'espace de la police : les
+   * morceaux sont des textes distincts, il n'y a aucun espace entre eux.
    */
-  const ECART_MOT = 0.44;
-  const ECART_EXPOSANT = 0.26;
+  const ECART_MOT = 0.3;
+  const ECART_EXPOSANT = 0.2;
   /** Corps de l'exposant, en part du corps courant. */
   const RAPPORT_EXPOSANT = 0.58;
 
@@ -390,19 +389,6 @@ function bandeau(
       }),
     );
 
-    if (m.exposant) {
-      // Soulignement de l'exposant : c'est la seule forme sous laquelle l'usage
-      // typographique tolere l'abreviation longue.
-      enfants.push({
-        type: 'rect',
-        role: 'journee-soulignement',
-        x,
-        y: y + style.taille * 0.1,
-        largeur,
-        hauteur: Math.max(2, style.taille * 0.11),
-        remplissage: COULEURS.blanc,
-      });
-    }
     x += largeur;
   }
 

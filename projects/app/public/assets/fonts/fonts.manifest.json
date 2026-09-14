@@ -47,15 +47,6 @@
       "source": "BarlowSemiCondensed-Bold.ttf"
     },
     {
-      "fichier": "ProtestRevolution-400.woff2",
-      "famille": "Protest Revolution",
-      "graisse": 400,
-      "role": "pinceau",
-      "octets": 181828,
-      "unitsPerEm": 1000,
-      "source": "ProtestRevolution-Regular.ttf"
-    },
-    {
       "fichier": "Caveat-700.woff2",
       "famille": "Caveat",
       "graisse": 700,
