@@ -321,7 +321,7 @@ function bandeau(
   // Blason, dans l'anneau rouge que le fond lui reserve. Detoure par dilatation
   // de sa silhouette alpha : un liseré fin suffit ici, l'anneau faisant deja
   // le cadre.
-  const dBlason = 178;
+  const dBlason = 208;
   const cadre = cadrerLogo(assets.blason, dBlason);
   noeuds.push({
     type: 'image',

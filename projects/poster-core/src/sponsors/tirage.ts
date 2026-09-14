@@ -13,6 +13,16 @@ import { SPONSORS, type EntreeSponsor } from './registre.generated';
  * n'importe quelle machine.
  */
 
+/**
+ * Partenaires epingles, dans l'ordre, en tete de tous les emplacements.
+ *
+ * Ce sont des engagements contractuels, pas des preferences d'affichage : le
+ * partenaire du club et le sponsor principal ne peuvent ni etre retires ni
+ * etre deplaces. L'epinglage est donc code ici et **non** expose comme un
+ * verrou dans le document — un verrou, l'utilisateur pourrait le lever.
+ */
+export const SPONSORS_EPINGLES = ['misterping', 'la-boutique-du-menuisier'] as const;
+
 /** Generateur mulberry32 : court, rapide, et suffisant pour un tirage d'affichage. */
 function mulberry32(graine: number): () => number {
   let etat = graine >>> 0;
@@ -64,8 +74,22 @@ export function tirerSponsors(
     .filter((s) => s.actif)
     .sort((a, b) => a.id.localeCompare(b.id));
 
+  // Les epingles ouvrent la liste et sortent du tirage : ils ne peuvent pas
+  // sortir deux fois, ni laisser leur place a un autre.
+  const epingles = SPONSORS_EPINGLES.map((id) => inventaire[id]).filter((s): s is EntreeSponsor =>
+    Boolean(s),
+  );
+  const manquants = SPONSORS_EPINGLES.filter((id) => !inventaire[id]);
+  if (manquants.length) {
+    // Echouer franchement : une affiche publiee sans le sponsor principal est
+    // un probleme avec le club, pas un detail graphique.
+    throw new Error(
+      `Partenaire(s) epingle(s) absent(s) de l'inventaire : ${manquants.join(', ')}.`,
+    );
+  }
+
   const retenus: EntreeSponsor[] = [];
-  const pris = new Set<string>();
+  const pris = new Set<string>(epingles.map((s) => s.id));
 
   for (const emplacement of selection.emplacements) {
     if (emplacement.verrouille && emplacement.sponsorId) {
@@ -92,9 +116,11 @@ export function tirerSponsors(
     });
 
   let prochain = 0;
-  return retenus
+  const tires = retenus
     .map((retenu) => retenu ?? candidats[prochain++])
     .filter((s): s is EntreeSponsor => Boolean(s));
+
+  return [...epingles, ...tires];
 }
 
 /** Fait tourner la graine, pour relancer un tirage de facon reproductible. */

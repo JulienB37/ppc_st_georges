@@ -115,6 +115,14 @@ export const SPONSORS = {
     hauteur: 300,
     actif: true,
   },
+  'la-boutique-du-menuisier': {
+    id: 'la-boutique-du-menuisier',
+    libelle: 'La Boutique Du Menuisier',
+    fichier: 'la-boutique-du-menuisier.jpg',
+    largeur: 225,
+    hauteur: 225,
+    actif: true,
+  },
   'le-week-end': {
     id: 'le-week-end',
     libelle: 'Le Week End',
@@ -129,6 +137,14 @@ export const SPONSORS = {
     fichier: 'logo-piscine-eg41-contact.png',
     largeur: 480,
     hauteur: 82,
+    actif: true,
+  },
+  misterping: {
+    id: 'misterping',
+    libelle: 'Misterping',
+    fichier: 'misterping.png',
+    largeur: 480,
+    hauteur: 240,
     actif: true,
   },
   'paris-simoneau': {
