@@ -1,5 +1,5 @@
 import type { Degrade, Filtre, Noeud } from './scene';
-import { COULEURS, FORMATS, PROJECTION, type NomFormat } from './tokens';
+import { COULEURS, FORMATS, type NomFormat } from './tokens';
 
 /**
  * Decor de l'affiche : peinture, dechirures, projections.
@@ -256,118 +256,6 @@ export function essaim(
   }));
 }
 
-function halo(
-  id: string,
-  couleur: string,
-  cx: number,
-  cy: number,
-  rayon: number,
-  intensite: number,
-): { degrade: Degrade; noeud: Noeud } {
-  return {
-    degrade: {
-      id,
-      type: 'radial',
-      cx: 0.5,
-      cy: 0.5,
-      r: 0.5,
-      etapes: [
-        { position: 0, couleur, opacite: intensite },
-        { position: 0.5, couleur, opacite: intensite * 0.34 },
-        { position: 1, couleur, opacite: 0 },
-      ],
-    },
-    noeud: {
-      type: 'ellipse',
-      role: 'halo',
-      cx,
-      cy,
-      rx: rayon,
-      ry: rayon * 0.8,
-      remplissage: `url(#${id})`,
-    },
-  };
-}
-
-/** Raquette et balle, dessinees, avec un bord mange par la peinture. */
-function raquette(cx: number, cy: number, echelle: number, angle: number, filtre: string): Noeud {
-  const r = (v: number) => v * echelle;
-  return {
-    type: 'groupe',
-    role: 'raquette',
-    transform: `translate(${cx} ${cy}) rotate(${angle})`,
-    filtre,
-    enfants: [
-      {
-        type: 'chemin',
-        role: 'raquette-manche',
-        d: `M ${r(-30)} ${r(96)} L ${r(-24)} ${r(212)} Q ${r(0)} ${r(234)} ${r(24)} ${r(212)} L ${r(30)} ${r(96)} Z`,
-        remplissage: '#6B3A1E',
-      },
-      {
-        type: 'ellipse',
-        role: 'raquette-bois',
-        cx: 0,
-        cy: 0,
-        rx: r(108),
-        ry: r(124),
-        remplissage: '#150D04',
-      },
-      {
-        type: 'ellipse',
-        role: 'raquette-revetement',
-        cx: 0,
-        cy: 0,
-        rx: r(96),
-        ry: r(111),
-        remplissage: COULEURS.rougePpc,
-      },
-      {
-        type: 'ellipse',
-        role: 'raquette-reflet',
-        cx: r(-30),
-        cy: r(-38),
-        rx: r(44),
-        ry: r(56),
-        remplissage: '#FFFFFF',
-        opacite: 0.11,
-        transform: `rotate(-18 ${r(-30)} ${r(-38)})`,
-      },
-    ],
-  };
-}
-
-function balle(cx: number, cy: number, rayon: number, direction: number): Noeud {
-  const trainee: Noeud[] = [1, 2, 3].map((i) => ({
-    type: 'ellipse',
-    role: 'trainee',
-    cx: cx + Math.cos(direction) * rayon * 2.2 * i,
-    cy: cy + Math.sin(direction) * rayon * 2.2 * i,
-    rx: rayon * (1 - i * 0.16),
-    ry: rayon * (1 - i * 0.16) * 0.8,
-    remplissage: '#FFFFFF',
-    opacite: 0.26 / i,
-  }));
-
-  return {
-    type: 'groupe',
-    role: 'balle',
-    enfants: [
-      ...trainee.reverse(),
-      { type: 'cercle', cx, cy, r: rayon, remplissage: '#FFFFFF' },
-      {
-        type: 'ellipse',
-        cx: cx - rayon * 0.28,
-        cy: cy - rayon * 0.3,
-        rx: rayon * 0.3,
-        ry: rayon * 0.22,
-        remplissage: '#DDE6F2',
-        opacite: 0.6,
-      },
-    ],
-  };
-}
-
 /**
  * Filtres de matiere, partages par le decor et par la composition.
  *
@@ -418,185 +306,129 @@ export const FILTRES_DECOR: Filtre[] = [
   { id: 'contour-fin', type: 'contour', rayon: 2, couleur: '#FFFFFF', marge: 20 },
 ];
 
-export function decorNocturne(
+export interface FondPhoto {
+  source: string;
+  largeur: number;
+  hauteur: number;
+}
+
+/**
+ * Decor de l'affiche, desormais porte par une photographie.
+ *
+ * Le fond livre par le club contient deja le titre « CHAMPIONNAT PAR EQUIPE »,
+ * l'accroche manuscrite du haut, les raquettes, la balle, la silhouette du
+ * joueur et l'anneau rouge qui attend le blason. La composition ne redessine
+ * donc AUCUN de ces elements — les superposer les dedoublerait.
+ *
+ * Il reste a poser :
+ * - la photo, recadree en « couvrir » ;
+ * - un voile sombre sur la zone de contenu, sans lequel les cartes ne se
+ *   detachent pas de la surface de table, la plus claire de l'image
+ *   (luminance mesuree a 84 sur 255, contre 22 au bas de l'affiche) ;
+ * - un degrade de pied, pour que la signature manuscrite reste lisible.
+ *
+ * Les coups de pinceau et essaims d'eclaboussures dessines ont ete retires :
+ * la photographie apporte sa propre matiere, et les y ajouter ne faisait que
+ * brouiller les deux.
+ */
+export function decorPhoto(
   format: NomFormat,
-  couleurAccent: string,
-  hauteurBandeau: number,
+  fond: FondPhoto | undefined,
+  hautContenu: number,
+  basContenu: number,
 ): Decor {
   const { largeur, hauteur } = FORMATS[format];
   const degrades: Degrade[] = [];
   const arriere: Noeud[] = [];
-  const avant: Noeud[] = [];
 
+  if (fond) {
+    arriere.push({
+      type: 'image',
+      role: 'fond',
+      x: 0,
+      y: 0,
+      largeur,
+      hauteur,
+      source: fond.source,
+      // « slice » recadre pour couvrir : l'image est en 4:5 a 0,7 % pres, donc
+      // le rognage reel est imperceptible.
+      preserveAspectRatio: 'xMidYMid slice',
+    });
+  } else {
+    // Repli sans fond livre : un aplat nocturne, pour que l'affiche reste
+    // lisible plutot que transparente.
+    degrades.push({
+      id: 'fond-repli',
+      type: 'lineaire',
+      x1: 0,
+      y1: 0,
+      x2: 0.3,
+      y2: 1,
+      etapes: [
+        { position: 0, couleur: COULEURS.bleuNuit },
+        { position: 1, couleur: COULEURS.nuit },
+      ],
+    });
+    arriere.push({
+      type: 'rect',
+      role: 'fond',
+      x: 0,
+      y: 0,
+      largeur,
+      hauteur,
+      remplissage: 'url(#fond-repli)',
+    });
+  }
+
+  // Voile de contenu : degrade vertical opaque au centre, fondu aux extremites
+  // pour ne pas trancher net sur la photo.
   degrades.push({
-    id: 'fond',
+    id: 'voile-contenu',
     type: 'lineaire',
     x1: 0,
     y1: 0,
-    x2: 0.4,
+    x2: 0,
     y2: 1,
     etapes: [
-      { position: 0, couleur: COULEURS.nuitHaute },
-      { position: 0.18, couleur: COULEURS.bleuNuit },
-      { position: 0.55, couleur: COULEURS.nuitHaute },
-      { position: 1, couleur: COULEURS.nuit },
+      { position: 0, couleur: COULEURS.nuit, opacite: 0 },
+      { position: 0.1, couleur: COULEURS.nuit, opacite: 0.72 },
+      { position: 0.9, couleur: COULEURS.nuit, opacite: 0.72 },
+      { position: 1, couleur: COULEURS.nuit, opacite: 0 },
     ],
   });
   arriere.push({
     type: 'rect',
-    role: 'fond',
+    role: 'voile-contenu',
     x: 0,
-    y: 0,
+    y: hautContenu - 28,
     largeur,
-    hauteur,
-    remplissage: 'url(#fond)',
+    hauteur: basContenu - hautContenu + 56,
+    remplissage: 'url(#voile-contenu)',
   });
 
-  for (const h of [
-    halo('halo-accent', couleurAccent, largeur * 0.84, hauteurBandeau * 0.48, 520, 0.46),
-    halo('halo-cyan', COULEURS.cyan, largeur * 0.04, hauteurBandeau * 1.3, 460, 0.26),
-    halo('halo-violet', COULEURS.violet, largeur * 1.02, hauteur * 0.58, 480, 0.24),
-    halo('halo-orange', COULEURS.orange, largeur * 0.9, hauteur * 0.86, 420, 0.3),
-    halo('halo-bas', couleurAccent, largeur * 0.2, hauteur * 0.96, 400, 0.24),
-  ]) {
-    degrades.push(h.degrade);
-    arriere.push(h.noeud);
-  }
-
-  // Bandes dechirees : plusieurs couches obliques, teintes et opacites variees.
-  // C'est elles qui donnent la profondeur de papier arrache.
-  // Deux teintes voisines par zone, pas plus. Empiler trois couches de teintes
-  // eloignees au meme endroit ne donne pas une dechirure franche mais un
-  // degrade arc-en-ciel, qui lit comme une bavure.
-  const bandes = [
-    {
-      y: hauteurBandeau * 0.76,
-      h: 70,
-      angle: -5,
-      couleur: couleurAccent,
-      opacite: 0.88,
-      graine: 71,
-    },
-    {
-      y: hauteurBandeau * 0.98,
-      h: 16,
-      angle: -5,
-      couleur: COULEURS.magenta,
-      opacite: 0.42,
-      graine: 72,
-    },
-    // Zone centrale : deux voiles tres discrets, juste pour que le fond du
-    // contenu ne soit pas mort.
-    {
-      y: hauteurBandeau * 1.5,
-      h: 46,
-      angle: 2,
-      couleur: COULEURS.violet,
-      opacite: 0.12,
-      graine: 73,
-    },
-    { y: hauteur * 0.58, h: 34, angle: -2, couleur: COULEURS.cyan, opacite: 0.1, graine: 74 },
-    { y: hauteur * 0.86, h: 62, angle: 4, couleur: couleurAccent, opacite: 0.5, graine: 75 },
-    { y: hauteur * 0.94, h: 14, angle: 4, couleur: COULEURS.magenta, opacite: 0.34, graine: 76 },
-  ];
-  for (const b of bandes) {
-    arriere.push({
-      type: 'groupe',
-      role: 'bande-dechiree',
-      transform: `rotate(${b.angle} ${largeur / 2} ${b.y})`,
-      filtre: 'peinture-bande',
-      enfants: [
-        {
-          type: 'chemin',
-          d: bandeDechiree(-90, b.y, largeur + 180, b.h, b.graine),
-          remplissage: b.couleur,
-          opacite: b.opacite,
-        },
-      ],
-    });
-  }
-
+  // Degrade de pied : la signature manuscrite se pose sur un sol sombre mais
+  // texture, qui la mangerait sans cela.
+  degrades.push({
+    id: 'voile-pied',
+    type: 'lineaire',
+    x1: 0,
+    y1: 0,
+    x2: 0,
+    y2: 1,
+    etapes: [
+      { position: 0, couleur: COULEURS.nuit, opacite: 0 },
+      { position: 1, couleur: COULEURS.nuit, opacite: 0.78 },
+    ],
+  });
   arriere.push({
-    type: 'chemin',
-    role: 'pinceau',
-    d: cheminPinceau(
-      { x: -70, y: hauteurBandeau * 0.68 },
-      { x: largeur * 0.5, y: hauteurBandeau * 0.28 },
-      { x: largeur + 70, y: hauteurBandeau * 0.56 },
-      22,
-      101,
-    ),
-    remplissage: COULEURS.magenta,
-    opacite: 0.42,
-    filtre: 'peinture-large',
-  });
-
-  // Projections : trois essaims, denses dans le bandeau et au pied.
-  arriere.push(
-    ...essaim(
-      {
-        centre: { x: largeur * 0.42, y: hauteurBandeau * 0.82 },
-        etendue: { x: largeur * 0.55, y: 130 },
-        nombre: 130,
-        rayonMax: 11,
-        graine: 2024,
-        partCoulures: 0.1,
-      },
-      PROJECTION,
-      'peinture-fine',
-    ),
-    ...essaim(
-      {
-        centre: { x: largeur * 0.5, y: hauteur * 0.9 },
-        etendue: { x: largeur * 0.55, y: 90 },
-        nombre: 90,
-        rayonMax: 10,
-        graine: 3031,
-        partCoulures: 0.12,
-      },
-      PROJECTION,
-      'peinture-fine',
-    ),
-    ...essaim(
-      {
-        centre: { x: largeur * 0.5, y: hauteur * 0.52 },
-        etendue: { x: largeur * 0.52, y: hauteur * 0.2 },
-        nombre: 55,
-        rayonMax: 8,
-        graine: 5051,
-        partCoulures: 0.08,
-      },
-      PROJECTION,
-      'peinture-fine',
-    ),
-    ...essaim(
-      {
-        centre: { x: largeur * 0.88, y: hauteurBandeau * 0.3 },
-        etendue: { x: 190, y: 130 },
-        nombre: 60,
-        rayonMax: 9,
-        graine: 4041,
-        partCoulures: 0.05,
-      },
-      [couleurAccent, COULEURS.jauneVif, COULEURS.blanc],
-      'peinture-fine',
-    ),
-  );
-
-  arriere.push(raquette(largeur * 0.855, hauteurBandeau * 0.63, 0.78, 36, 'peinture-objet'));
-  arriere.push(balle(largeur * 0.63, hauteurBandeau * 0.33, 21, Math.PI * 0.97));
-
-  avant.push({
     type: 'rect',
-    role: 'grain',
+    role: 'voile-pied',
     x: 0,
-    y: 0,
+    y: hauteur - 210,
     largeur,
-    hauteur,
-    remplissage: COULEURS.blanc,
-    opacite: 0.07,
-    filtre: 'grain',
+    hauteur: 210,
+    remplissage: 'url(#voile-pied)',
   });
 
-  return { degrades, filtres: FILTRES_DECOR, arriere, avant };
+  return { degrades, filtres: FILTRES_DECOR, arriere, avant: [] };
 }

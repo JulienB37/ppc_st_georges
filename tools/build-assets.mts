@@ -36,6 +36,17 @@ const DEST_CLUBS = path.join(RACINE, 'projects/app/public/assets/clubs');
 const DEST_SPONSORS = path.join(RACINE, 'projects/app/public/assets/sponsors');
 const DEST_REGISTRES = path.join(RACINE, 'projects/poster-core/src');
 const LABELS = path.join(RACINE, 'assets-src/clubs.labels.json');
+const SRC_FOND = path.join(RACINE, 'assets-src/fond');
+const DEST_FOND = path.join(RACINE, 'projects/app/public/assets/fond');
+
+/**
+ * Largeurs derivees du fond photographique.
+ *
+ * Le fond finit encode en data URL dans le SVG : embarquer une image de 2160 px
+ * pour un export a 1080 quadruplerait le poids pour rien. On genere donc une
+ * version par taille d'export, et le moteur prend la bonne.
+ */
+const LARGEURS_FOND = [1080, 2160];
 
 /** 256 px suffit : a l'export 2160, la pastille de logo fait ~160 px. */
 const TAILLE_CLUB = 256;
@@ -230,6 +241,48 @@ async function main(): Promise<void> {
     }
   }
 
+  // ------------------------------------------------------------------- fond
+  const fonds: (Entree & { largeurCible: number })[] = [];
+  let octetsAvantFond = 0;
+  try {
+    for (const nom of await fichiersImages(SRC_FOND)) {
+      const source = await readFile(path.join(SRC_FOND, nom));
+      octetsAvantFond += source.length;
+      const id = clubIdDepuisFichier(nom);
+      await mkdir(DEST_FOND, { recursive: true });
+
+      const { width: largeurSource = 0 } = await sharp(source).metadata();
+      // Une cible plus large que la source produirait un fichier identique :
+      // on ne fabrique pas de pixels, donc on ne duplique pas non plus. Si la
+      // source est plus petite que toutes les cibles, on n'en garde qu'une.
+      const utiles = LARGEURS_FOND.filter((c) => c <= largeurSource);
+      const cibles = utiles.length ? utiles : [Math.min(...LARGEURS_FOND)];
+      for (const cible of cibles) {
+        // `withoutEnlargement` : on ne fabrique pas de pixels. Si la source est
+        // plus petite que la cible, le fichier sort a sa taille reelle et
+        // l'agrandissement est laisse au rasteriseur, qui le fait aussi bien.
+        const buffer = await sharp(source)
+          .resize(cible, null, { fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 88, mozjpeg: true })
+          .toBuffer();
+        const { width = 0, height = 0 } = await sharp(buffer).metadata();
+        const fichier = `${id}-${cible}.jpg`;
+        await writeFile(path.join(DEST_FOND, fichier), buffer);
+        fonds.push({
+          id,
+          libelle: libelleDepuisId(id),
+          fichier,
+          largeur: width,
+          hauteur: height,
+          octets: buffer.length,
+          largeurCible: cible,
+        });
+      }
+    }
+  } catch {
+    console.warn('(assets-src/fond absent : aucun fond photographique livre)');
+  }
+
   // -------------------------------------------------------------- registres
   const enTete = (source: string) =>
     `/* Genere par tools/build-assets.ts depuis ${source}. Ne pas modifier a la main. */\n\n`;
@@ -292,6 +345,39 @@ async function main(): Promise<void> {
     `} as const satisfies Record<string, EntreeSponsor>;\n\n` +
     `export type SponsorId = keyof typeof SPONSORS;\n`;
 
+  const fondTs =
+    enTete('assets-src/fond/') +
+    `export interface EntreeFond {\n` +
+    `  readonly id: string;\n` +
+    `  readonly fichier: string;\n` +
+    `  readonly largeur: number;\n` +
+    `  readonly hauteur: number;\n` +
+    `  /** Largeur d'export a laquelle cette version est destinee. */\n` +
+    `  readonly largeurCible: number;\n` +
+    `}\n\n` +
+    `export const FONDS = [\n` +
+    fonds
+      .map(
+        (f) =>
+          `  {\n` +
+          `    id: ${citer(f.id)},\n` +
+          `    fichier: ${citer(f.fichier)},\n` +
+          `    largeur: ${f.largeur},\n` +
+          `    hauteur: ${f.hauteur},\n` +
+          `    largeurCible: ${f.largeurCible},\n` +
+          `  },\n`,
+      )
+      .join('') +
+    `] as const satisfies readonly EntreeFond[];\n\n` +
+    `/** Version la mieux adaptee a une largeur d'export donnee. */\n` +
+    `export function fondPour(largeurExport: number): EntreeFond | undefined {\n` +
+    `  const candidats = [...FONDS].sort((a, b) => a.largeurCible - b.largeurCible);\n` +
+    `  return candidats.find((f) => f.largeurCible >= largeurExport) ?? candidats.at(-1);\n` +
+    `}\n`;
+
+  await mkdir(path.join(DEST_REGISTRES, 'fond'), { recursive: true });
+  await writeFile(path.join(DEST_REGISTRES, 'fond/registre.generated.ts'), fondTs);
+
   await mkdir(path.join(DEST_REGISTRES, 'sponsors'), { recursive: true });
   await writeFile(path.join(DEST_REGISTRES, 'clubs/registre.generated.ts'), clubsTs);
   await writeFile(path.join(DEST_REGISTRES, 'sponsors/registre.generated.ts'), sponsorsTs);
@@ -306,8 +392,16 @@ async function main(): Promise<void> {
     `sponsors : ${sponsors.length} logos (${sponsors.filter((s) => s.actif).length} actifs), ` +
       `${ko(octetsAvantSponsors)} -> ${ko(apresSponsors)}`,
   );
+  if (fonds.length) {
+    console.log(
+      `fond     : ${fonds.length} version(s), ${ko(octetsAvantFond)} -> ` +
+        `${ko(fonds.reduce((t, f) => t + f.octets, 0))} ` +
+        `(${fonds.map((f) => `${f.largeur}x${f.hauteur}`).join(', ')})`,
+    );
+  }
   console.log(
-    `total    : ${ko(octetsAvantClubs + octetsAvantSponsors)} -> ${ko(apresClubs + apresSponsors)}`,
+    `total    : ${ko(octetsAvantClubs + octetsAvantSponsors + octetsAvantFond)} -> ` +
+      `${ko(apresClubs + apresSponsors + fonds.reduce((t, f) => t + f.octets, 0))}`,
   );
 
   if (avertissements.length) {

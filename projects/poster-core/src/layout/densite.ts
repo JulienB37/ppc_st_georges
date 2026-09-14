@@ -71,11 +71,20 @@ export function choisirVariante(nbRencontres: number, format: NomFormat): Varian
 }
 
 /**
+ * Largeur minimale d'une colonne de rencontres.
+ *
+ * En deca, une rangee ne peut plus loger deux pastilles de logo, deux noms et
+ * le « VS » central : les textes se chevauchent. Mieux vaut alors garder une
+ * colonne unique et accepter un facteur d'echelle plus bas.
+ */
+export const LARGEUR_MIN_COLONNE = 470;
+
+/**
  * Calcule la densite d'une affiche.
  *
  * Le seuil de double colonne correspond au point ou le facteur tomberait sous
- * son plancher : au-dela, reduire encore rendrait les noms illisibles en
- * vignette, alors que deux colonnes tiennent confortablement.
+ * son plancher. Mais il ne s'applique que si la largeur offerte permet deux
+ * colonnes lisibles : sinon la liste reste le seul recours, meme a facteur bas.
  */
 export function calculerDensite(
   nbRencontres: number,
@@ -87,16 +96,49 @@ export function calculerDensite(
    * d'affiche. A defaut, on retombe sur la valeur deduite du format.
    */
   hauteurDispo = hauteurDisponible(format),
+  /** Largeur offerte au contenu, qui conditionne la double colonne. */
+  largeurDispo = Infinity,
+  /**
+   * Nombre de rencontres par groupe, dans l'ordre.
+   *
+   * Necessaire en double colonne : la repartition ne coupant jamais un groupe,
+   * une colonne peut recevoir bien plus que la moitie du contenu. Sans cette
+   * information, le facteur serait calcule sur un partage moitie-moitie que la
+   * repartition ne garantit pas, et la colonne la plus chargee deborderait.
+   */
+  rencontresParGroupe?: readonly number[],
 ): Densite {
-  const souhaitee = choisirVariante(nbRencontres, format);
-  const essai = composer(souhaitee, nbRencontres, nbGroupes, format, hauteurDispo);
+  const deuxColonnesTiennent = largeurDispo / 2 >= LARGEUR_MIN_COLONNE;
+  const souhaitee = deuxColonnesTiennent
+    ? choisirVariante(nbRencontres, format)
+    : // Sans la largeur pour deux colonnes, la liste reste le seul recours.
+      choisirVariante(nbRencontres, format) === 'duel'
+      ? 'duel'
+      : 'liste';
+  const essai = composer(
+    souhaitee,
+    nbRencontres,
+    nbGroupes,
+    format,
+    hauteurDispo,
+    rencontresParGroupe,
+  );
   if (essai.tient || souhaitee === 'doubleColonne') return essai.densite;
 
   // Les planchers de lisibilite de l'en-tete de groupe ne suivent pas le
   // facteur : sur une journee tres fragmentee, ils peuvent consommer plus que
   // ce que le modele de demande prevoyait. Plutot que de rogner en silence —
-  // le defaut exact de l'ancien moteur — on passe a la variante suivante.
-  return composer('doubleColonne', nbRencontres, nbGroupes, format, hauteurDispo).densite;
+  // le defaut exact de l'ancien moteur — on passe a la variante suivante,
+  // sauf si la largeur ne le permet pas.
+  if (!deuxColonnesTiennent) return essai.densite;
+  return composer(
+    'doubleColonne',
+    nbRencontres,
+    nbGroupes,
+    format,
+    hauteurDispo,
+    rencontresParGroupe,
+  ).densite;
 }
 
 function composer(
@@ -105,10 +147,13 @@ function composer(
   nbGroupes: number,
   format: NomFormat,
   disponible: number,
+  rencontresParGroupe?: readonly number[],
 ): { densite: Densite; tient: boolean } {
   const colonnes = variante === 'doubleColonne' ? 2 : 1;
-  // En double colonne, chaque colonne ne porte que la moitie du contenu.
-  const demande = hauteurDemandee(nbRencontres, nbGroupes) / colonnes;
+  const demande =
+    colonnes === 2
+      ? demandeColonneLaPlusChargee(nbRencontres, nbGroupes, rencontresParGroupe)
+      : hauteurDemandee(nbRencontres, nbGroupes);
   const brut = demande > 0 ? disponible / demande : ECHELLE.max;
   const facteur = borner(brut, ECHELLE.min, ECHELLE.max);
 
@@ -183,6 +228,30 @@ function composer(
   };
 
   return { densite, tient };
+}
+
+/**
+ * Hauteur nominale reclamee par la colonne la plus chargee.
+ *
+ * La repartition ne coupe jamais un groupe : un groupe de cinq rencontres peut
+ * donc occuper seul une colonne, bien au-dela de la moitie du contenu. C'est
+ * cette colonne, et non la moyenne, qui contraint le facteur d'echelle.
+ *
+ * Les hauteurs relatives ne dependent pas du facteur — tout s'echelonne
+ * ensemble — donc la repartition peut se faire sur les valeurs nominales.
+ */
+function demandeColonneLaPlusChargee(
+  nbRencontres: number,
+  nbGroupes: number,
+  rencontresParGroupe?: readonly number[],
+): number {
+  if (!rencontresParGroupe?.length) {
+    return hauteurDemandee(nbRencontres, nbGroupes) / 2;
+  }
+  const nominales = rencontresParGroupe.map((n) => n * NOMINAL.pasRangee + NOMINAL.blocGroupe);
+  const [gauche, droite] = repartirEnColonnes([...nominales], (h) => h);
+  const somme = (xs: number[]) => xs.reduce((t, x) => t + x, 0);
+  return Math.max(somme(gauche), somme(droite), 1);
 }
 
 /**

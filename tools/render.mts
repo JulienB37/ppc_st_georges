@@ -12,6 +12,7 @@ import path from 'node:path';
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
 
 import { CLUBS } from '../projects/poster-core/src/clubs/registre.generated.ts';
+import { fondPour } from '../projects/poster-core/src/fond/registre.generated.ts';
 import {
   composerAffiche,
   type AssetsAffiche,
@@ -28,6 +29,7 @@ const RACINE = path.resolve(import.meta.dirname, '..');
 const ASSETS = path.join(RACINE, 'projects/app/public/assets');
 const SORTIE = path.join(RACINE, 'resultats/nouveau');
 const WASM = path.join(RACINE, 'node_modules/@resvg/resvg-wasm/index_bg.wasm');
+const LARGEUR_EXPORT = 1080;
 
 const MIMES: Record<string, string> = {
   '.png': 'image/png',
@@ -91,7 +93,18 @@ async function chargerAssets(journee: Journee, indexAffiche: number): Promise<As
     });
   }
 
-  return { blason, logos, sponsors };
+  // Le fond est choisi selon la largeur d'export : embarquer une version 2160
+  // pour un rendu a 1080 quadruplerait le poids du SVG pour rien.
+  const entreeFond = fondPour(LARGEUR_EXPORT);
+  const fond = entreeFond
+    ? {
+        source: await dataUrl(path.join(ASSETS, 'fond', entreeFond.fichier)),
+        largeur: entreeFond.largeur,
+        hauteur: entreeFond.hauteur,
+      }
+    : undefined;
+
+  return { fond, blason, logos, sponsors };
 }
 
 async function main(): Promise<void> {
@@ -132,7 +145,7 @@ async function main(): Promise<void> {
       await writeFile(path.join(SORTIE, `${base}.svg`), svg);
 
       const rendu = new Resvg(svg, {
-        fitTo: { mode: 'width', value: 1080 },
+        fitTo: { mode: 'width', value: LARGEUR_EXPORT },
         font: { fontBuffers: tampons, loadSystemFonts: false },
       });
       const png = rendu.render().asPng();

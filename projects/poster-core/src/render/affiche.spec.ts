@@ -195,8 +195,13 @@ describe('composerAffiche — sortie', () => {
     }
   });
 
-  it('signale la reduction de densite a l utilisateur', () => {
-    expect(diagnostics.some((d) => d.message.includes('réduit'))).toBe(true);
+  it('previent l utilisateur quand la mise en page a du ceder', () => {
+    // Le contrat est qu'une contrainte de densite soit TOUJOURS signalee, que
+    // la reponse ait ete une reduction d'echelle ou un passage sur deux
+    // colonnes. C'est le rognage silencieux de l'ancien moteur qu'on interdit.
+    expect(
+      diagnostics.some((d) => d.message.includes('réduit') || d.message.includes('colonnes')),
+    ).toBe(true);
   });
 
   it('signale un logo manquant plutot que de le remplacer en silence', () => {

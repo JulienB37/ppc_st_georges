@@ -4,18 +4,16 @@ import { monogramme } from '../clubs/normaliser';
 import { formatCreneau } from '../format/creneau';
 import { ordinalJournee } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
-import { decorNocturne, essaim, parallelogramme } from './decor';
+import { decorPhoto, parallelogramme, type FondPhoto } from './decor';
 import type { Boite, Decoupe, Degrade, Filtre, Noeud, NoeudTexte, Scene } from './scene';
 import {
   CADRAGE_LOGO,
   COULEURS,
-  PROJECTION,
   TEINTES_ANNEAU,
   TEINTES_CRENEAU,
   ESPACES,
   FORMATS,
   GRAISSES,
-  HAUTEUR_BANDEAU,
   INCLINAISON,
   MARGE_X,
   PADDING_CONTENU_Y,
@@ -48,6 +46,8 @@ export interface SponsorResolu extends LogoResolu {
 }
 
 export interface AssetsAffiche {
+  /** Fond photographique livre par le club. Absent : aplat nocturne de repli. */
+  fond?: FondPhoto;
   blason: LogoResolu;
   logos: ReadonlyMap<string, LogoResolu>;
   sponsors: SponsorResolu[];
@@ -59,10 +59,7 @@ export type DispositionSponsors = 'bande' | 'colonne';
 export interface OptionsComposition {
   format?: NomFormat;
   nomClub?: string;
-  /** Titre principal, une ligne par saut de ligne. */
-  titre?: string;
   dispositionSponsors?: DispositionSponsors;
-  accrocheHaute?: string;
   accrocheBasse?: string;
 }
 
@@ -79,15 +76,22 @@ export interface Composition {
 }
 
 const NOM_CLUB_DEFAUT = 'St Georges';
-const TITRE_DEFAUT = 'CHAMPIONNAT\nPAR ÉQUIPE';
-const ACCROCHE_HAUTE = 'Du jeu, du partage\net de la passion !';
-const ACCROCHE_BASSE = 'Ensemble pour la passion du Ping !';
+const ACCROCHE_BASSE = 'Ensemble\npour la passion du Ping !';
 
-/** Hauteur reservee a la signature manuscrite, en pied d'affiche. */
-const HAUTEUR_SIGNATURE = 84;
-const HAUTEUR_BANDE_SPONSORS = 168;
-const LARGEUR_COLONNE_SPONSORS = 208;
-const ECART_COLONNE = 28;
+/**
+ * Zones, calees sur les reperes mesures dans le fond livre (en repere
+ * 1080 x 1350) :
+ *   - titre incruste        : x 321-838, y 27-262
+ *   - raquettes et balle    : x 558-1072, y 134-424
+ *   - anneau rouge du blason: centre 155,195
+ *   - silhouette du joueur  : x 775-1036, y 1112-1340
+ * Le contenu s'inscrit donc entre les raquettes et la silhouette.
+ */
+const HAUT_CONTENU = 398;
+const BAS_CONTENU = 1158;
+const LARGEUR_COLONNE_SPONSORS = 206;
+const ECART_COLONNE = 26;
+const HAUTEUR_BANDE_SPONSORS = 160;
 
 /** Decalage horizontal induit par `skewX` a une ordonnee donnee. */
 const PENTE = Math.tan((-INCLINAISON * Math.PI) / 180);
@@ -305,145 +309,45 @@ function bandeau(
   numeroJournee: number,
   assets: AssetsAffiche,
   moteur: MoteurTexte,
-  decoupes: Decoupe[],
   options: OptionsComposition,
 ): Noeud[] {
   const couleurAccent = accent(affiche.categorie);
-  const largeurAffiche = FORMATS.portrait.largeur;
   const noeuds: Noeud[] = [];
 
-  // Blason. Anneau rouge meme sur l'affiche jeunes : l'identite du club ne se
-  // decline pas, seul l'accent de l'affiche change.
-  const dBlason = 150;
-  const cxBlason = MARGE_X + dBlason / 2;
-  const cyBlason = 104;
-  // Gerbe de projections derriere le blason, pour qu'il ne soit pas pose sur
-  // le fond comme une vignette decoupee.
-  noeuds.push(
-    ...essaim(
-      {
-        centre: { x: cxBlason, y: cyBlason },
-        etendue: { x: dBlason * 0.85, y: dBlason * 0.8 },
-        nombre: 46,
-        rayonMax: 9,
-        graine: 909,
-        partCoulures: 0.14,
-      },
-      PROJECTION,
-      'peinture-fine',
-    ),
-  );
+  // Le titre « CHAMPIONNAT PAR EQUIPE » et l'accroche manuscrite du haut sont
+  // INCRUSTES dans le fond livre : les redessiner les dedoublerait. Le bandeau
+  // ne pose donc que ce que le fond n'a pas.
 
-  // Ni pastille ni anneau : le blason est DETOURE. Sa silhouette alpha est
-  // dilatee et remplie de blanc sous l'original, ce qui le decolle du fond sans
-  // le poser sur un disque — un disque lit comme une vignette collee.
-  const cadre = cadrerLogo(assets.blason, dBlason * 1.3);
+  // Blason, dans l'anneau rouge que le fond lui reserve. Detoure par dilatation
+  // de sa silhouette alpha : un liseré fin suffit ici, l'anneau faisant deja
+  // le cadre.
+  const dBlason = 178;
+  const cadre = cadrerLogo(assets.blason, dBlason);
   noeuds.push({
     type: 'image',
     role: 'blason',
-    x: cxBlason + cadre.x,
-    y: cyBlason + cadre.y,
+    x: 155 + cadre.x,
+    y: 196 + cadre.y,
     largeur: cadre.largeur,
     hauteur: cadre.hauteur,
     source: assets.blason.source,
-    filtre: 'contour-blason',
+    filtre: 'contour-fin',
   });
 
-  // Accroche manuscrite, en haut a droite.
-  const lignesAccroche = (options.accrocheHaute ?? ACCROCHE_HAUTE).split('\n');
-  const styleAccroche = styleManuscrit(38);
-  noeuds.push({
-    type: 'groupe',
-    role: 'accroche-haute',
-    transform: `rotate(-6 ${largeurAffiche - MARGE_X - 22} 56)`,
-    enfants: lignesAccroche.map((ligne, i) =>
-      texte(
-        ligne,
-        largeurAffiche - MARGE_X - 22,
-        48 + i * 38,
-        styleAccroche,
-        COULEURS.blanc,
-        moteur,
-        {
-          ancre: 'end',
-          opacite: 0.95,
-        },
-      ),
-    ),
-  });
-
-  // Bloc titre incline. `skewX` sur le groupe : Anton n'a pas d'italique, et
-  // resvg ne synthetise pas l'oblique — `font-style: italic` ne ferait rien.
-  const xTitre = cxBlason + dBlason / 2 + ESPACES.s4;
-  const largeurTitre = 440;
-  const lignes = (options.titre ?? TITRE_DEFAUT).toUpperCase().split('\n');
-  const styleTitre = styleDisplay(72);
-  const tailleTitre = Math.min(
-    ...lignes.map(
-      (l) => moteur.ajuster(l, largeurTitre, styleTitre, echelonsDepuis(72, 34)).taille,
-    ),
-  );
-
-  noeuds.push(
-    ...essaim(
-      {
-        centre: { x: xTitre + largeurTitre * 0.45, y: 96 },
-        etendue: { x: largeurTitre * 0.6, y: 92 },
-        nombre: 70,
-        rayonMax: 10,
-        graine: 717,
-        partCoulures: 0.16,
-      },
-      PROJECTION,
-      'peinture-fine',
-    ),
-  );
-
-  noeuds.push({
-    type: 'groupe',
-    role: 'titre',
-    transform: `skewX(${INCLINAISON})`,
-    enfants: lignes.map((ligne, i) => {
-      const style = { ...styleTitre, taille: tailleTitre };
-      const y = 74 + i * (tailleTitre + 4);
-      return texte(ligne, xTitre + compenser(y), y, style, COULEURS.blanc, moteur, {
-        role: 'titre-ligne',
-        // Contour sombre epais : sans lui le titre flotte sur un fond charge.
-        contour: COULEURS.nuit,
-        epaisseurContour: tailleTitre * 0.11,
-      });
-    }),
-  });
-
-  // Soulignement de titre : une bande cisaillee sous la derniere ligne, qui
-  // ancre le bloc au lieu de le laisser en suspension.
-  const ySouligne = 74 + (lignes.length - 1) * (tailleTitre + 4) + tailleTitre * 0.22;
-  noeuds.push({
-    type: 'groupe',
-    role: 'soulignement-titre',
-    transform: `skewX(${INCLINAISON})`,
-    enfants: [
-      {
-        type: 'chemin',
-        d: parallelogramme(xTitre + compenser(ySouligne), ySouligne, largeurTitre * 0.62, 9, 12),
-        remplissage: couleurAccent,
-      },
-    ],
-  });
-
-  // Banniere « LES RENCONTRES » et pastille de journee, sur une meme ligne.
-  const yBanniere = 236;
-  const hBanniere = 64;
+  // Banniere « LES RENCONTRES » et pastille de journee, sous le titre incruste.
+  const yBanniere = 300;
+  const hBanniere = 62;
   const cyBanniere = yBanniere + hBanniere / 2;
   const libelleRencontres =
     affiche.categorie === 'jeunes' ? 'LES RENCONTRES JEUNES' : 'LES RENCONTRES';
-  const styleBanniere = styleDisplay(44);
+  const styleBanniere = styleDisplay(42);
   const largeurBanniere = moteur.largeur(libelleRencontres, styleBanniere) + ESPACES.s6;
 
   const libelleJournee = `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE`;
-  const styleJournee = styleDisplay(30);
+  const styleJournee = styleDisplay(28);
   const largeurJournee = moteur.largeur(libelleJournee, styleJournee) + ESPACES.s5;
-  const xJournee = MARGE_X + largeurBanniere + ESPACES.s3;
+  const xBanniere = 258;
+  const xJournee = xBanniere + largeurBanniere + ESPACES.s3;
 
   noeuds.push({
     type: 'groupe',
@@ -453,9 +357,9 @@ function bandeau(
       {
         type: 'chemin',
         role: 'banniere-fond',
-        // Coins VIFS et cisaillement : c'est le surlignage de la reference.
+        // Coins VIFS et cisaillement, comme les surlignages du fond livre.
         d: parallelogramme(
-          MARGE_X + compenser(yBanniere),
+          xBanniere + compenser(yBanniere),
           yBanniere,
           largeurBanniere,
           hBanniere,
@@ -465,7 +369,7 @@ function bandeau(
       },
       texte(
         libelleRencontres,
-        MARGE_X + ESPACES.s4 + compenser(cyBanniere),
+        xBanniere + ESPACES.s4 + compenser(cyBanniere),
         moteur.ligneDeBaseCentree(styleBanniere, cyBanniere),
         styleBanniere,
         COULEURS.nuit,
@@ -496,6 +400,7 @@ function bandeau(
     ],
   });
 
+  void options;
   return noeuds;
 }
 
@@ -894,12 +799,14 @@ export function composerAffiche(
   const { largeur, hauteur } = FORMATS[format];
   const couleurAccent = accent(affiche.categorie);
 
-  const basContenu = hauteur - HAUTEUR_SIGNATURE - (enBande ? HAUTEUR_BANDE_SPONSORS : 0);
+  // La bande basse mangerait la silhouette du joueur : en disposition « bande »
+  // le contenu remonte d'autant.
+  const basContenu = BAS_CONTENU - (enBande ? HAUTEUR_BANDE_SPONSORS : 0);
   const zoneContenu: Boite = {
     x: MARGE_X,
-    y: HAUTEUR_BANDEAU + PADDING_CONTENU_Y,
+    y: HAUT_CONTENU,
     largeur: largeur - 2 * MARGE_X - (enBande ? 0 : LARGEUR_COLONNE_SPONSORS + ECART_COLONNE),
-    hauteur: basContenu - HAUTEUR_BANDEAU - 2 * PADDING_CONTENU_Y,
+    hauteur: basContenu - HAUT_CONTENU - PADDING_CONTENU_Y,
   };
 
   const nbRencontres = affiche.groupes.reduce((t, g) => t + g.rencontres.length, 0);
@@ -908,6 +815,8 @@ export function composerAffiche(
     affiche.groupes.length,
     format,
     zoneContenu.hauteur,
+    zoneContenu.largeur,
+    affiche.groupes.map((g) => g.rencontres.length),
   );
 
   const decoupes: Decoupe[] = [];
@@ -922,15 +831,15 @@ export function composerAffiche(
     diagnostics,
   };
 
-  const decor = decorNocturne(format, couleurAccent, HAUTEUR_BANDEAU);
+  const decor = decorPhoto(format, assets.fond, HAUT_CONTENU, basContenu);
   const degrades: Degrade[] = [...decor.degrades];
   const filtres: Filtre[] = [...decor.filtres];
   const noeuds: Noeud[] = [
-    // Le decor est regroupe et non disperse : il deborde volontairement du
-    // cadre — halos, coups de pinceau, raquette — et les invariants de mise en
-    // page doivent pouvoir l'ecarter sans ecarter le contenu.
+    // Le decor est regroupe et non disperse : voiles et fond couvrent tout le
+    // cadre, et les invariants de mise en page doivent pouvoir l'ecarter sans
+    // ecarter le contenu.
     { type: 'groupe', role: 'decor', enfants: decor.arriere },
-    ...bandeau(affiche, numeroJournee, assets, moteur, decoupes, options),
+    ...bandeau(affiche, numeroJournee, assets, moteur, options),
   ];
 
   const colonnes =
@@ -970,32 +879,31 @@ export function composerAffiche(
 
   noeuds.push(
     ...(enBande
-      ? sponsorsEnBande(assets, basContenu, moteur)
+      ? sponsorsEnBande(assets, basContenu + PADDING_CONTENU_Y, moteur)
       : sponsorsEnColonne(
           assets,
           largeur - MARGE_X - LARGEUR_COLONNE_SPONSORS,
-          zoneContenu.y,
-          zoneContenu.hauteur,
+          zoneContenu.y + 40,
+          // La silhouette du joueur commence a y = 1112 dans le fond livre :
+          // la colonne s'arrete avant, sinon elle la masque.
+          1090 - zoneContenu.y - 40,
           moteur,
         )),
   );
 
-  const styleSignature = styleManuscrit(46);
+  // Signature en bas a GAUCHE : la silhouette du joueur occupe tout le coin
+  // bas-droit du fond livre, une signature centree la chevaucherait.
+  const styleSignature = styleManuscrit(44);
+  const lignesSignature = (options.accrocheBasse ?? ACCROCHE_BASSE).split('\n');
   noeuds.push({
     type: 'groupe',
     role: 'accroche-basse',
-    transform: `rotate(-3 ${largeur / 2} ${hauteur - 34})`,
-    enfants: [
-      texte(
-        options.accrocheBasse ?? ACCROCHE_BASSE,
-        largeur / 2,
-        hauteur - 30,
-        styleSignature,
-        COULEURS.blanc,
-        moteur,
-        { ancre: 'middle', opacite: 0.92 },
-      ),
-    ],
+    transform: `rotate(-4 ${MARGE_X} ${hauteur - 96})`,
+    enfants: lignesSignature.map((ligne, i) =>
+      texte(ligne, MARGE_X + 6, hauteur - 104 + i * 46, styleSignature, COULEURS.blanc, moteur, {
+        opacite: 0.95,
+      }),
+    ),
   });
 
   if (densite.strategie === 'reduit') {
