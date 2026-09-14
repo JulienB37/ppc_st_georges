@@ -414,16 +414,13 @@ function enteteGroupe(
   x: number,
   y: number,
   ctx: Contexte,
-  indexGroupe: number,
+  teinte: string,
 ): Noeud[] {
   const { densite, moteur } = ctx;
   // La bande occupe l'essentiel de la hauteur reservee. Un coup de pinceau
   // s'affine a ses extremites : trop basse, la bande etrangle son texte.
   const h = Math.min(62, densite.hauteurEnteteGroupe * 0.84);
   const cy = y + h / 2;
-  // Une teinte par creneau plutot qu'une teinte par lieu : cela rythme la
-  // liste, le lieu restant porte par son icone et son libelle.
-  const teinte = TEINTES_CRENEAU[indexGroupe % TEINTES_CRENEAU.length]!;
 
   const date = groupe.creneau.libelleOverride ?? formatCreneau(groupe.creneau.debutIso);
   const lieu = groupe.domicile ? 'À domicile' : "À l'extérieur";
@@ -513,16 +510,18 @@ function enteteGroupe(
  *
  * Les lettres sont AJOUREES dans le trace : le remplissage colore la tache, et
  * les lettres prennent la couleur de ce qu'il y a derriere — ici le fond de la
- * carte. C'est pourquoi la tache est blanche et non coloree : sur une carte
- * sombre, cela donne des lettres sombres sur tache claire, le contraste le plus
- * fort disponible.
+ * carte.
+ *
+ * La tache reprend la teinte de la bande de date de son creneau. Les rangees
+ * d'un meme creneau sont ainsi reliees a leur en-tete par la couleur, ce que la
+ * seule proximite verticale ne disait pas.
  */
-function marqueVs(cx: number, cy: number, hauteur: number): Noeud {
+function marqueVs(cx: number, cy: number, hauteur: number, couleur: string): Noeud {
   return {
     type: 'groupe',
     role: 'vs',
     transform: transformVs(cx, cy, hauteur),
-    enfants: VS.chemins.map((d) => ({ type: 'chemin' as const, d, remplissage: COULEURS.blanc })),
+    enfants: VS.chemins.map((d) => ({ type: 'chemin' as const, d, remplissage: couleur })),
   };
 }
 
@@ -535,6 +534,7 @@ function rangee(
   indice: string,
   ctx: Contexte,
   indexRangee: number,
+  teinteCreneau: string,
 ): Noeud[] {
   const teinteAnneau = TEINTES_ANNEAU[indexRangee % TEINTES_ANNEAU.length]!;
   const { densite, moteur } = ctx;
@@ -603,7 +603,7 @@ function rangee(
   const hauteurVs = h * 0.92;
   const largeurVs = hauteurVs * VS.rapport;
   const cxVs = x + largeur / 2;
-  noeuds.push(marqueVs(cxVs, cy, hauteurVs));
+  noeuds.push(marqueVs(cxVs, cy, hauteurVs, teinteCreneau));
 
   const styleNom = styleTexte(densite.tailleNom, GRAISSES.fort);
   const echelons = echelonsDepuis(densite.tailleNom, PLANCHERS.tailleNom);
@@ -700,6 +700,7 @@ function rangeeDuel(
   indice: string,
   ctx: Contexte,
   indexRangee: number,
+  teinteCreneau: string,
 ): Noeud[] {
   const teinteAnneau = TEINTES_ANNEAU[indexRangee % TEINTES_ANNEAU.length]!;
   const { densite, moteur } = ctx;
@@ -764,7 +765,7 @@ function rangeeDuel(
   // Au duel, la marque se cale sur l'espace laisse entre les deux blasons,
   // pas sur la taille des noms.
   const hauteurVs = Math.min(h * 0.4, (cxDroite - cxGauche - d) / VS.rapport);
-  noeuds.push(marqueVs(x + largeur / 2, cy, hauteurVs));
+  noeuds.push(marqueVs(x + largeur / 2, cy, hauteurVs, teinteCreneau));
 
   // Noms sous chaque camp, centres sur leur blason et ajustes a la moitie de
   // la carte pour qu'ils ne se rejoignent jamais au centre.
@@ -988,14 +989,28 @@ export function composerAffiche(
     let y = zoneContenu.y + reliquat / 2;
 
     groupes.forEach((groupe, iGroupe) => {
-      noeuds.push(...enteteGroupe(groupe, xColonne, y, ctx, iGroupe + iColonne * 2));
+      // Une teinte par creneau plutot qu'une teinte par lieu : cela rythme la
+      // liste, le lieu restant porte par son icone et son libelle. Elle est
+      // calculee ici, et non deduite d'un index dans chaque fonction : la bande
+      // de date et la marque « VS » doivent porter exactement la meme.
+      const teinteCreneau = TEINTES_CRENEAU[(iGroupe + iColonne * 2) % TEINTES_CRENEAU.length]!;
+      noeuds.push(...enteteGroupe(groupe, xColonne, y, ctx, teinteCreneau));
       y += densite.hauteurEnteteGroupe;
 
       groupe.rencontres.forEach((rencontre, iRencontre) => {
         const indice = `${iColonne}-${iGroupe}-${iRencontre}`;
         noeuds.push(
           ...(densite.variante === 'duel'
-            ? rangeeDuel(rencontre, xColonne, y, largeurColonne, indice, ctx, compteurRangee++)
+            ? rangeeDuel(
+                rencontre,
+                xColonne,
+                y,
+                largeurColonne,
+                indice,
+                ctx,
+                compteurRangee++,
+                teinteCreneau,
+              )
             : rangee(
                 rencontre,
                 groupe.domicile,
@@ -1005,6 +1020,7 @@ export function composerAffiche(
                 indice,
                 ctx,
                 compteurRangee++,
+                teinteCreneau,
               )),
         );
         y += densite.pasRangee;
