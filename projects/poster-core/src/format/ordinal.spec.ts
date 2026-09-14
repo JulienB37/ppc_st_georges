@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ordinalJournee, quantiemeMois } from './ordinal';
+import { ordinalJournee, quantiemeMois, rangJourneeParties } from './ordinal';
 
 describe('ordinalJournee', () => {
   it('abrege correctement le rang feminin', () => {
@@ -28,5 +28,17 @@ describe('quantiemeMois', () => {
   it('refuse un quantieme hors bornes', () => {
     expect(() => quantiemeMois(0)).toThrow(RangeError);
     expect(() => quantiemeMois(32)).toThrow(RangeError);
+  });
+});
+
+describe('rangJourneeParties', () => {
+  it("rend la forme longue du club, decoupee pour l'exposant", () => {
+    expect(rangJourneeParties(1)).toEqual({ chiffre: '1', suffixe: 'ère' });
+    expect(rangJourneeParties(12)).toEqual({ chiffre: '12', suffixe: 'ème' });
+  });
+
+  it('refuse un rang invalide, comme la forme abregee', () => {
+    expect(() => rangJourneeParties(0)).toThrow(RangeError);
+    expect(() => rangJourneeParties(2.5)).toThrow(RangeError);
   });
 });

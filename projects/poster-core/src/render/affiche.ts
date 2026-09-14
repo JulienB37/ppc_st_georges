@@ -2,7 +2,7 @@ import { calculerDensite, repartirEnColonnes, type Densite } from '../layout/den
 import { echelonsDepuis, type MoteurTexte, type StyleTexte } from '../layout/mesure';
 import { monogramme } from '../clubs/normaliser';
 import { formatCreneau } from '../format/creneau';
-import { ordinalJournee } from '../format/ordinal';
+import { rangJourneeParties } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
 import { decorPhoto, type FondPhoto } from './decor';
 import { PINCEAU, transformPinceau } from './pinceau.generated';
@@ -295,61 +295,108 @@ function bandeau(
   moteur: MoteurTexte,
   diagnostics: Diagnostic[],
 ): Noeud[] {
-  const libelle =
-    affiche.categorie === 'jeunes'
-      ? `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE JEUNES`
-      : `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE`;
+  const { chiffre, suffixe } = rangJourneeParties(numeroJournee);
+  const exposant = suffixe.toUpperCase();
+  const reste = affiche.categorie === 'jeunes' ? 'JOURNÉE JEUNES' : 'JOURNÉE';
 
-  // Le corps se deduit de la bande : les capitales en occupent 86 % de la
-  // hauteur, puis la largeur mesuree le reduit si la mention « JEUNES »
-  // l'allonge.
   const famille = { famille: POLICES.pinceau, graisse: GRAISSES.pinceau };
   const metriques = moteur.metriques(famille);
-  const tailleHaute = (BANDE_JOURNEE.hauteur * 0.86) / metriques.capitale;
-  const ajuste = moteur.ajuster(
-    libelle,
-    BANDE_JOURNEE.largeur,
-    { ...famille, taille: tailleHaute },
-    echelonsDepuis(tailleHaute, tailleHaute * 0.55),
-  );
-  if (ajuste.deborde) {
+
+  // Le corps se deduit de la bande : les capitales en occupent 62 % de la
+  // hauteur, puis la largeur mesuree le reduit si la mention « JEUNES »
+  // l'allonge. Le rapport est volontairement bas — le trace peint doit rester
+  // visible autour du texte, sinon le rang de journee lit comme une etiquette
+  // collee et non comme une inscription sur l'affiche.
+  const tailleHaute = (BANDE_JOURNEE.hauteur * 0.62) / metriques.capitale;
+  const RAPPORT_EXPOSANT = 0.58;
+  const ECART_MOT = 0.2;
+
+  /** Largeur totale de la composition « 1 + ÈRE + JOURNÉE » a un corps donne. */
+  const largeurTotale = (taille: number): number =>
+    moteur.largeur(chiffre, { ...famille, taille }) +
+    moteur.largeur(exposant, { ...famille, taille: taille * RAPPORT_EXPOSANT }) +
+    taille * ECART_MOT +
+    moteur.largeur(reste, { ...famille, taille });
+
+  // `ajuster` mesure une chaine unique ; la composition en trois morceaux se
+  // reduit donc a la main, sur les memes echelons.
+  const disponible = BANDE_JOURNEE.largeur * 0.82;
+  const echelons = echelonsDepuis(tailleHaute, tailleHaute * 0.5);
+  const taille = echelons.find((t) => largeurTotale(t) <= disponible) ?? echelons.at(-1)!;
+  if (largeurTotale(taille) > disponible) {
     diagnostics.push({
       niveau: 'alerte',
-      message: `« ${libelle} » est trop long pour la bande du gabarit.`,
+      message: `« ${chiffre}${suffixe} ${reste} » est trop long pour la bande du gabarit.`,
     });
   }
 
-  const style: StyleTexte = { ...famille, taille: ajuste.taille };
+  const styleBase: StyleTexte = { ...famille, taille };
+  const styleExposant: StyleTexte = { ...famille, taille: taille * RAPPORT_EXPOSANT };
   const cx = BANDE_JOURNEE.x + BANDE_JOURNEE.largeur / 2;
   const cy = BANDE_JOURNEE.y + BANDE_JOURNEE.hauteur / 2;
 
-  return [
-    {
-      type: 'groupe',
-      role: 'journee',
-      transform: `skewX(${INCLINAISON})`,
-      enfants: [
-        texte(
-          libelle,
-          cx + compenser(cy),
-          // Tout en capitales : la ligne de base se cale sur leur hauteur, et
-          // non sur la boite em, dont les reserves dependent de la face.
-          moteur.ligneDeBaseCapitales(style, cy),
-          style,
-          COULEURS.blanc,
-          moteur,
-          {
-            role: 'journee-texte',
-            ancre: 'middle',
-            // Le trace peint est mouchete : le liseré sombre garantit la
-            // lisibilite la ou le rouge laisse voir le fond bleu.
-            contour: COULEURS.nuit,
-            epaisseurContour: style.taille * 0.07,
-          },
-        ),
-      ],
-    },
+  // Tout en capitales : la ligne de base se cale sur leur hauteur, et non sur
+  // la boite em, dont les reserves dependent de la face.
+  const base = moteur.ligneDeBaseCapitales(styleBase, cy);
+  // L'exposant s'aligne par le HAUT des capitales, pas par la ligne de base :
+  // c'est ce qui le fait lire comme un exposant et non comme un petit mot.
+  const hautCapitales = base - metriques.capitale * taille;
+  const baseExposant = hautCapitales + metriques.capitale * styleExposant.taille;
+
+  const largeurChiffre = moteur.largeur(chiffre, styleBase);
+  const largeurExposant = moteur.largeur(exposant, styleExposant);
+  let x = cx - largeurTotale(taille) / 2;
+
+  const lisere = {
+    contour: COULEURS.nuit,
+    epaisseurContour: taille * 0.07,
+  };
+
+  const enfants: Noeud[] = [
+    texte(chiffre, x + compenser(base), base, styleBase, COULEURS.blanc, moteur, {
+      role: 'journee-chiffre',
+      ...lisere,
+    }),
   ];
+  x += largeurChiffre;
+
+  enfants.push(
+    texte(
+      exposant,
+      x + compenser(baseExposant),
+      baseExposant,
+      styleExposant,
+      COULEURS.blanc,
+      moteur,
+      {
+        role: 'journee-exposant',
+        ...lisere,
+      },
+    ),
+  );
+  // Soulignement de l'exposant, comme sur les affiches du club : un filet sous
+  // l'abreviation, seul endroit ou l'usage tolere la forme longue.
+  const epaisseurFilet = Math.max(2, styleExposant.taille * 0.11);
+  const yFilet = baseExposant + styleExposant.taille * 0.1;
+  enfants.push({
+    type: 'rect',
+    role: 'journee-soulignement',
+    x: x + compenser(yFilet),
+    y: yFilet,
+    largeur: largeurExposant,
+    hauteur: epaisseurFilet,
+    remplissage: COULEURS.blanc,
+  });
+  x += largeurExposant + taille * ECART_MOT;
+
+  enfants.push(
+    texte(reste, x + compenser(base), base, styleBase, COULEURS.blanc, moteur, {
+      role: 'journee-texte',
+      ...lisere,
+    }),
+  );
+
+  return [{ type: 'groupe', role: 'journee', transform: `skewX(${INCLINAISON})`, enfants }];
 }
 
 interface Contexte {

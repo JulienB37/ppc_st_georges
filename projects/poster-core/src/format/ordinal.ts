@@ -23,3 +23,22 @@ export function quantiemeMois(jour: number): string {
   }
   return jour === 1 ? '1er' : String(jour);
 }
+
+/**
+ * Rang de journee tel que le club l'ecrit sur l'affiche, en deux morceaux.
+ *
+ * L'abreviation strictement correcte est `1re` / `12e` : c'est ce que rend
+ * `ordinalJournee`, et ce qui doit partir dans le texte de publication. Mais
+ * le club ecrit `1ere` sur ses affiches et l'a demande explicitement. La forme
+ * longue reste donc cantonnee au dessin, ou le suffixe est de toute facon pose
+ * en exposant souligne — la ou l'usage typographique la tolere.
+ *
+ * Le decoupage en deux champs existe pour cela : l'exposant ne peut pas etre
+ * obtenu par une balise, l'emetteur SVG n'ayant pas de `<tspan>` de style.
+ */
+export function rangJourneeParties(rang: number): { chiffre: string; suffixe: string } {
+  if (!Number.isInteger(rang) || rang < 1) {
+    throw new RangeError(`Rang de journee invalide : ${rang}`);
+  }
+  return { chiffre: String(rang), suffixe: rang === 1 ? 'ère' : 'ème' };
+}
