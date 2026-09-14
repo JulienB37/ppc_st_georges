@@ -457,11 +457,11 @@ function enteteGroupe(
   // Le trace est plus haut que la bande utile — un coup de brosse baveux — donc
   // on l'etire sur une hauteur superieure et on le recentre verticalement.
   const largeurBande = largeurPilule + tailleIcone + ESPACES.s2;
-  // Le trace est plus etendu que la bande utile, dans les deux sens : ses bords
-  // sont ronges et ses extremites effilees. On l'etire donc genereusement
-  // au-dela du contenu, puis on le recentre, pour que texte et icones reposent
-  // tous sur la partie pleine du coup de brosse.
-  const debordV = h * 0.95;
+  // `transformPinceau` ne place que la bande PLEINE du trace : la hauteur
+  // demandee est donc directement l'epaisseur obtenue. Un leger debord
+  // vertical laisse respirer les bords ronges, et un debord horizontal plus
+  // large loge les extremites effilees en dehors du texte.
+  const debordV = h * 0.3;
   const debordH = h * 1.1;
   const noeuds: Noeud[] = [
     {

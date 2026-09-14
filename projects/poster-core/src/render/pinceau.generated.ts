@@ -3,32 +3,36 @@
 /**
  * Coup de pinceau vectoriel, fourni par le club.
  *
- * Trace en 2170 x 725 — un rapport de 2.99, soit la forme meme d'une
- * bande de date. Conserve en vectoriel plutot que rasterise : il reste net a
- * toute echelle et se recolore par simple changement de remplissage.
+ * Conserve en vectoriel plutot que rasterise : il reste net a toute echelle et
+ * se recolore par simple changement de remplissage, ce qui lui permet de suivre
+ * la teinte cyclee de chaque creneau.
  *
- * Le trace d'origine vient d'une vectorisation automatique, d'ou la
- * transformation interne qui renverse l'axe vertical.
+ * `bandePleine` est MESUREE, pas estimee : le trace venant d'une vectorisation
+ * automatique, sa partie pleine n'occupe qu'une fraction de son viewBox. Placer
+ * le viewBox entier dans une bande reviendrait a etirer du vide.
  */
 export const PINCEAU = {
-  largeurSource: 2170.0,
-  hauteurSource: 725.0,
+  largeurSource: 2170,
+  hauteurSource: 725,
+  /** Bande reellement encree, en unites du viewBox source. */
+  bandePleine: { haut: 240.9, hauteur: 199.9 },
   /** Transformation interne du trace vectorise, a appliquer en premier. */
   transformInterne: 'translate(0.000000,725.000000) scale(0.100000,-0.100000)',
-  /** Le trait principal. Les eclats satellites sont ecartes : a la taille d'une
-   *  bande de date ils ne seraient que du bruit. */
   chemin:
     'M19240 4889 c-221 -10 -323 -23 -347 -47 -14 -14 -40 -17 -142 -18 -69 -1 -344 -7 -611 -13 -355 -9 -553 -9 -740 -1 -140 6 -583 10 -985 9 -401 0 -737 2 -746 6 -9 3 -270 1 -580 -6 -707 -14 -2157 -19 -2469 -8 -747 27 -1283 32 -1940 20 -366 -7 -800 -16 -965 -22 -165 -5 -478 -12 -695 -15 -217 -4 -512 -8 -655 -10 -264 -5 -380 1 -339 16 12 5 104 18 205 30 101 12 186 23 188 26 2 2 1 7 -3 12 -4 4 -484 9 -1066 11 -1067 3 -1306 -2 -1650 -34 -85 -8 -306 -24 -490 -35 -184 -11 -393 -25 -465 -30 -71 -5 -249 -12 -395 -15 -146 -3 -355 -13 -465 -21 -110 -8 -339 -21 -510 -29 -295 -14 -400 -23 -525 -45 -30 -5 -111 -11 -180 -14 -69 -3 -213 -15 -320 -26 -277 -29 -765 -29 -819 0 -14 8 79 15 304 25 210 9 356 25 425 45 36 10 128 23 205 30 76 6 141 13 144 15 11 12 -13 13 -124 7 -66 -4 -149 -4 -185 0 -214 24 -987 -14 -1280 -63 -176 -29 -329 -79 -415 -133 -124 -80 -97 -128 54 -95 27 5 69 9 93 7 l43 -3 -62 -23 c-69 -25 -192 -109 -266 -180 -117 -114 -219 -311 -194 -377 6 -13 11 -12 39 5 64 39 66 16 3 -51 -70 -74 -74 -129 -10 -129 46 0 46 -17 -4 -94 -39 -62 -57 -120 -45 -150 7 -18 34 -22 34 -5 0 5 4 8 9 5 25 -16 29 -209 6 -270 -17 -44 -17 -49 0 -111 19 -72 70 -163 118 -213 84 -88 185 -122 353 -122 167 0 694 37 934 65 222 26 420 33 420 15 0 -5 -2 -10 -5 -10 -17 0 -301 -32 -365 -41 -150 -21 -320 -75 -320 -102 0 -16 173 -2 390 32 107 17 245 36 305 41 136 12 519 12 640 -1 166 -17 436 -22 530 -10 50 6 166 14 258 18 134 5 171 3 177 -7 10 -16 210 -3 580 36 294 32 636 44 1275 48 275 1 574 7 665 14 531 36 560 37 1290 34 404 -2 872 2 1040 7 168 6 469 15 670 21 201 5 425 12 498 16 118 6 132 5 132 -10 0 -14 18 -16 143 -16 78 1 243 5 367 10 1136 46 2539 67 4120 61 565 -2 731 1 718 14 -2 3 -49 9 -104 15 -127 14 -156 19 -148 31 7 11 253 11 449 -2 83 -5 447 -13 810 -19 363 -5 782 -14 930 -20 149 -6 407 -13 575 -15 168 -2 352 -8 410 -14 224 -23 1356 -43 1404 -25 9 3 16 12 16 20 0 20 64 33 191 39 63 3 215 10 339 15 210 10 382 24 423 36 9 3 17 11 17 19 0 7 -8 16 -17 20 -10 4 -251 11 -535 15 -510 9 -589 15 -524 40 53 20 167 29 476 40 309 11 369 17 373 35 1 6 -13 17 -31 27 -20 9 -29 19 -22 23 6 4 136 10 288 14 153 4 284 11 291 16 11 6 9 12 -10 26 l-23 17 44 6 c120 15 174 18 275 17 122 -1 163 6 179 32 14 22 -6 37 -47 37 -15 0 -62 8 -105 19 -42 10 -108 24 -147 31 -84 14 -145 31 -145 39 0 21 78 48 160 58 71 7 100 19 100 38 0 36 -86 41 -139 8 -19 -12 -45 -15 -123 -11 -115 6 -140 19 -82 43 22 9 62 21 89 26 79 16 127 30 122 35 -6 7 -168 8 -267 2 -91 -6 -165 8 -165 31 0 9 30 22 80 36 44 13 102 32 128 44 27 11 54 21 61 21 7 0 29 10 48 23 27 19 59 26 156 37 95 10 126 17 135 30 7 10 32 24 55 31 38 11 47 10 73 -5 30 -18 49 -15 49 8 0 36 -29 41 -209 38 -164 -3 -177 -2 -197 17 -12 10 -43 23 -70 26 -60 9 -87 21 -64 29 8 2 68 12 133 21 136 19 148 22 141 40 -11 28 -204 33 -559 14 -193 -11 -408 -5 -434 10 -21 13 21 20 204 35 194 17 256 23 340 36 80 13 414 34 493 32 59 -2 62 -1 52 18 -9 16 -20 19 -63 17 -75 -3 -443 22 -502 34 -83 17 -115 30 -115 44 0 14 12 18 123 46 57 14 67 26 32 39 -36 14 -22 30 24 30 21 0 44 6 50 14 17 21 -1 28 -52 21 -49 -6 -273 8 -284 19 -12 12 17 24 76 30 194 22 291 52 291 91 0 26 -74 48 -202 60 -49 5 -68 11 -68 21 0 8 8 14 17 14 13 0 14 3 5 12 -7 7 -115 17 -295 28 -236 14 -287 20 -310 35 -23 14 -39 16 -91 11 -35 -3 -77 -11 -93 -16 -31 -11 -487 -29 -546 -22 -20 2 -37 8 -37 12 0 17 -3 16 385 46 68 6 83 9 60 15 -38 8 -100 8 -345 -2z',
 } as const;
 
 /**
- * Transformation menant le trace source dans un rectangle donne.
+ * Transformation menant la BANDE PLEINE du trace dans un rectangle donne.
  *
- * L'etirement est volontairement non uniforme : un coup de pinceau allonge
- * reste credible, et la bande doit s'adapter a la longueur de la date.
+ * L'etirement horizontal est volontairement non uniforme : un coup de brosse
+ * allonge reste credible, et la bande doit suivre la longueur de la date.
  */
 export function transformPinceau(x: number, y: number, largeur: number, hauteur: number): string {
   const sx = largeur / PINCEAU.largeurSource;
-  const sy = hauteur / PINCEAU.hauteurSource;
-  return `translate(${x} ${y}) scale(${sx} ${sy}) ${PINCEAU.transformInterne}`;
+  const sy = hauteur / PINCEAU.bandePleine.hauteur;
+  return (
+    `translate(${x} ${y}) scale(${sx} ${sy}) ` +
+    `translate(0 ${-PINCEAU.bandePleine.haut}) ${PINCEAU.transformInterne}`
+  );
 }
