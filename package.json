@@ -16,6 +16,7 @@
     "assets:verify": "node --experimental-strip-types tools/verify-assets.mts",
     "render": "esbuild tools/render.mts --bundle --platform=node --format=esm --packages=external --outfile=.tmp/render.mjs --log-level=warning && node .tmp/render.mjs",
     "spike:rendu": "node tools/spikes/resvg-fontkit.mjs",
+    "spike:filtres": "node tools/spikes/resvg-filtres.mjs",
     "render:legacy": "cd legacy && bun run index.ts"
   },
   "private": true,

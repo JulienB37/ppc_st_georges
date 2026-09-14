@@ -26,6 +26,7 @@ interface Commun {
 
 export interface NoeudRect extends Commun {
   type: 'rect';
+  filtre?: string;
   x: number;
   y: number;
   largeur: number;
@@ -50,6 +51,7 @@ export interface NoeudCercle extends Commun {
 
 export interface NoeudEllipse extends Commun {
   type: 'ellipse';
+  filtre?: string;
   cx: number;
   cy: number;
   rx: number;
@@ -61,6 +63,7 @@ export interface NoeudEllipse extends Commun {
 
 export interface NoeudChemin extends Commun {
   type: 'chemin';
+  filtre?: string;
   d: string;
   remplissage?: string;
   contour?: string;
@@ -109,6 +112,7 @@ export interface NoeudImage extends Commun {
 
 export interface NoeudGroupe extends Commun {
   type: 'groupe';
+  filtre?: string;
   enfants: Noeud[];
   transform?: string;
   clip?: string;
@@ -153,11 +157,51 @@ export type Degrade =
     }
   | { id: string; type: 'radial'; cx: number; cy: number; r: number; etapes: EtapeDegrade[] };
 
+/**
+ * Filtres de matiere, references par `filter="url(#id)"`.
+ *
+ * Deux effets seulement, et ils suffisent a sortir l'affiche du registre
+ * « aplat vectoriel lisse » :
+ *
+ * - `peinture` deforme le contour d'une forme par un bruit fractal, ce qui
+ *   donne des bords dechires de coup de pinceau au lieu d'une courbe de
+ *   Bezier parfaite ;
+ * - `grain` module l'interieur d'une forme, pour que la couleur ne soit pas
+ *   parfaitement uniforme.
+ *
+ * Le type est ferme plutot qu'une chaine de primitives libre : l'emetteur
+ * reste le seul endroit qui connaisse la syntaxe SVG, et un filtre mal forme
+ * ne compile pas.
+ */
+export type Filtre =
+  | {
+      id: string;
+      type: 'peinture';
+      /** Echelle du bruit : plus bas, plus les accidents sont larges. */
+      frequence: number;
+      octaves: number;
+      graine: number;
+      /** Amplitude de la deformation, en unites de la scene. */
+      amplitude: number;
+      /** Debordement autorise autour de la forme, en pourcentage. */
+      marge: number;
+    }
+  | {
+      id: string;
+      type: 'grain';
+      frequence: number;
+      octaves: number;
+      graine: number;
+      /** 0 = invisible, 1 = tres marque. */
+      intensite: number;
+    };
+
 export interface Scene {
   largeur: number;
   hauteur: number;
   decoupes: Decoupe[];
   degrades: Degrade[];
+  filtres: Filtre[];
   noeuds: Noeud[];
 }
 

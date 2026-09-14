@@ -5,7 +5,7 @@ import { formatCreneau } from '../format/creneau';
 import { ordinalJournee } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
 import { decorNocturne } from './decor';
-import type { Boite, Decoupe, Degrade, Noeud, NoeudTexte, Scene } from './scene';
+import type { Boite, Decoupe, Degrade, Filtre, Noeud, NoeudTexte, Scene } from './scene';
 import {
   CADRAGE_LOGO,
   COULEURS,
@@ -283,12 +283,20 @@ function bandeau(
   noeuds.push({
     type: 'groupe',
     role: 'accroche-haute',
-    transform: `rotate(-6 ${largeurAffiche - MARGE_X} 60)`,
+    transform: `rotate(-6 ${largeurAffiche - MARGE_X - 22} 56)`,
     enfants: lignesAccroche.map((ligne, i) =>
-      texte(ligne, largeurAffiche - MARGE_X, 52 + i * 40, styleAccroche, COULEURS.blanc, moteur, {
-        ancre: 'end',
-        opacite: 0.95,
-      }),
+      texte(
+        ligne,
+        largeurAffiche - MARGE_X - 22,
+        48 + i * 38,
+        styleAccroche,
+        COULEURS.blanc,
+        moteur,
+        {
+          ancre: 'end',
+          opacite: 0.95,
+        },
+      ),
     ),
   });
 
@@ -791,6 +799,7 @@ export function composerAffiche(
 
   const decor = decorNocturne(format, couleurAccent, HAUTEUR_BANDEAU);
   const degrades: Degrade[] = [...decor.degrades];
+  const filtres: Filtre[] = [...decor.filtres];
   const noeuds: Noeud[] = [
     // Le decor est regroupe et non disperse : il deborde volontairement du
     // cadre — halos, coups de pinceau, raquette — et les invariants de mise en
@@ -875,8 +884,12 @@ export function composerAffiche(
     });
   }
 
+  // Le grain passe par-dessus tout : c'est lui qui enleve au degrade son
+  // aspect parfaitement propre.
+  noeuds.push({ type: 'groupe', role: 'decor-avant', enfants: decor.avant });
+
   return {
-    scene: { largeur, hauteur, decoupes, degrades, noeuds },
+    scene: { largeur, hauteur, decoupes, degrades, filtres, noeuds },
     densite,
     diagnostics,
     zoneContenu,

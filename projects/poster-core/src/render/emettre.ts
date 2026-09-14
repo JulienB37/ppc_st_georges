@@ -1,4 +1,4 @@
-import type { Decoupe, Degrade, Noeud, Scene } from './scene';
+import type { Decoupe, Degrade, Filtre, Noeud, Scene } from './scene';
 
 /**
  * Emission du SVG.
@@ -46,6 +46,7 @@ function emettreNoeud(noeud: Noeud): string {
         ['stroke', noeud.contour],
         ['stroke-width', noeud.epaisseur],
         ['opacity', noeud.opacite],
+        ['filter', noeud.filtre ? `url(#${noeud.filtre})` : undefined],
       ])}/>`;
 
     case 'cercle':
@@ -68,6 +69,7 @@ function emettreNoeud(noeud: Noeud): string {
         ['fill', noeud.remplissage ?? 'none'],
         ['opacity', noeud.opacite],
         ['transform', noeud.transform],
+        ['filter', noeud.filtre ? `url(#${noeud.filtre})` : undefined],
       ])}/>`;
 
     case 'chemin':
@@ -78,6 +80,7 @@ function emettreNoeud(noeud: Noeud): string {
         ['stroke-width', noeud.epaisseur],
         ['stroke-linecap', noeud.contour ? 'round' : undefined],
         ['opacity', noeud.opacite],
+        ['filter', noeud.filtre ? `url(#${noeud.filtre})` : undefined],
       ])}/>`;
 
     case 'texte':
@@ -124,6 +127,7 @@ function emettreNoeud(noeud: Noeud): string {
         ['transform', noeud.transform],
         ['clip-path', noeud.clip ? `url(#${noeud.clip})` : undefined],
         ['opacity', noeud.opacite],
+        ['filter', noeud.filtre ? `url(#${noeud.filtre})` : undefined],
       ])}>${enfants}</g>`;
     }
   }
@@ -158,6 +162,77 @@ function emettreDegrades(degrades: Degrade[]): string {
         ['cy', d.cy],
         ['r', d.r],
       ])}>${etapes}</radialGradient>`;
+    })
+    .join('');
+}
+
+function emettreFiltres(filtres: Filtre[]): string {
+  return filtres
+    .map((f) => {
+      if (f.type === 'peinture') {
+        // Le bruit fractal sert de carte de deplacement : chaque pixel du
+        // contour est pousse selon les canaux R et G du bruit, ce qui dechire
+        // les bords. C'est ce qui distingue un coup de pinceau d'un aplat.
+        return (
+          `<filter${attributs([
+            ['id', f.id],
+            ['x', `${-f.marge}%`],
+            ['y', `${-f.marge}%`],
+            ['width', `${100 + 2 * f.marge}%`],
+            ['height', `${100 + 2 * f.marge}%`],
+          ])}>` +
+          `<feTurbulence${attributs([
+            ['type', 'fractalNoise'],
+            ['baseFrequency', f.frequence],
+            ['numOctaves', f.octaves],
+            ['seed', f.graine],
+            ['result', 'bruit'],
+          ])}/>` +
+          `<feDisplacementMap${attributs([
+            ['in', 'SourceGraphic'],
+            ['in2', 'bruit'],
+            ['scale', f.amplitude],
+            ['xChannelSelector', 'R'],
+            ['yChannelSelector', 'G'],
+          ])}/>` +
+          `</filter>`
+        );
+      }
+
+      // Grain : le bruit est decoupe a la forme source puis multiplie par
+      // elle, ce qui module la couleur sans deborder.
+      return (
+        `<filter${attributs([['id', f.id]])}>` +
+        `<feTurbulence${attributs([
+          ['type', 'fractalNoise'],
+          ['baseFrequency', f.frequence],
+          ['numOctaves', f.octaves],
+          ['seed', f.graine],
+          ['result', 'grain'],
+        ])}/>` +
+        `<feComposite${attributs([
+          ['in', 'grain'],
+          ['in2', 'SourceGraphic'],
+          ['operator', 'in'],
+          ['result', 'masque'],
+        ])}/>` +
+        `<feComponentTransfer${attributs([
+          ['in', 'masque'],
+          ['result', 'atténué'],
+        ])}>` +
+        `<feFuncA${attributs([
+          ['type', 'linear'],
+          ['slope', f.intensite],
+          ['intercept', 0],
+        ])}/>` +
+        `</feComponentTransfer>` +
+        `<feBlend${attributs([
+          ['in', 'SourceGraphic'],
+          ['in2', 'atténué'],
+          ['mode', 'multiply'],
+        ])}/>` +
+        `</filter>`
+      );
     })
     .join('');
 }
@@ -204,7 +279,10 @@ export function emettreSvg(scene: Scene, options: OptionsEmission = {}): string 
     `<svg xmlns="http://www.w3.org/2000/svg" ` +
     `viewBox="0 0 ${n(scene.largeur)} ${n(scene.hauteur)}">`;
 
-  const defs = emettreDegrades(scene.degrades) + emettreDecoupes(scene.decoupes);
+  const defs =
+    emettreDegrades(scene.degrades) +
+    emettreFiltres(scene.filtres) +
+    emettreDecoupes(scene.decoupes);
 
   return (
     ouverture +

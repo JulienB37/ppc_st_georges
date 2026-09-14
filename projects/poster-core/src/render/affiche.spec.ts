@@ -112,7 +112,11 @@ describe('composerAffiche — invariants de mise en page', () => {
       // Deux exclusions, chacune pour une raison distincte : le decor deborde
       // du cadre par construction, et les sous-arbres inclines expriment leurs
       // coordonnees dans un autre repere.
-      const noeuds = [...parcourirPlanaire(scene.noeuds.filter((n) => n.role !== 'decor'))];
+      const noeuds = [
+        ...parcourirPlanaire(
+          scene.noeuds.filter((n) => n.role !== 'decor' && n.role !== 'decor-avant'),
+        ),
+      ];
       const cadre: Boite = { x: 0, y: 0, largeur: scene.largeur, hauteur: scene.hauteur };
 
       it('ne place rien hors du cadre', () => {
@@ -216,7 +220,9 @@ describe('composerAffiche — sur les donnees reelles du club', () => {
       expect(cartes).toHaveLength(nbRencontres);
 
       const cadre: Boite = { x: 0, y: 0, largeur: scene.largeur, hauteur: scene.hauteur };
-      for (const noeud of parcourirPlanaire(scene.noeuds.filter((n) => n.role !== 'decor'))) {
+      for (const noeud of parcourirPlanaire(
+        scene.noeuds.filter((n) => n.role !== 'decor' && n.role !== 'decor-avant'),
+      )) {
         const boite = boiteDe(noeud);
         if (boite) expect(contient(cadre, boite, 1), `${noeud.role}`).toBe(true);
       }
