@@ -431,7 +431,9 @@ function enteteGroupe(
   indexGroupe: number,
 ): Noeud[] {
   const { densite, moteur } = ctx;
-  const h = Math.min(46, densite.hauteurEnteteGroupe * 0.74);
+  // La bande occupe l'essentiel de la hauteur reservee. Un coup de pinceau
+  // s'affine a ses extremites : trop basse, la bande etrangle son texte.
+  const h = Math.min(62, densite.hauteurEnteteGroupe * 0.84);
   const cy = y + h / 2;
   // Une teinte par creneau plutot qu'une teinte par lieu : cela rythme la
   // liste, le lieu restant porte par son icone et son libelle.
@@ -439,8 +441,8 @@ function enteteGroupe(
 
   const date = groupe.creneau.libelleOverride ?? formatCreneau(groupe.creneau.debutIso);
   const lieu = groupe.domicile ? 'À domicile' : "À l'extérieur";
-  const styleDate = styleTexte(Math.max(19, h * 0.46), GRAISSES.fort);
-  const styleLieu = styleTexte(Math.max(16, h * 0.38), GRAISSES.appuye);
+  const styleDate = styleTexte(Math.max(21, h * 0.42), GRAISSES.fort);
+  const styleLieu = styleTexte(Math.max(17, h * 0.34), GRAISSES.appuye);
 
   const tailleIcone = h * 0.5;
   const largeurDate = moteur.largeur(date, styleDate);
@@ -455,16 +457,21 @@ function enteteGroupe(
   // Le trace est plus haut que la bande utile — un coup de brosse baveux — donc
   // on l'etire sur une hauteur superieure et on le recentre verticalement.
   const largeurBande = largeurPilule + tailleIcone + ESPACES.s2;
-  const debord = h * 0.55;
+  // Le trace est plus etendu que la bande utile, dans les deux sens : ses bords
+  // sont ronges et ses extremites effilees. On l'etire donc genereusement
+  // au-dela du contenu, puis on le recentre, pour que texte et icones reposent
+  // tous sur la partie pleine du coup de brosse.
+  const debordV = h * 0.95;
+  const debordH = h * 1.1;
   const noeuds: Noeud[] = [
     {
       type: 'groupe',
       role: 'entete-groupe',
       transform: transformPinceau(
-        x - debord * 0.3,
-        y - debord / 2,
-        largeurBande + debord * 0.6,
-        h + debord,
+        x - debordH * 0.45,
+        y - debordV / 2,
+        largeurBande + debordH,
+        h + debordV,
       ),
       enfants: [{ type: 'chemin', d: PINCEAU.chemin, remplissage: teinte }],
     },

@@ -181,10 +181,10 @@ export const NOMINAL = {
   hauteurPuce: 32,
   taillePuce: 22,
   largeurFilet: 8,
-  hauteurEnteteGroupe: 64,
+  hauteurEnteteGroupe: 80,
   ecartGroupe: 32,
   /** Hauteur consommee par un en-tete de groupe, ecart compris. */
-  blocGroupe: 96,
+  blocGroupe: 112,
 } as const;
 
 /**
@@ -200,7 +200,7 @@ export const PLANCHERS = {
   hauteurRangee: 52,
   ecartRangee: 8,
   hauteurPuce: 22,
-  hauteurEnteteGroupe: 44,
+  hauteurEnteteGroupe: 58,
   ecartGroupe: 20,
 } as const;
 
@@ -210,7 +210,7 @@ export const PLAFONDS = {
   diametreLogo: 104,
   tailleNom: 40,
   hauteurPuce: 38,
-  hauteurEnteteGroupe: 78,
+  hauteurEnteteGroupe: 94,
   ecartGroupe: 44,
 } as const;
 
