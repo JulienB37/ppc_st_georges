@@ -6,13 +6,13 @@ import { rangJourneeParties } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
 import { decorPhoto, type FondPhoto } from './decor';
 import { PINCEAU, transformPinceau } from './pinceau.generated';
+import { ANNEAU, transformAnneau } from './anneau.generated';
 import { VS, transformVs } from './vs.generated';
 import type { Boite, Decoupe, Degrade, Filtre, Noeud, NoeudTexte, Scene } from './scene';
 import {
   BANDE_JOURNEE,
   CADRAGE_LOGO,
   COULEURS,
-  TEINTES_ANNEAU,
   TEINTES_CRENEAU,
   ESPACES,
   FORMATS,
@@ -23,7 +23,6 @@ import {
   RETRAIT_PANNEAU,
   ROTATION_GABARIT,
   RAYONS,
-  TRAITS,
   accent,
   type FamillePolice,
   type NomFormat,
@@ -74,6 +73,14 @@ export interface Composition {
 }
 
 const NOM_CLUB_DEFAUT = 'St Georges';
+
+/**
+ * Jeu entre l'anneau et la pastille, en part du disque libre de l'anneau.
+ *
+ * Mince a dessein : l'anneau doit se lire comme un cerne du logo, pas comme une
+ * seconde rondelle posee autour.
+ */
+const JEU_ANNEAU = 0.05;
 
 function styleTexte(taille: number, graisse: number, interlettrage = 0): StyleTexte {
   return { famille: POLICES.texte, graisse, taille, interlettrage };
@@ -133,10 +140,21 @@ export function cadrerLogo(logo: LogoResolu, diametre: number): Boite {
   return { x: -largeur / 2, y: -hauteur / 2, largeur, hauteur };
 }
 
+/**
+ * Pastille de logo, cerclee de l'anneau au pinceau du club.
+ *
+ * Le parametre est le diametre EXTERIEUR disponible, et non celui du logo : le
+ * trace du club occupe 23 % du rayon autour de son disque libre — mesure a la
+ * generation — et un appelant qui dimensionnerait le logo verrait l'anneau
+ * deborder de sa rangee.
+ *
+ * L'ordre de derivation est donc : place offerte, puis disque libre de
+ * l'anneau, puis jeu, puis logo.
+ */
 function pastille(
   cx: number,
   cy: number,
-  diametre: number,
+  diametreExterieur: number,
   logo: LogoResolu | undefined,
   libelle: string,
   moteur: MoteurTexte,
@@ -144,7 +162,11 @@ function pastille(
   idDecoupe: string,
   couleurAnneau: string,
 ): Noeud[] {
+  // Disque libre au centre de l'anneau, puis jeu, puis pastille.
+  const diametreLibre = (diametreExterieur * ANNEAU.rayonInterieur) / ANNEAU.rayonExterieur;
+  const diametre = diametreLibre * (1 - 2 * JEU_ANNEAU);
   const r = diametre / 2;
+
   const noeuds: Noeud[] = [
     {
       type: 'cercle',
@@ -153,8 +175,22 @@ function pastille(
       cy,
       r,
       remplissage: COULEURS.blanc,
-      contour: couleurAnneau,
-      epaisseur: TRAITS.contourPastille * 1.8,
+    },
+    {
+      type: 'groupe',
+      role: 'anneau',
+      transform: transformAnneau(cx, cy, diametreLibre),
+      enfants: [
+        {
+          type: 'groupe',
+          transform: ANNEAU.transformInterne,
+          enfants: ANNEAU.chemins.map((d) => ({
+            type: 'chemin' as const,
+            d,
+            remplissage: couleurAnneau,
+          })),
+        },
+      ],
     },
   ];
 
@@ -554,10 +590,8 @@ function rangee(
   largeur: number,
   indice: string,
   ctx: Contexte,
-  indexRangee: number,
   teinteCreneau: string,
 ): Noeud[] {
-  const teinteAnneau = TEINTES_ANNEAU[indexRangee % TEINTES_ANNEAU.length]!;
   const { densite, moteur } = ctx;
   const h = densite.hauteurRangee;
   const cy = y + h / 2;
@@ -576,8 +610,11 @@ function rangee(
     epaisseur: 1.5,
   });
 
-  const d = densite.diametreLogo;
-  const marge = 8;
+  // L'anneau deborde volontairement de la carte, dans l'ecart qui la separe de
+  // la suivante : lui faire tenir dans la hauteur de carte rognerait le logo
+  // d'un quart, alors que l'ecart entre rangees est vide.
+  const d = Math.min(densite.pasRangee * 0.96, largeur * 0.3);
+  const marge = 2;
   const cxGauche = x + marge + d / 2;
   const cxDroite = x + largeur - marge - d / 2;
 
@@ -594,7 +631,10 @@ function rangee(
       moteur,
       ctx.decoupes,
       `clip-l-${indice}`,
-      teinteAnneau,
+      // L'anneau du club prend la teinte du creneau, celui de l'adversaire
+      // reste blanc : la couleur dit « nous », et sur une liste scannee de haut
+      // en bas cela vaut mieux qu'un anneau cycle sans rapport avec rien.
+      teinteCreneau,
     ),
   );
 
@@ -615,7 +655,7 @@ function rangee(
       moteur,
       ctx.decoupes,
       `clip-r-${indice}`,
-      teinteAnneau,
+      COULEURS.blanc,
     ),
   );
 
@@ -720,10 +760,8 @@ function rangeeDuel(
   largeur: number,
   indice: string,
   ctx: Contexte,
-  indexRangee: number,
   teinteCreneau: string,
 ): Noeud[] {
-  const teinteAnneau = TEINTES_ANNEAU[indexRangee % TEINTES_ANNEAU.length]!;
   const { densite, moteur } = ctx;
   const h = densite.hauteurRangee;
   const noeuds: Noeud[] = [];
@@ -758,7 +796,7 @@ function rangeeDuel(
       moteur,
       ctx.decoupes,
       `clip-dl-${indice}`,
-      teinteAnneau,
+      teinteCreneau,
     ),
   );
 
@@ -779,7 +817,7 @@ function rangeeDuel(
       moteur,
       ctx.decoupes,
       `clip-dr-${indice}`,
-      teinteAnneau,
+      COULEURS.blanc,
     ),
   );
 
@@ -999,7 +1037,6 @@ export function composerAffiche(
   const largeurColonne =
     densite.colonnes === 2 ? (zoneContenu.largeur - ESPACES.s5) / 2 : zoneContenu.largeur;
 
-  let compteurRangee = 0;
   colonnes.forEach((groupes, iColonne) => {
     const xColonne = zoneContenu.x + iColonne * (largeurColonne + ESPACES.s5);
     // Le facteur de densite plafonne a 1,15 : une journee de deux rencontres
@@ -1022,16 +1059,7 @@ export function composerAffiche(
         const indice = `${iColonne}-${iGroupe}-${iRencontre}`;
         noeuds.push(
           ...(densite.variante === 'duel'
-            ? rangeeDuel(
-                rencontre,
-                xColonne,
-                y,
-                largeurColonne,
-                indice,
-                ctx,
-                compteurRangee++,
-                teinteCreneau,
-              )
+            ? rangeeDuel(rencontre, xColonne, y, largeurColonne, indice, ctx, teinteCreneau)
             : rangee(
                 rencontre,
                 groupe.domicile,
@@ -1040,7 +1068,6 @@ export function composerAffiche(
                 largeurColonne,
                 indice,
                 ctx,
-                compteurRangee++,
                 teinteCreneau,
               )),
         );
