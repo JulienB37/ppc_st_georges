@@ -15,6 +15,12 @@
  *
  * Le portrait suit le gabarit fourni par le club, qui est en 2:3. Facebook
  * recadre en 4:5 dans le fil mais l'affiche entiere reste visible au clic.
+ *
+ * Le carre reste declare — la loi de densite a ses propres seuils pour lui —
+ * mais il n'a PAS de gabarit, donc pas de panneaux. Composer une affiche carree
+ * echoue franchement plutot que de poser le contenu du portrait sur un cadre
+ * plus court : les panneaux etant mesures a y 494-1390, le contenu sortirait de
+ * 310 px sous le bord d'un cadre de 1080, en silence.
  */
 export const FORMATS = {
   portrait: { largeur: 1080, hauteur: 1620 },
@@ -23,9 +29,16 @@ export const FORMATS = {
 
 export type NomFormat = keyof typeof FORMATS;
 
+export interface Panneaux {
+  contenu: { x: number; y: number; largeur: number; hauteur: number };
+  partenaires: { x: number; y: number; largeur: number; hauteur: number };
+}
+
 /**
- * Panneaux noirs du gabarit fourni par le club, mesures sur l'image et
- * convertis dans le repere 1080 x 1620 :
+ * Panneaux noirs des gabarits, par format.
+ *
+ * Pour le portrait, mesures sur l'image et convertis dans le repere
+ * 1080 x 1620 :
  *   - contenu      : x 36-813,   y 494-1390  (777 x 896)
  *   - partenaires  : x 831-1069, y 620-1350  (238 x 730)
  *
@@ -33,11 +46,35 @@ export type NomFormat = keyof typeof FORMATS;
  * peint deja le blason, le titre, « LES RENCONTRES », les deux accroches
  * manuscrites et « Nos partenaires ». La composition ne fait que s'inscrire
  * dans les deux reserves laissees libres.
+ *
+ * Le carre n'y figure pas, faute de gabarit carre. C'est volontaire : un jeu de
+ * panneaux invente pour lui aurait l'air de fonctionner tout en posant le
+ * contenu sur un fond qui ne l'attend pas.
  */
-export const PANNEAUX = {
-  contenu: { x: 36, y: 494, largeur: 777, hauteur: 896 },
-  partenaires: { x: 831, y: 620, largeur: 238, hauteur: 730 },
-} as const;
+export const PANNEAUX_PAR_FORMAT: Partial<Record<NomFormat, Panneaux>> = {
+  portrait: {
+    contenu: { x: 36, y: 494, largeur: 777, hauteur: 896 },
+    partenaires: { x: 831, y: 620, largeur: 238, hauteur: 730 },
+  },
+};
+
+/**
+ * Panneaux d'un format, ou echec explicite.
+ *
+ * L'affiche n'est plus dessinee de toutes pieces : elle s'inscrit dans les
+ * reserves d'un gabarit. Sans gabarit, il n'y a rien ou s'inscrire, et le dire
+ * vaut mieux que de rendre une affiche fausse.
+ */
+export function panneauxDe(format: NomFormat): Panneaux {
+  const panneaux = PANNEAUX_PAR_FORMAT[format];
+  if (!panneaux) {
+    throw new Error(
+      `Le format « ${format} » n'a pas de gabarit : aucun panneau n'est mesure pour lui. ` +
+        `Fournir un gabarit et mesurer ses panneaux, ou composer en portrait.`,
+    );
+  }
+  return panneaux;
+}
 
 /** Marge interieure des panneaux, pour ne pas coller a leur bord arrondi. */
 export const RETRAIT_PANNEAU = 18;
@@ -59,20 +96,9 @@ export const RETRAIT_PANNEAU = 18;
  */
 export const BANDE_JOURNEE = { x: 278, y: 394, largeur: 330, hauteur: 56 } as const;
 
-/**
- * Cadre du format carre, qui n'a pas encore de gabarit.
- *
- * Il retombe donc sur une geometrie calculee — bandeau de titre en haut, bande
- * de partenaires en bas — la ou le portrait lit ses reserves sur l'image.
- */
-const HAUTEUR_BANDEAU_CARRE = 330;
-const HAUTEUR_SPONSORS_CARRE = 176;
-
 /** Hauteur reellement offerte au contenu, retrait interieur deduit. */
 export function hauteurContenu(format: NomFormat): number {
-  return format === 'portrait'
-    ? PANNEAUX.contenu.hauteur - 2 * RETRAIT_PANNEAU
-    : FORMATS.carre.hauteur - HAUTEUR_BANDEAU_CARRE - HAUTEUR_SPONSORS_CARRE;
+  return panneauxDe(format).contenu.hauteur - 2 * RETRAIT_PANNEAU;
 }
 
 /**

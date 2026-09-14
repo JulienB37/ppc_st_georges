@@ -17,7 +17,7 @@ import {
   ESPACES,
   FORMATS,
   GRAISSES,
-  PANNEAUX,
+  panneauxDe,
   PLANCHERS,
   POLICES,
   RETRAIT_PANNEAU,
@@ -1025,15 +1025,19 @@ export function composerAffiche(
 ): Composition {
   const format = options.format ?? 'portrait';
   const { largeur, hauteur } = FORMATS[format];
+  // Echoue ici si le format n'a pas de gabarit, avant tout calcul de mise en
+  // page : mieux vaut une erreur nette qu'une affiche dont le contenu sort du
+  // cadre.
+  const panneaux = panneauxDe(format);
   const couleurAccent = accent(affiche.categorie);
 
   // Les deux panneaux du gabarit fixent les zones : plus rien a calculer, il
   // suffit de s'y inscrire avec un retrait pour ne pas coller aux bords.
   const zoneContenu: Boite = {
-    x: PANNEAUX.contenu.x + RETRAIT_PANNEAU,
-    y: PANNEAUX.contenu.y + RETRAIT_PANNEAU,
-    largeur: PANNEAUX.contenu.largeur - 2 * RETRAIT_PANNEAU,
-    hauteur: PANNEAUX.contenu.hauteur - 2 * RETRAIT_PANNEAU,
+    x: panneaux.contenu.x + RETRAIT_PANNEAU,
+    y: panneaux.contenu.y + RETRAIT_PANNEAU,
+    largeur: panneaux.contenu.largeur - 2 * RETRAIT_PANNEAU,
+    hauteur: panneaux.contenu.hauteur - 2 * RETRAIT_PANNEAU,
   };
 
   const nbRencontres = affiche.groupes.reduce((t, g) => t + g.rencontres.length, 0);
@@ -1118,10 +1122,10 @@ export function composerAffiche(
 
   noeuds.push(
     ...panneauSponsors(assets, {
-      x: PANNEAUX.partenaires.x + RETRAIT_PANNEAU / 2,
-      y: PANNEAUX.partenaires.y + RETRAIT_PANNEAU / 2,
-      largeur: PANNEAUX.partenaires.largeur - RETRAIT_PANNEAU,
-      hauteur: PANNEAUX.partenaires.hauteur - RETRAIT_PANNEAU,
+      x: panneaux.partenaires.x + RETRAIT_PANNEAU / 2,
+      y: panneaux.partenaires.y + RETRAIT_PANNEAU / 2,
+      largeur: panneaux.partenaires.largeur - RETRAIT_PANNEAU,
+      hauteur: panneaux.partenaires.hauteur - RETRAIT_PANNEAU,
     }),
   );
 

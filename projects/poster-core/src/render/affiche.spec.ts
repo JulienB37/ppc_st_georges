@@ -190,6 +190,19 @@ describe('composerAffiche — invariants de mise en page', () => {
   }
 });
 
+describe('composerAffiche — formats sans gabarit', () => {
+  it('echoue franchement plutot que de poser le contenu hors du cadre', () => {
+    // Les panneaux sont mesures sur le gabarit portrait, a y 494-1390. Sur un
+    // cadre carre de 1080, le panneau de contenu sortirait de 310 px sous le
+    // bord — et rien ne l'aurait signale, les invariants s'appuyant sur la
+    // zone de contenu rendue par la composition elle-meme.
+    const affiche = afficheDe([groupe(true, 2)]);
+    expect(() =>
+      composerAffiche(affiche, 1, assets(['club-test']), moteur, { format: 'carre' }),
+    ).toThrow(/gabarit/);
+  });
+});
+
 describe('composerAffiche — sortie', () => {
   const affiche = afficheDe([groupe(false, 1), groupe(true, 5), groupe(true, 2)]);
   const { scene, diagnostics } = composerAffiche(affiche, 12, assets(['club-test']), moteur);
