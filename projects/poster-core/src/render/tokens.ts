@@ -125,21 +125,27 @@ export const COULEURS = {
  * cela rythme la liste et donne de la vie, le lieu restant porte par son icone
  * et son libelle.
  *
- * Les trois premieres sont reprises d'une maquette fournie par le club. Elles
- * ne renvoient PLUS a la gamme de projection : celle-ci sert au decor, et la
- * confondre avec les teintes de creneau ferait deriver l'une avec l'autre. Le
- * rouge d'identite `rougePpc` en est egalement distinct, pour la meme raison.
+ * Les trois premieres sont reprises d'une maquette fournie par le club, puis
+ * FONCEES d'un tiers — chaque canal multiplie par 2/3. Elles ne renvoient PLUS
+ * a la gamme de projection : celle-ci sert au decor, et la confondre avec les
+ * teintes de creneau ferait deriver l'une avec l'autre. Le rouge d'identite
+ * `rougePpc` en est egalement distinct, pour la meme raison.
  *
- * Valeurs estimees a l'oeil sur la maquette, faute de pouvoir en echantillonner
- * les pixels. A reprendre par la mesure si le fichier est fourni.
+ * L'assombrissement a un effet mesurable sur la lisibilite du texte blanc pose
+ * dessus : le contraste passe de 4,8 a 8,8:1 sur le rouge, de 2,8 a 5,7:1 sur
+ * le turquoise et de 6,1 a 10,2:1 sur le violet. Le turquoise clair etait donc
+ * sous le seuil AA de 4,5:1 — le defaut meme que cette refonte corrige.
+ *
+ * Teintes de depart estimees a l'oeil sur la maquette, faute de pouvoir en
+ * echantillonner les pixels. A reprendre par la mesure si le fichier est fourni.
  */
 export const TEINTES_CRENEAU = [
-  /** Rouge framboise : un cran plus rose que le rouge d'identite du club. */
-  '#DE1B4B',
-  /** Turquoise : plus profond et plus vert que le cyan de projection. */
-  '#1FA9B4',
+  /** Rouge framboise sombre : un cran plus rose que le rouge d'identite. */
+  '#941232',
+  /** Turquoise profond, plus vert que le cyan de projection. */
+  '#157178',
   /** Violet amethyste, et non le violet electrique de la gamme de projection. */
-  '#8B3FAE',
+  '#5D2A74',
   /**
    * Quatrieme creneau, rare : trois suffisent a une journee ordinaire, mais la
    * loi de densite en accepte quatre.
