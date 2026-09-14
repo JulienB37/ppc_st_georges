@@ -10,23 +10,52 @@
  * 1080**. Toutes les valeurs deviennent des entiers lisibles.
  */
 
-/** Formats de publication. Le 4:5 occupe le plus de surface dans un fil mobile. */
+/**
+ * Formats de publication.
+ *
+ * Le portrait suit le gabarit fourni par le club, qui est en 2:3. Facebook
+ * recadre en 4:5 dans le fil mais l'affiche entiere reste visible au clic.
+ */
 export const FORMATS = {
-  portrait: { largeur: 1080, hauteur: 1350 },
+  portrait: { largeur: 1080, hauteur: 1620 },
   carre: { largeur: 1080, hauteur: 1080 },
 } as const;
 
 export type NomFormat = keyof typeof FORMATS;
 
-export const MARGE_X = 48;
-/** Largeur utile entre marges. */
-export const LARGEUR_UTILE = FORMATS.portrait.largeur - 2 * MARGE_X;
-export const HAUTEUR_BANDEAU = 330;
-export const HAUTEUR_SPONSORS = 176;
-export const PADDING_CONTENU_Y = 24;
+/**
+ * Panneaux noirs du gabarit fourni par le club, mesures sur l'image et
+ * convertis dans le repere 1080 x 1620 :
+ *   - contenu      : x 36-813,   y 494-1390  (777 x 896)
+ *   - partenaires  : x 831-1069, y 620-1350  (238 x 730)
+ *
+ * Ce ne sont pas des choix de mise en page, ce sont des mesures : le gabarit
+ * peint deja le blason, le titre, « LES RENCONTRES », les deux accroches
+ * manuscrites et « Nos partenaires ». La composition ne fait que s'inscrire
+ * dans les deux reserves laissees libres.
+ */
+export const PANNEAUX = {
+  contenu: { x: 36, y: 494, largeur: 777, hauteur: 896 },
+  partenaires: { x: 831, y: 620, largeur: 238, hauteur: 730 },
+} as const;
 
+/** Marge interieure des panneaux, pour ne pas coller a leur bord arrondi. */
+export const RETRAIT_PANNEAU = 18;
+
+/**
+ * Cadre du format carre, qui n'a pas encore de gabarit.
+ *
+ * Il retombe donc sur une geometrie calculee — bandeau de titre en haut, bande
+ * de partenaires en bas — la ou le portrait lit ses reserves sur l'image.
+ */
+const HAUTEUR_BANDEAU_CARRE = 330;
+const HAUTEUR_SPONSORS_CARRE = 176;
+
+/** Hauteur reellement offerte au contenu, retrait interieur deduit. */
 export function hauteurContenu(format: NomFormat): number {
-  return FORMATS[format].hauteur - HAUTEUR_BANDEAU - HAUTEUR_SPONSORS;
+  return format === 'portrait'
+    ? PANNEAUX.contenu.hauteur - 2 * RETRAIT_PANNEAU
+    : FORMATS.carre.hauteur - HAUTEUR_BANDEAU_CARRE - HAUTEUR_SPONSORS_CARRE;
 }
 
 /**

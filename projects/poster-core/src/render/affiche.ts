@@ -16,10 +16,10 @@ import {
   FORMATS,
   GRAISSES,
   INCLINAISON,
-  MARGE_X,
-  PADDING_CONTENU_Y,
+  PANNEAUX,
   PLANCHERS,
   POLICES,
+  RETRAIT_PANNEAU,
   RAYONS,
   TRAITS,
   accent,
@@ -54,14 +54,9 @@ export interface AssetsAffiche {
   sponsors: SponsorResolu[];
 }
 
-/** Ou poser les logos partenaires. */
-export type DispositionSponsors = 'bande' | 'colonne';
-
 export interface OptionsComposition {
   format?: NomFormat;
   nomClub?: string;
-  dispositionSponsors?: DispositionSponsors;
-  accrocheBasse?: string;
 }
 
 export interface Diagnostic {
@@ -77,22 +72,6 @@ export interface Composition {
 }
 
 const NOM_CLUB_DEFAUT = 'St Georges';
-const ACCROCHE_BASSE = 'Ensemble\npour la passion du Ping !';
-
-/**
- * Zones, calees sur les reperes mesures dans le fond livre (en repere
- * 1080 x 1350) :
- *   - titre incruste        : x 321-838, y 27-262
- *   - raquettes et balle    : x 558-1072, y 134-424
- *   - anneau rouge du blason: centre 155,195
- *   - silhouette du joueur  : x 775-1036, y 1112-1340
- * Le contenu s'inscrit donc entre les raquettes et la silhouette.
- */
-const HAUT_CONTENU = 398;
-const BAS_CONTENU = 1158;
-const LARGEUR_COLONNE_SPONSORS = 206;
-const ECART_COLONNE = 26;
-const HAUTEUR_BANDE_SPONSORS = 160;
 
 /** Decalage horizontal induit par `skewX` a une ordonnee donnee. */
 const PENTE = Math.tan((-INCLINAISON * Math.PI) / 180);
@@ -106,10 +85,6 @@ function styleTexte(taille: number, graisse: number, interlettrage = 0): StyleTe
 
 function styleDisplay(taille: number): StyleTexte {
   return { famille: POLICES.display, graisse: GRAISSES.display, taille };
-}
-
-function styleManuscrit(taille: number): StyleTexte {
-  return { famille: POLICES.manuscrit, graisse: GRAISSES.manuscrit, taille };
 }
 
 interface OptionsTexte {
@@ -305,112 +280,46 @@ function iconeRepere(x: number, y: number, taille: number, couleur: string): Noe
   };
 }
 
-function bandeau(
-  affiche: Affiche,
-  numeroJournee: number,
-  assets: AssetsAffiche,
-  moteur: MoteurTexte,
-  options: OptionsComposition,
-): Noeud[] {
+function bandeau(affiche: Affiche, numeroJournee: number, moteur: MoteurTexte): Noeud[] {
   const couleurAccent = accent(affiche.categorie);
-  const noeuds: Noeud[] = [];
 
-  // Le titre « CHAMPIONNAT PAR EQUIPE » et l'accroche manuscrite du haut sont
-  // INCRUSTES dans le fond livre : les redessiner les dedoublerait. Le bandeau
-  // ne pose donc que ce que le fond n'a pas.
+  // Seul element du haut que le gabarit ne porte pas : le rang de la journee,
+  // qui change chaque semaine. Il se pose sous « LES RENCONTRES », sur la
+  // bande peinte que le gabarit y laisse libre.
+  const libelle =
+    affiche.categorie === 'jeunes'
+      ? `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE — JEUNES`
+      : `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE`;
+  const style = styleDisplay(34);
+  const largeur = moteur.largeur(libelle, style) + ESPACES.s6;
+  const y = 404;
+  const h = 62;
+  const x = PANNEAUX.contenu.x + 24;
 
-  // Blason, dans l'anneau rouge que le fond lui reserve.
-  //
-  // Interieur de l'anneau mesure sur l'image source : x 57-247, y 37-253, soit
-  // un centre a (152, 145) et 190 x 216 d'espace libre. Ramene au repere de
-  // l'affiche (facteur 1,164) : centre (177, 169), interieur 221 x 251.
-  //
-  // `cadrerLogo` inscrit le rapport du logo dans un cercle de diametre donne ;
-  // pour un rapport de 1,29 la largeur vaut 0,839 fois ce diametre. Un diametre
-  // de 305 donne donc 256 de large : le blason effleure l'anneau, ce qui est
-  // l'effet voulu. Au-dela il le chevaucherait, et l'anneau cesserait de lire
-  // comme un cadre.
-  const dBlason = 305;
-  const cadre = cadrerLogo(assets.blason, dBlason);
-  noeuds.push({
-    type: 'image',
-    role: 'blason',
-    x: 183 + cadre.x,
-    y: 172 + cadre.y,
-    largeur: cadre.largeur,
-    hauteur: cadre.hauteur,
-    source: assets.blason.source,
-    filtre: 'contour-fin',
-  });
-
-  // Banniere « LES RENCONTRES » et pastille de journee, sous le titre incruste.
-  const yBanniere = 300;
-  const hBanniere = 62;
-  const cyBanniere = yBanniere + hBanniere / 2;
-  const libelleRencontres =
-    affiche.categorie === 'jeunes' ? 'LES RENCONTRES JEUNES' : 'LES RENCONTRES';
-  const styleBanniere = styleDisplay(42);
-  const largeurBanniere = moteur.largeur(libelleRencontres, styleBanniere) + ESPACES.s6;
-
-  const libelleJournee = `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE`;
-  const styleJournee = styleDisplay(28);
-  const largeurJournee = moteur.largeur(libelleJournee, styleJournee) + ESPACES.s5;
-  const xBanniere = 258;
-  const xJournee = xBanniere + largeurBanniere + ESPACES.s3;
-
-  noeuds.push({
-    type: 'groupe',
-    role: 'banniere',
-    transform: `skewX(${INCLINAISON})`,
-    enfants: [
-      {
-        type: 'chemin',
-        role: 'banniere-fond',
-        // Coins VIFS et cisaillement, comme les surlignages du fond livre.
-        d: parallelogramme(
-          xBanniere + compenser(yBanniere),
-          yBanniere,
-          largeurBanniere,
-          hBanniere,
-          14,
+  return [
+    {
+      type: 'groupe',
+      role: 'journee',
+      transform: `skewX(${INCLINAISON})`,
+      enfants: [
+        {
+          type: 'chemin',
+          role: 'pastille-journee',
+          d: parallelogramme(x + compenser(y), y, largeur, h, 14),
+          remplissage: couleurAccent,
+        },
+        texte(
+          libelle,
+          x + largeur / 2 + compenser(y + h / 2),
+          moteur.ligneDeBaseCentree(style, y + h / 2),
+          style,
+          COULEURS.blanc,
+          moteur,
+          { role: 'journee-texte', ancre: 'middle' },
         ),
-        remplissage: COULEURS.blanc,
-      },
-      texte(
-        libelleRencontres,
-        xBanniere + ESPACES.s4 + compenser(cyBanniere),
-        moteur.ligneDeBaseCentree(styleBanniere, cyBanniere),
-        styleBanniere,
-        COULEURS.nuit,
-        moteur,
-        { role: 'banniere-texte' },
-      ),
-      {
-        type: 'chemin',
-        role: 'pastille-journee',
-        d: parallelogramme(
-          xJournee + compenser(yBanniere + 8),
-          yBanniere + 8,
-          largeurJournee,
-          hBanniere - 16,
-          11,
-        ),
-        remplissage: couleurAccent,
-      },
-      texte(
-        libelleJournee,
-        xJournee + largeurJournee / 2 + compenser(cyBanniere),
-        moteur.ligneDeBaseCentree(styleJournee, cyBanniere),
-        styleJournee,
-        COULEURS.blanc,
-        moteur,
-        { role: 'journee-texte', ancre: 'middle' },
-      ),
-    ],
-  });
-
-  void options;
-  return noeuds;
+      ],
+    },
+  ];
 }
 
 interface Contexte {
@@ -463,12 +372,15 @@ function enteteGroupe(
   // large loge les extremites effilees en dehors du texte.
   const debordV = h * 0.3;
   const debordH = h * 1.1;
+  // Le debord gauche est borne : au-dela, la pointe effilee sort du panneau
+  // noir du gabarit et bave sur la photo.
+  const debordGauche = Math.min(debordH * 0.45, RETRAIT_PANNEAU - 2);
   const noeuds: Noeud[] = [
     {
       type: 'groupe',
       role: 'entete-groupe',
       transform: transformPinceau(
-        x - debordH * 0.45,
+        x - debordGauche,
         y - debordV / 2,
         largeurBande + debordH,
         h + debordV,
@@ -694,6 +606,182 @@ function rangee(
   return noeuds;
 }
 
+/**
+ * Rangee en duel : une ou deux rencontres, chacune sur une grande carte.
+ *
+ * La variante etait annoncee par le moteur de densite depuis le debut, mais
+ * rendue comme une liste : une journee jeunes de deux rencontres laissait donc
+ * les trois quarts du panneau vides. Ici les blasons se font face en grand, le
+ * « VS » tient le centre, et les noms passent sous chaque camp — ce qui remplit
+ * la hauteur au lieu de l'etaler.
+ */
+function rangeeDuel(
+  rencontre: Rencontre,
+  x: number,
+  y: number,
+  largeur: number,
+  indice: string,
+  ctx: Contexte,
+  indexRangee: number,
+): Noeud[] {
+  const teinteAnneau = TEINTES_ANNEAU[indexRangee % TEINTES_ANNEAU.length]!;
+  const { densite, moteur } = ctx;
+  const h = densite.hauteurRangee;
+  const noeuds: Noeud[] = [];
+
+  noeuds.push({
+    type: 'rect',
+    role: 'carte',
+    x,
+    y,
+    largeur,
+    hauteur: h,
+    rx: RAYONS.carte,
+    remplissage: COULEURS.carte,
+    contour: COULEURS.carteBord,
+    epaisseur: 1.5,
+  });
+
+  // Les blasons occupent le tiers haut de la carte, les noms le tiers bas :
+  // le diametre est donc borne par la hauteur autant que par la largeur.
+  const d = Math.min(h * 0.46, largeur * 0.3);
+  const cy = y + h * 0.4;
+  const cxGauche = x + largeur * 0.24;
+  const cxDroite = x + largeur * 0.76;
+
+  noeuds.push(
+    ...pastille(
+      cxGauche,
+      cy,
+      d,
+      ctx.assets.blason,
+      ctx.nomClub,
+      moteur,
+      ctx.decoupes,
+      `clip-dl-${indice}`,
+      teinteAnneau,
+    ),
+  );
+
+  const logoAdverse = ctx.assets.logos.get(rencontre.adversaire.clubId);
+  if (!logoAdverse) {
+    ctx.diagnostics.push({
+      niveau: 'alerte',
+      message: `Aucun logo pour « ${rencontre.adversaire.libelle} » : un monogramme sera affiché.`,
+    });
+  }
+  noeuds.push(
+    ...pastille(
+      cxDroite,
+      cy,
+      d,
+      logoAdverse,
+      rencontre.adversaire.libelle,
+      moteur,
+      ctx.decoupes,
+      `clip-dr-${indice}`,
+      teinteAnneau,
+    ),
+  );
+
+  // Le « VS » du duel est la marque graphique de la carte : il se cale sur la
+  // place laissee entre les deux blasons, pas sur la taille des noms.
+  const styleVs = styleDisplay(Math.min(h * 0.3, (cxDroite - cxGauche - d) * 0.75));
+  noeuds.push({
+    type: 'groupe',
+    role: 'vs',
+    transform: `skewX(${INCLINAISON})`,
+    enfants: [
+      texte(
+        'VS',
+        x + largeur / 2 + compenser(cy),
+        moteur.ligneDeBaseCentree(styleVs, cy),
+        styleVs,
+        COULEURS.blanc,
+        moteur,
+        {
+          ancre: 'middle',
+          role: 'vs-texte',
+          contour: COULEURS.nuit,
+          epaisseurContour: styleVs.taille * 0.12,
+        },
+      ),
+    ],
+  });
+
+  // Noms sous chaque camp, centres sur leur blason et ajustes a la moitie de
+  // la carte pour qu'ils ne se rejoignent jamais au centre.
+  const largeurNom = largeur * 0.44;
+  const cyNom = y + h * 0.76;
+  const styleNom = styleTexte(Math.min(40, h * 0.11), GRAISSES.fort);
+  const echelons = echelonsDepuis(styleNom.taille, PLANCHERS.tailleNom);
+
+  const nomLocal = `${ctx.nomClub} ${rencontre.equipeLocale.numero}`;
+  const local = moteur.ajuster(nomLocal, largeurNom, styleNom, echelons);
+  noeuds.push(
+    texte(
+      nomLocal,
+      cxGauche,
+      moteur.ligneDeBaseCentree({ ...styleNom, taille: local.taille }, cyNom),
+      { ...styleNom, taille: local.taille },
+      COULEURS.blanc,
+      moteur,
+      { role: 'nom-local', ancre: 'middle' },
+    ),
+  );
+
+  const styleAdverse = styleTexte(styleNom.taille, GRAISSES.courant);
+  const adverse = moteur.ajuster(rencontre.adversaire.libelle, largeurNom, styleAdverse, echelons);
+  if (adverse.deborde) {
+    ctx.diagnostics.push({
+      niveau: 'alerte',
+      message: `« ${rencontre.adversaire.libelle} » est trop long pour sa carte.`,
+    });
+  }
+  noeuds.push(
+    texte(
+      rencontre.adversaire.libelle,
+      cxDroite,
+      moteur.ligneDeBaseCentree({ ...styleAdverse, taille: adverse.taille }, cyNom),
+      { ...styleAdverse, taille: adverse.taille },
+      COULEURS.brume,
+      moteur,
+      { role: 'nom-adverse', ancre: 'middle' },
+    ),
+  );
+
+  // La division reste attachee a l'equipe locale, sous son nom.
+  if (rencontre.equipeLocale.division) {
+    const cyPuce = y + h * 0.89;
+    const stylePuce = styleTexte(densite.taillePuce, GRAISSES.fort, 0.03);
+    const largeurPuce =
+      moteur.largeur(rencontre.equipeLocale.division, stylePuce) + ESPACES.s2 * 1.4;
+    noeuds.push({
+      type: 'rect',
+      role: 'puce-division',
+      x: cxGauche - largeurPuce / 2,
+      y: cyPuce - densite.hauteurPuce / 2,
+      largeur: largeurPuce,
+      hauteur: densite.hauteurPuce,
+      rx: RAYONS.puce,
+      remplissage: ctx.couleurAccent,
+    });
+    noeuds.push(
+      texte(
+        rencontre.equipeLocale.division,
+        cxGauche,
+        moteur.ligneDeBaseCentree(stylePuce, cyPuce),
+        stylePuce,
+        COULEURS.blanc,
+        moteur,
+        { role: 'division', ancre: 'middle' },
+      ),
+    );
+  }
+
+  return noeuds;
+}
+
 /** Une cellule blanche portant un logo partenaire. */
 function celluleSponsor(
   sponsor: SponsorResolu,
@@ -739,69 +827,26 @@ function celluleSponsor(
   ];
 }
 
-function sponsorsEnBande(assets: AssetsAffiche, y: number, moteur: MoteurTexte): Noeud[] {
-  const style = styleManuscrit(36);
-  const noeuds: Noeud[] = [
-    texte('Ils font vivre le club', MARGE_X, y + 34, style, COULEURS.blanc, moteur, {
-      role: 'titre-sponsors',
-      opacite: 0.92,
-    }),
-  ];
-
+/**
+ * Les partenaires, dans le panneau de droite du gabarit.
+ *
+ * Le gabarit y peint deja le titre « Nos partenaires » : on ne pose que les
+ * cellules. Le nombre de partenaires etant fixe a cinq (deux epingles, trois
+ * en rotation), la colonne se divise simplement.
+ */
+function panneauSponsors(assets: AssetsAffiche, boite: Boite): Noeud[] {
+  const noeuds: Noeud[] = [];
   const n = Math.max(1, assets.sponsors.length);
-  const largeurUtile = FORMATS.portrait.largeur - 2 * MARGE_X;
-  const ecart = 14;
-  const largeurCellule = (largeurUtile - (n - 1) * ecart) / n;
+  const ecart = 10;
+  const hauteurCellule = (boite.hauteur - (n - 1) * ecart) / n;
 
   assets.sponsors.forEach((sponsor, i) => {
     noeuds.push(
       ...celluleSponsor(
         sponsor,
-        MARGE_X + i * (largeurCellule + ecart),
-        y + 50,
-        largeurCellule,
-        HAUTEUR_BANDE_SPONSORS - 62,
-      ),
-    );
-  });
-  return noeuds;
-}
-
-function sponsorsEnColonne(
-  assets: AssetsAffiche,
-  x: number,
-  y: number,
-  hauteur: number,
-  moteur: MoteurTexte,
-): Noeud[] {
-  const style = styleManuscrit(36);
-  const noeuds: Noeud[] = [
-    texte(
-      'Nos partenaires',
-      x + LARGEUR_COLONNE_SPONSORS / 2,
-      y + 30,
-      style,
-      COULEURS.blanc,
-      moteur,
-      {
-        role: 'titre-sponsors',
-        ancre: 'middle',
-      },
-    ),
-  ];
-
-  const n = Math.max(1, assets.sponsors.length);
-  const hautCellules = y + 48;
-  const ecart = 12;
-  const hauteurCellule = (hauteur - 48 - (n - 1) * ecart) / n;
-
-  assets.sponsors.forEach((sponsor, i) => {
-    noeuds.push(
-      ...celluleSponsor(
-        sponsor,
-        x,
-        hautCellules + i * (hauteurCellule + ecart),
-        LARGEUR_COLONNE_SPONSORS,
+        boite.x,
+        boite.y + i * (hauteurCellule + ecart),
+        boite.largeur,
         hauteurCellule,
       ),
     );
@@ -823,18 +868,16 @@ export function composerAffiche(
   options: OptionsComposition = {},
 ): Composition {
   const format = options.format ?? 'portrait';
-  const enBande = (options.dispositionSponsors ?? 'bande') === 'bande';
   const { largeur, hauteur } = FORMATS[format];
   const couleurAccent = accent(affiche.categorie);
 
-  // La bande basse mangerait la silhouette du joueur : en disposition « bande »
-  // le contenu remonte d'autant.
-  const basContenu = BAS_CONTENU - (enBande ? HAUTEUR_BANDE_SPONSORS : 0);
+  // Les deux panneaux du gabarit fixent les zones : plus rien a calculer, il
+  // suffit de s'y inscrire avec un retrait pour ne pas coller aux bords.
   const zoneContenu: Boite = {
-    x: MARGE_X,
-    y: HAUT_CONTENU,
-    largeur: largeur - 2 * MARGE_X - (enBande ? 0 : LARGEUR_COLONNE_SPONSORS + ECART_COLONNE),
-    hauteur: basContenu - HAUT_CONTENU - PADDING_CONTENU_Y,
+    x: PANNEAUX.contenu.x + RETRAIT_PANNEAU,
+    y: PANNEAUX.contenu.y + RETRAIT_PANNEAU,
+    largeur: PANNEAUX.contenu.largeur - 2 * RETRAIT_PANNEAU,
+    hauteur: PANNEAUX.contenu.hauteur - 2 * RETRAIT_PANNEAU,
   };
 
   const nbRencontres = affiche.groupes.reduce((t, g) => t + g.rencontres.length, 0);
@@ -859,7 +902,7 @@ export function composerAffiche(
     diagnostics,
   };
 
-  const decor = decorPhoto(format, assets.fond, HAUT_CONTENU, basContenu);
+  const decor = decorPhoto(format, assets.fond);
   const degrades: Degrade[] = [...decor.degrades];
   const filtres: Filtre[] = [...decor.filtres];
   const noeuds: Noeud[] = [
@@ -867,7 +910,7 @@ export function composerAffiche(
     // cadre, et les invariants de mise en page doivent pouvoir l'ecarter sans
     // ecarter le contenu.
     { type: 'groupe', role: 'decor', enfants: decor.arriere },
-    ...bandeau(affiche, numeroJournee, assets, moteur, options),
+    ...bandeau(affiche, numeroJournee, moteur),
   ];
 
   const colonnes =
@@ -880,24 +923,32 @@ export function composerAffiche(
   let compteurRangee = 0;
   colonnes.forEach((groupes, iColonne) => {
     const xColonne = zoneContenu.x + iColonne * (largeurColonne + ESPACES.s5);
-    let y = zoneContenu.y;
+    // Le facteur de densite plafonne a 1,15 : une journee de deux rencontres
+    // ne peut pas remplir le panneau, et un bloc colle en haut laisse un grand
+    // rectangle noir vide dessous. On centre donc le reliquat.
+    const hauteurBloc = groupes.reduce((t, g) => t + hauteurGroupe(g, densite), 0);
+    const reliquat = Math.max(0, zoneContenu.hauteur - hauteurBloc);
+    let y = zoneContenu.y + reliquat / 2;
 
     groupes.forEach((groupe, iGroupe) => {
       noeuds.push(...enteteGroupe(groupe, xColonne, y, ctx, iGroupe + iColonne * 2));
       y += densite.hauteurEnteteGroupe;
 
       groupe.rencontres.forEach((rencontre, iRencontre) => {
+        const indice = `${iColonne}-${iGroupe}-${iRencontre}`;
         noeuds.push(
-          ...rangee(
-            rencontre,
-            groupe.domicile,
-            xColonne,
-            y,
-            largeurColonne,
-            `${iColonne}-${iGroupe}-${iRencontre}`,
-            ctx,
-            compteurRangee++,
-          ),
+          ...(densite.variante === 'duel'
+            ? rangeeDuel(rencontre, xColonne, y, largeurColonne, indice, ctx, compteurRangee++)
+            : rangee(
+                rencontre,
+                groupe.domicile,
+                xColonne,
+                y,
+                largeurColonne,
+                indice,
+                ctx,
+                compteurRangee++,
+              )),
         );
         y += densite.pasRangee;
       });
@@ -906,33 +957,15 @@ export function composerAffiche(
   });
 
   noeuds.push(
-    ...(enBande
-      ? sponsorsEnBande(assets, basContenu + PADDING_CONTENU_Y, moteur)
-      : sponsorsEnColonne(
-          assets,
-          largeur - MARGE_X - LARGEUR_COLONNE_SPONSORS,
-          zoneContenu.y + 40,
-          // La silhouette du joueur commence a y = 1112 dans le fond livre :
-          // la colonne s'arrete avant, sinon elle la masque.
-          1090 - zoneContenu.y - 40,
-          moteur,
-        )),
+    ...panneauSponsors(assets, {
+      x: PANNEAUX.partenaires.x + RETRAIT_PANNEAU / 2,
+      y: PANNEAUX.partenaires.y + RETRAIT_PANNEAU / 2,
+      largeur: PANNEAUX.partenaires.largeur - RETRAIT_PANNEAU,
+      hauteur: PANNEAUX.partenaires.hauteur - RETRAIT_PANNEAU,
+    }),
   );
 
-  // Signature en bas a GAUCHE : la silhouette du joueur occupe tout le coin
-  // bas-droit du fond livre, une signature centree la chevaucherait.
-  const styleSignature = styleManuscrit(44);
-  const lignesSignature = (options.accrocheBasse ?? ACCROCHE_BASSE).split('\n');
-  noeuds.push({
-    type: 'groupe',
-    role: 'accroche-basse',
-    transform: `rotate(-4 ${MARGE_X} ${hauteur - 96})`,
-    enfants: lignesSignature.map((ligne, i) =>
-      texte(ligne, MARGE_X + 6, hauteur - 104 + i * 46, styleSignature, COULEURS.blanc, moteur, {
-        opacite: 0.95,
-      }),
-    ),
-  });
+  // La signature manuscrite du pied est peinte dans le gabarit.
 
   if (densite.strategie === 'reduit') {
     diagnostics.push({

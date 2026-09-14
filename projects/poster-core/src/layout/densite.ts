@@ -1,7 +1,6 @@
 import {
   ECHELLE,
   NOMINAL,
-  PADDING_CONTENU_Y,
   PLAFONDS,
   PLANCHERS,
   SEUILS,
@@ -56,7 +55,7 @@ function borner(valeur: number, min: number, max: number): number {
 }
 
 export function hauteurDisponible(format: NomFormat): number {
-  return hauteurContenu(format) - 2 * PADDING_CONTENU_Y;
+  return hauteurContenu(format);
 }
 
 /** Hauteur que reclamerait la journee a l'echelle nominale. */
@@ -184,10 +183,15 @@ function composer(
   const consommeParEntetes = (nbGroupes / colonnes) * (hauteurEnteteGroupe + ecartGroupe);
   const resteRangees = disponible - consommeParEntetes;
 
-  const pasRangee = Math.min(
-    echelonner(NOMINAL.pasRangee, facteur, 0, PLAFONDS.pasRangee),
-    rangeesParColonne > 0 ? resteRangees / rangeesParColonne : Infinity,
-  );
+  const partEgale = rangeesParColonne > 0 ? resteRangees / rangeesParColonne : Infinity;
+  // Le duel est la seule variante qui *doit* remplir la hauteur offerte : une
+  // ou deux rencontres etalees a 115 px laissent les trois quarts du panneau
+  // vides. Les autres variantes gardent leur plafond, sans quoi une journee
+  // legere produirait des rangees demesurees.
+  const pasRangee =
+    variante === 'duel'
+      ? partEgale
+      : Math.min(echelonner(NOMINAL.pasRangee, facteur, 0, PLAFONDS.pasRangee), partEgale);
   const hauteurRangee = pasRangee - ecartRangee;
   const tient = hauteurRangee >= PLANCHERS.hauteurRangee;
 

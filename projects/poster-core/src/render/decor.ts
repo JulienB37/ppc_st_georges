@@ -313,30 +313,23 @@ export interface FondPhoto {
 }
 
 /**
- * Decor de l'affiche, desormais porte par une photographie.
+ * Decor de l'affiche, desormais porte par le gabarit fourni par le club.
  *
- * Le fond livre par le club contient deja le titre « CHAMPIONNAT PAR EQUIPE »,
- * l'accroche manuscrite du haut, les raquettes, la balle, la silhouette du
- * joueur et l'anneau rouge qui attend le blason. La composition ne redessine
- * donc AUCUN de ces elements — les superposer les dedoublerait.
+ * Le gabarit est une affiche complete : il porte le blason dans son anneau
+ * rouge, le titre « CHAMPIONNAT PAR EQUIPE », « LES RENCONTRES », les deux
+ * accroches manuscrites, « Nos partenaires », les raquettes, la balle, la
+ * silhouette du joueur et le filet. La composition ne redessine AUCUN de ces
+ * elements — les superposer les dedoublerait.
  *
- * Il reste a poser :
- * - la photo, recadree en « couvrir » ;
- * - un voile sombre sur la zone de contenu, sans lequel les cartes ne se
- *   detachent pas de la surface de table, la plus claire de l'image
- *   (luminance mesuree a 84 sur 255, contre 22 au bas de l'affiche) ;
- * - un degrade de pied, pour que la signature manuscrite reste lisible.
+ * Il ne reste donc qu'a poser la photo. Le voile sombre de la version
+ * precedente a disparu avec elle : le gabarit menage deux panneaux deja noirs,
+ * ou le texte blanc se detache sans aide.
  *
  * Les coups de pinceau et essaims d'eclaboussures dessines ont ete retires :
- * la photographie apporte sa propre matiere, et les y ajouter ne faisait que
+ * le gabarit apporte sa propre matiere, et les y ajouter ne faisait que
  * brouiller les deux.
  */
-export function decorPhoto(
-  format: NomFormat,
-  fond: FondPhoto | undefined,
-  hautContenu: number,
-  basContenu: number,
-): Decor {
+export function decorPhoto(format: NomFormat, fond: FondPhoto | undefined): Decor {
   const { largeur, hauteur } = FORMATS[format];
   const degrades: Degrade[] = [];
   const arriere: Noeud[] = [];
@@ -350,12 +343,12 @@ export function decorPhoto(
       largeur,
       hauteur,
       source: fond.source,
-      // « slice » recadre pour couvrir : l'image est en 4:5 a 0,7 % pres, donc
-      // le rognage reel est imperceptible.
+      // « slice » recadre pour couvrir. Le gabarit est en 2:3, exactement le
+      // format de l'affiche : le rognage est nul.
       preserveAspectRatio: 'xMidYMid slice',
     });
   } else {
-    // Repli sans fond livre : un aplat nocturne, pour que l'affiche reste
+    // Repli sans gabarit livre : un aplat nocturne, pour que l'affiche reste
     // lisible plutot que transparente.
     degrades.push({
       id: 'fond-repli',
@@ -379,56 +372,6 @@ export function decorPhoto(
       remplissage: 'url(#fond-repli)',
     });
   }
-
-  // Voile de contenu : degrade vertical opaque au centre, fondu aux extremites
-  // pour ne pas trancher net sur la photo.
-  degrades.push({
-    id: 'voile-contenu',
-    type: 'lineaire',
-    x1: 0,
-    y1: 0,
-    x2: 0,
-    y2: 1,
-    etapes: [
-      { position: 0, couleur: COULEURS.nuit, opacite: 0 },
-      { position: 0.1, couleur: COULEURS.nuit, opacite: 0.72 },
-      { position: 0.9, couleur: COULEURS.nuit, opacite: 0.72 },
-      { position: 1, couleur: COULEURS.nuit, opacite: 0 },
-    ],
-  });
-  arriere.push({
-    type: 'rect',
-    role: 'voile-contenu',
-    x: 0,
-    y: hautContenu - 28,
-    largeur,
-    hauteur: basContenu - hautContenu + 56,
-    remplissage: 'url(#voile-contenu)',
-  });
-
-  // Degrade de pied : la signature manuscrite se pose sur un sol sombre mais
-  // texture, qui la mangerait sans cela.
-  degrades.push({
-    id: 'voile-pied',
-    type: 'lineaire',
-    x1: 0,
-    y1: 0,
-    x2: 0,
-    y2: 1,
-    etapes: [
-      { position: 0, couleur: COULEURS.nuit, opacite: 0 },
-      { position: 1, couleur: COULEURS.nuit, opacite: 0.78 },
-    ],
-  });
-  arriere.push({
-    type: 'rect',
-    role: 'voile-pied',
-    x: 0,
-    y: hauteur - 210,
-    largeur,
-    hauteur: 210,
-    remplissage: 'url(#voile-pied)',
-  });
 
   return { degrades, filtres: FILTRES_DECOR, arriere, avant: [] };
 }

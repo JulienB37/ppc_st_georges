@@ -101,6 +101,7 @@ describe('cadrerLogo', () => {
 describe('composerAffiche — invariants de mise en page', () => {
   const cas: [string, Affiche][] = [
     ['1 rencontre', afficheDe([groupe(true, 1)])],
+    ['3 rencontres en duel', afficheDe([groupe(true, 2), groupe(false, 1)])],
     ['journee type du club', afficheDe([groupe(false, 1), groupe(true, 5), groupe(true, 2)])],
     ['10 rencontres', afficheDe([groupe(true, 5), groupe(false, 5)])],
     ['16 rencontres, 4 creneaux', afficheDe([0, 1, 2, 3].map((i) => groupe(i % 2 === 0, 4)))],
@@ -156,6 +157,20 @@ describe('composerAffiche — invariants de mise en page', () => {
           largeur: scene.largeur,
           hauteur: scene.hauteur,
         });
+      });
+
+      it('remplit la hauteur du panneau', () => {
+        // Le panneau du gabarit est noir : un contenu qui n'en occupe qu'une
+        // fraction laisse un grand rectangle vide, ce qui est arrive a
+        // l'affiche jeunes tant que la variante duel rendait comme une liste.
+        const blocs = noeuds
+          .filter((n) => n.role === 'carte' || n.role === 'entete-groupe')
+          .map((n) => boiteDe(n)!)
+          .filter(Boolean);
+        expect(blocs.length).toBeGreaterThan(0);
+        const haut = Math.min(...blocs.map((b) => b.y));
+        const bas = Math.max(...blocs.map((b) => b.y + b.hauteur));
+        expect((bas - haut) / zoneContenu.hauteur).toBeGreaterThan(0.8);
       });
 
       it('contient chaque texte dans sa carte', () => {

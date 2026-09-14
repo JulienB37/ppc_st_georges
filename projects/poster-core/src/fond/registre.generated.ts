@@ -11,10 +11,10 @@ export interface EntreeFond {
 
 export const FONDS = [
   {
-    id: 'championnat',
-    fichier: 'championnat-1080.jpg',
-    largeur: 928,
-    hauteur: 1152,
+    id: 'gabarit',
+    fichier: 'gabarit-1080.jpg',
+    largeur: 1024,
+    hauteur: 1536,
     largeurCible: 1080,
   },
 ] as const satisfies readonly EntreeFond[];

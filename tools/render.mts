@@ -127,21 +127,18 @@ async function main(): Promise<void> {
   const moteur = creerMoteurTexte(faces);
   await mkdir(SORTIE, { recursive: true });
 
-  const dispositions = ['bande', 'colonne'] as const;
-
   for (const [i, affiche] of journee.affiches.entries()) {
     const assets = await chargerAssets(journee, i);
-    for (const dispositionSponsors of dispositions) {
+    {
       const { scene, densite, diagnostics } = composerAffiche(
         affiche,
         journee.numero,
         assets,
         moteur,
-        { dispositionSponsors },
       );
 
       const svg = emettreSvg(scene);
-      const base = `J${journee.numero}_${affiche.categorie}_${dispositionSponsors}`;
+      const base = `J${journee.numero}_${affiche.categorie}`;
       await writeFile(path.join(SORTIE, `${base}.svg`), svg);
 
       const rendu = new Resvg(svg, {
