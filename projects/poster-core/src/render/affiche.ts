@@ -318,16 +318,23 @@ function bandeau(
   // INCRUSTES dans le fond livre : les redessiner les dedoublerait. Le bandeau
   // ne pose donc que ce que le fond n'a pas.
 
-  // Blason, dans l'anneau rouge que le fond lui reserve. Detoure par dilatation
-  // de sa silhouette alpha : un liseré fin suffit ici, l'anneau faisant deja
-  // le cadre.
-  const dBlason = 208;
+  // Blason, dans l'anneau rouge que le fond lui reserve.
+  //
+  // Interieur de l'anneau mesure sur l'image source : x 57-247, y 37-253, soit
+  // un centre a (152, 145) et 190 x 216 d'espace libre. Ramene au repere de
+  // l'affiche (facteur 1,164) : centre (177, 169), interieur 221 x 251.
+  //
+  // `cadrerLogo` inscrit le rapport du logo dans un cercle de diametre donne ;
+  // pour un rapport de 1,29 la largeur vaut 0,839 fois ce diametre. Un diametre
+  // de 250 donne donc 210 de large, soit 95 % de l'espace libre — au plus pres
+  // de l'anneau sans le toucher.
+  const dBlason = 250;
   const cadre = cadrerLogo(assets.blason, dBlason);
   noeuds.push({
     type: 'image',
     role: 'blason',
-    x: 155 + cadre.x,
-    y: 196 + cadre.y,
+    x: 177 + cadre.x,
+    y: 169 + cadre.y,
     largeur: cadre.largeur,
     hauteur: cadre.hauteur,
     source: assets.blason.source,
