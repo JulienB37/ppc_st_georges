@@ -508,9 +508,14 @@ function enteteGroupe(
  * deux lettres au milieu d'une ligne passaient pour du bruit, la ou une tache
  * se lit d'un coup d'oeil.
  *
- * Les lettres sont AJOUREES dans le trace : le remplissage colore la tache, et
- * les lettres prennent la couleur de ce qu'il y a derriere — ici le fond de la
- * carte.
+ * Les lettres sont AJOUREES dans le trace : il ne dessine que la tache. Un
+ * aplat blanc est donc pose dessous pour qu'elles se lisent en blanc, et non a
+ * la couleur de la carte.
+ *
+ * Cet aplat est une union de disques MESURES a la generation : ils couvrent la
+ * totalite des lettres sans sortir de la silhouette, faute de quoi le blanc
+ * deborderait de la tache. Un disque unique n'y suffisait pas — le plus grand
+ * inscrit ne couvre que 96,7 % des lettres.
  *
  * La tache reprend la teinte de la bande de date de son creneau. Les rangees
  * d'un meme creneau sont ainsi reliees a leur en-tete par la couleur, ce que la
@@ -521,7 +526,23 @@ function marqueVs(cx: number, cy: number, hauteur: number, couleur: string): Noe
     type: 'groupe',
     role: 'vs',
     transform: transformVs(cx, cy, hauteur),
-    enfants: VS.chemins.map((d) => ({ type: 'chemin' as const, d, remplissage: couleur })),
+    enfants: [
+      ...VS.disques.map((d) => ({
+        type: 'cercle' as const,
+        role: 'vs-aplat',
+        cx: d.cx,
+        cy: d.cy,
+        r: d.r,
+        remplissage: COULEURS.blanc,
+      })),
+      // Les chemins vivent dans le repere de la vectorisation, les disques dans
+      // celui du viewBox : d'ou ce second groupe.
+      {
+        type: 'groupe' as const,
+        transform: VS.transformInterne,
+        enfants: VS.chemins.map((d) => ({ type: 'chemin' as const, d, remplissage: couleur })),
+      },
+    ],
   };
 }
 
