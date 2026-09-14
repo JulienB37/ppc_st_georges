@@ -613,11 +613,6 @@ function rangee(
     hauteur: h,
     rx: RAYONS.carte,
     remplissage: COULEURS.carte,
-    // Le liseré reprend la teinte du creneau : la carte est ainsi rattachee a
-    // sa bande de date par la couleur, comme l'anneau du club et la marque
-    // « VS ». Le bleu neutre `carteBord` ne rattachait la carte a rien.
-    contour: teinteCreneau,
-    epaisseur: TRAITS.lisereCarte,
   });
 
   // L'anneau deborde volontairement de la carte, dans l'ecart qui la separe de
@@ -627,6 +622,27 @@ function rangee(
   const marge = 2;
   const cxGauche = x + marge + d / 2;
   const cxDroite = x + largeur - marge - d / 2;
+
+  // Le liseré n'est pas un contour de rectangle mais DEUX FILETS, en haut et en
+  // bas. La rangee se lit ainsi comme une ligne ouverte a ses deux bouts, et
+  // non comme une boite : c'est le blason qui la ferme.
+  //
+  // Ils courent de centre de logo a centre de logo, si bien que leurs
+  // extremites passent sous les pastilles, posees apres eux. Aucun bout de
+  // filet n'est donc visible.
+  const filet = TRAITS.lisereCarte;
+  for (const yFilet of [y, y + h - filet]) {
+    noeuds.push({
+      type: 'rect',
+      role: 'filet-carte',
+      x: cxGauche,
+      y: yFilet,
+      largeur: cxDroite - cxGauche,
+      hauteur: filet,
+      // Meme teinte que la bande de date, comme l'anneau et la marque « VS ».
+      remplissage: teinteCreneau,
+    });
+  }
 
   // Le blason du club reste toujours a gauche : l'oeil retrouve « nous » au
   // meme endroit sur chaque ligne, et les logos adverses heterogenes sont
@@ -787,12 +803,21 @@ function rangeeDuel(
     hauteur: h,
     rx: RAYONS.carte,
     remplissage: COULEURS.carte,
-    // Le liseré reprend la teinte du creneau : la carte est ainsi rattachee a
-    // sa bande de date par la couleur, comme l'anneau du club et la marque
-    // « VS ». Le bleu neutre `carteBord` ne rattachait la carte a rien.
-    contour: teinteCreneau,
-    epaisseur: TRAITS.lisereCarte,
   });
+
+  // Deux filets seulement, comme en liste : pas de bord vertical. Ici ils
+  // courent sur toute la largeur, les blasons du duel etant loin des bords.
+  for (const yFilet of [y, y + h - TRAITS.lisereCarte]) {
+    noeuds.push({
+      type: 'rect',
+      role: 'filet-carte',
+      x,
+      y: yFilet,
+      largeur,
+      hauteur: TRAITS.lisereCarte,
+      remplissage: teinteCreneau,
+    });
+  }
 
   // Les blasons occupent le tiers haut de la carte, les noms le tiers bas :
   // le diametre est donc borne par la hauteur autant que par la largeur.
