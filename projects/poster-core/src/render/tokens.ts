@@ -95,7 +95,6 @@ export const COULEURS = {
   vertHalo: '#12E07E',
   /** Fond des cartes de rencontre, pose sur le fond nocturne. */
   carte: '#0C1B31',
-  carteBord: '#2E5480',
   encre: '#101820',
   blanc: '#FFFFFF',
   ivoire: '#F4F6F8',
@@ -235,6 +234,8 @@ export const ESPACES = { s1: 8, s2: 12, s3: 16, s4: 24, s5: 32, s6: 48, s7: 64, 
 export const RAYONS = { puce: 6, carte: 16, drapeau: 16, filet: 4, onglet: 999 } as const;
 
 export const TRAITS = {
+  /** Liseré d'une carte de rencontre, a la teinte de son creneau. */
+  lisereCarte: 3,
   contourPastille: 2,
   ongletExterieur: 2.5,
   anneauBlason: 5,

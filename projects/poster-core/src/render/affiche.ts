@@ -21,6 +21,7 @@ import {
   PLANCHERS,
   POLICES,
   RETRAIT_PANNEAU,
+  TRAITS,
   ROTATION_GABARIT,
   RAYONS,
   accent,
@@ -612,8 +613,11 @@ function rangee(
     hauteur: h,
     rx: RAYONS.carte,
     remplissage: COULEURS.carte,
-    contour: COULEURS.carteBord,
-    epaisseur: 1.5,
+    // Le liseré reprend la teinte du creneau : la carte est ainsi rattachee a
+    // sa bande de date par la couleur, comme l'anneau du club et la marque
+    // « VS ». Le bleu neutre `carteBord` ne rattachait la carte a rien.
+    contour: teinteCreneau,
+    epaisseur: TRAITS.lisereCarte,
   });
 
   // L'anneau deborde volontairement de la carte, dans l'ecart qui la separe de
@@ -781,8 +785,11 @@ function rangeeDuel(
     hauteur: h,
     rx: RAYONS.carte,
     remplissage: COULEURS.carte,
-    contour: COULEURS.carteBord,
-    epaisseur: 1.5,
+    // Le liseré reprend la teinte du creneau : la carte est ainsi rattachee a
+    // sa bande de date par la couleur, comme l'anneau du club et la marque
+    // « VS ». Le bleu neutre `carteBord` ne rattachait la carte a rien.
+    contour: teinteCreneau,
+    epaisseur: TRAITS.lisereCarte,
   });
 
   // Les blasons occupent le tiers haut de la carte, les noms le tiers bas :
