@@ -72,6 +72,28 @@ export const COULEURS = {
   jauneVif: '#FFC300',
 } as const;
 
+/**
+ * Teintes des en-tetes de creneau, cyclees par groupe.
+ *
+ * La reference change de couleur a chaque creneau plutot que de coder le lieu :
+ * cela rythme la liste et donne de la vie, le lieu restant porte par son icone
+ * et son libelle.
+ */
+export const TEINTES_CRENEAU = [
+  COULEURS.rougePpc,
+  COULEURS.cyan,
+  COULEURS.violet,
+  COULEURS.orange,
+] as const;
+
+/** Anneaux des pastilles de logo, cycles par rangee. */
+export const TEINTES_ANNEAU = [
+  COULEURS.cyan,
+  COULEURS.rougeHalo,
+  COULEURS.jauneVif,
+  COULEURS.violet,
+] as const;
+
 /** Gamme projetee sur le fond, hors elements d'information. */
 export const PROJECTION = [
   COULEURS.cyan,

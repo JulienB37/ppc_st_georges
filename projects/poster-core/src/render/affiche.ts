@@ -4,12 +4,14 @@ import { monogramme } from '../clubs/normaliser';
 import { formatCreneau } from '../format/creneau';
 import { ordinalJournee } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
-import { anneauPeint, bandeDechiree, decorNocturne, essaim } from './decor';
+import { decorNocturne, essaim, parallelogramme } from './decor';
 import type { Boite, Decoupe, Degrade, Filtre, Noeud, NoeudTexte, Scene } from './scene';
 import {
   CADRAGE_LOGO,
   COULEURS,
   PROJECTION,
+  TEINTES_ANNEAU,
+  TEINTES_CRENEAU,
   ESPACES,
   FORMATS,
   GRAISSES,
@@ -109,6 +111,9 @@ interface OptionsTexte {
   role?: string;
   ancre?: NoeudTexte['ancre'];
   opacite?: number;
+  /** Contour du texte, dessine en une passe sous la passe pleine. */
+  contour?: string;
+  epaisseurContour?: number;
 }
 
 /** Fabrique un noeud texte en reportant la mesure, dont dependent les invariants. */
@@ -173,7 +178,7 @@ function pastille(
       r,
       remplissage: COULEURS.blanc,
       contour: couleurAnneau,
-      epaisseur: TRAITS.contourPastille,
+      epaisseur: TRAITS.contourPastille * 1.8,
     },
   ];
 
@@ -204,6 +209,63 @@ function pastille(
     }),
   );
   return noeuds;
+}
+
+/** Calendrier encadre, comme sur la reference, a gauche de chaque creneau. */
+function iconeCalendrier(x: number, y: number, taille: number, couleur: string): Noeud {
+  const k = taille / 24;
+  return {
+    type: 'groupe',
+    role: 'icone-calendrier',
+    enfants: [
+      {
+        type: 'rect',
+        x: x + 2 * k,
+        y: y + 5 * k,
+        largeur: 20 * k,
+        hauteur: 17 * k,
+        rx: 2 * k,
+        remplissage: 'none',
+        contour: couleur,
+        epaisseur: Math.max(1.2, 2 * k),
+      },
+      // Les deux anneaux de reliure.
+      {
+        type: 'rect',
+        x: x + 7 * k,
+        y: y + 2 * k,
+        largeur: 2 * k,
+        hauteur: 5 * k,
+        remplissage: couleur,
+      },
+      {
+        type: 'rect',
+        x: x + 15 * k,
+        y: y + 2 * k,
+        largeur: 2 * k,
+        hauteur: 5 * k,
+        remplissage: couleur,
+      },
+      // Bandeau de l'en-tete du calendrier.
+      {
+        type: 'rect',
+        x: x + 2 * k,
+        y: y + 9 * k,
+        largeur: 20 * k,
+        hauteur: 2.2 * k,
+        remplissage: couleur,
+      },
+      // Une case cochee.
+      {
+        type: 'rect',
+        x: x + 6 * k,
+        y: y + 14 * k,
+        largeur: 5 * k,
+        hauteur: 4.5 * k,
+        remplissage: couleur,
+      },
+    ],
+  };
 }
 
 /** Petite maison, pour un creneau a domicile. Chemin normalise sur 24 x 24. */
@@ -272,26 +334,10 @@ function bandeau(
     ),
   );
 
-  // Disque et anneau peints plutot qu'un cercle au contour parfait : un
-  // contour net se lit comme un gabarit colle sur le fond.
-  noeuds.push({
-    type: 'cercle',
-    role: 'blason-fond',
-    cx: cxBlason,
-    cy: cyBlason,
-    r: dBlason / 2 - 2,
-    remplissage: COULEURS.blanc,
-    filtre: 'peinture-objet',
-  });
-  noeuds.push({
-    type: 'chemin',
-    role: 'blason-anneau',
-    d: anneauPeint(cxBlason, cyBlason, dBlason / 2 + 3, TRAITS.anneauBlason + 3, 313),
-    remplissage: COULEURS.rougePpc,
-    filtre: 'peinture-objet',
-  });
-  decoupes.push({ id: 'clip-blason', cercle: { cx: cxBlason, cy: cyBlason, r: dBlason / 2 - 5 } });
-  const cadre = cadrerLogo(assets.blason, dBlason - 16);
+  // Ni pastille ni anneau : le blason est DETOURE. Sa silhouette alpha est
+  // dilatee et remplie de blanc sous l'original, ce qui le decolle du fond sans
+  // le poser sur un disque — un disque lit comme une vignette collee.
+  const cadre = cadrerLogo(assets.blason, dBlason * 1.3);
   noeuds.push({
     type: 'image',
     role: 'blason',
@@ -300,7 +346,7 @@ function bandeau(
     largeur: cadre.largeur,
     hauteur: cadre.hauteur,
     source: assets.blason.source,
-    clip: 'clip-blason',
+    filtre: 'contour-blason',
   });
 
   // Accroche manuscrite, en haut a droite.
@@ -362,8 +408,27 @@ function bandeau(
       const y = 74 + i * (tailleTitre + 4);
       return texte(ligne, xTitre + compenser(y), y, style, COULEURS.blanc, moteur, {
         role: 'titre-ligne',
+        // Contour sombre epais : sans lui le titre flotte sur un fond charge.
+        contour: COULEURS.nuit,
+        epaisseurContour: tailleTitre * 0.11,
       });
     }),
+  });
+
+  // Soulignement de titre : une bande cisaillee sous la derniere ligne, qui
+  // ancre le bloc au lieu de le laisser en suspension.
+  const ySouligne = 74 + (lignes.length - 1) * (tailleTitre + 4) + tailleTitre * 0.22;
+  noeuds.push({
+    type: 'groupe',
+    role: 'soulignement-titre',
+    transform: `skewX(${INCLINAISON})`,
+    enfants: [
+      {
+        type: 'chemin',
+        d: parallelogramme(xTitre + compenser(ySouligne), ySouligne, largeurTitre * 0.62, 9, 12),
+        remplissage: couleurAccent,
+      },
+    ],
   });
 
   // Banniere « LES RENCONTRES » et pastille de journee, sur une meme ligne.
@@ -388,40 +453,36 @@ function bandeau(
       {
         type: 'chemin',
         role: 'banniere-fond',
-        d: bandeDechiree(
+        // Coins VIFS et cisaillement : c'est le surlignage de la reference.
+        d: parallelogramme(
           MARGE_X + compenser(yBanniere),
           yBanniere,
           largeurBanniere,
           hBanniere,
-          515,
-          12,
+          14,
         ),
-        remplissage: COULEURS.nuit,
-        opacite: 0.88,
-        filtre: 'peinture-bande',
+        remplissage: COULEURS.blanc,
       },
       texte(
         libelleRencontres,
         MARGE_X + ESPACES.s4 + compenser(cyBanniere),
         moteur.ligneDeBaseCentree(styleBanniere, cyBanniere),
         styleBanniere,
-        COULEURS.blanc,
+        COULEURS.nuit,
         moteur,
         { role: 'banniere-texte' },
       ),
       {
         type: 'chemin',
         role: 'pastille-journee',
-        d: bandeDechiree(
-          xJournee + compenser(yBanniere),
-          yBanniere + 7,
+        d: parallelogramme(
+          xJournee + compenser(yBanniere + 8),
+          yBanniere + 8,
           largeurJournee,
-          hBanniere - 14,
-          616,
-          10,
+          hBanniere - 16,
+          11,
         ),
         remplissage: couleurAccent,
-        filtre: 'peinture-bande',
       },
       texte(
         libelleJournee,
@@ -448,10 +509,19 @@ interface Contexte {
   diagnostics: Diagnostic[];
 }
 
-function enteteGroupe(groupe: Groupe, x: number, y: number, ctx: Contexte): Noeud[] {
+function enteteGroupe(
+  groupe: Groupe,
+  x: number,
+  y: number,
+  ctx: Contexte,
+  indexGroupe: number,
+): Noeud[] {
   const { densite, moteur } = ctx;
   const h = Math.min(46, densite.hauteurEnteteGroupe * 0.74);
   const cy = y + h / 2;
+  // Une teinte par creneau plutot qu'une teinte par lieu : cela rythme la
+  // liste, le lieu restant porte par son icone et son libelle.
+  const teinte = TEINTES_CRENEAU[indexGroupe % TEINTES_CRENEAU.length]!;
 
   const date = groupe.creneau.libelleOverride ?? formatCreneau(groupe.creneau.debutIso);
   const lieu = groupe.domicile ? 'À domicile' : "À l'extérieur";
@@ -466,25 +536,16 @@ function enteteGroupe(groupe: Groupe, x: number, y: number, ctx: Contexte): Noeu
 
   const noeuds: Noeud[] = [
     {
-      type: 'rect',
+      type: 'chemin',
       role: 'entete-groupe',
-      x,
-      y,
-      largeur: largeurPilule,
-      hauteur: h,
-      rx: h / 2,
-      remplissage: groupe.domicile ? ctx.couleurAccent : COULEURS.bleuNuit,
-      contour: groupe.domicile ? undefined : COULEURS.carteBord,
-      epaisseur: groupe.domicile ? undefined : 1.5,
+      // Coins vifs et cisaillement, comme les surlignages de titre.
+      d: parallelogramme(x, y, largeurPilule + tailleIcone + ESPACES.s2, h, h * 0.22),
+      remplissage: teinte,
     },
   ];
 
-  let curseur = x + ESPACES.s4;
-  noeuds.push(
-    groupe.domicile
-      ? iconeMaison(curseur, cy - tailleIcone / 2, tailleIcone, COULEURS.blanc)
-      : iconeRepere(curseur, cy - tailleIcone / 2, tailleIcone, COULEURS.blanc),
-  );
+  let curseur = x + ESPACES.s3;
+  noeuds.push(iconeCalendrier(curseur, cy - tailleIcone / 2, tailleIcone, COULEURS.blanc));
   curseur += tailleIcone + ESPACES.s2;
 
   noeuds.push(
@@ -508,8 +569,14 @@ function enteteGroupe(groupe: Groupe, x: number, y: number, ctx: Contexte): Noeu
       styleLieu,
       COULEURS.blanc,
       moteur,
-      { role: 'lieu', opacite: 0.82 },
+      { role: 'lieu', opacite: 0.9 },
     ),
+  );
+  curseur += largeurLieu + ESPACES.s2;
+  noeuds.push(
+    groupe.domicile
+      ? iconeMaison(curseur, cy - tailleIcone * 0.42, tailleIcone * 0.84, COULEURS.blanc)
+      : iconeRepere(curseur, cy - tailleIcone * 0.42, tailleIcone * 0.84, COULEURS.blanc),
   );
 
   return noeuds;
@@ -523,7 +590,9 @@ function rangee(
   largeur: number,
   indice: string,
   ctx: Contexte,
+  indexRangee: number,
 ): Noeud[] {
+  const teinteAnneau = TEINTES_ANNEAU[indexRangee % TEINTES_ANNEAU.length]!;
   const { densite, moteur } = ctx;
   const h = densite.hauteurRangee;
   const cy = y + h / 2;
@@ -560,7 +629,7 @@ function rangee(
       moteur,
       ctx.decoupes,
       `clip-l-${indice}`,
-      domicile ? ctx.couleurAccent : COULEURS.carteBord,
+      teinteAnneau,
     ),
   );
 
@@ -581,13 +650,15 @@ function rangee(
       moteur,
       ctx.decoupes,
       `clip-r-${indice}`,
-      COULEURS.carteBord,
+      teinteAnneau,
     ),
   );
 
   // Le « VS » revient, mais comme une marque inclinee a l'accent de l'affiche,
   // et non comme du texte de sept points perdu au milieu de la ligne.
-  const styleVs = styleDisplay(Math.max(18, densite.tailleNom * 0.78));
+  // « VS » nettement plus grand que les noms, contoure de sombre : c'est une
+  // marque graphique, pas du texte courant.
+  const styleVs = styleDisplay(Math.max(26, densite.tailleNom * 1.15));
   const largeurVs = moteur.largeur('VS', styleVs);
   const cxVs = x + largeur / 2;
   noeuds.push({
@@ -600,9 +671,14 @@ function rangee(
         cxVs + compenser(cy),
         moteur.ligneDeBaseCentree(styleVs, cy),
         styleVs,
-        ctx.couleurAccent,
+        COULEURS.blanc,
         moteur,
-        { ancre: 'middle', role: 'vs-texte' },
+        {
+          ancre: 'middle',
+          role: 'vs-texte',
+          contour: COULEURS.nuit,
+          epaisseurContour: styleVs.taille * 0.16,
+        },
       ),
     ],
   });
@@ -864,12 +940,13 @@ export function composerAffiche(
   const largeurColonne =
     densite.colonnes === 2 ? (zoneContenu.largeur - ESPACES.s5) / 2 : zoneContenu.largeur;
 
+  let compteurRangee = 0;
   colonnes.forEach((groupes, iColonne) => {
     const xColonne = zoneContenu.x + iColonne * (largeurColonne + ESPACES.s5);
     let y = zoneContenu.y;
 
     groupes.forEach((groupe, iGroupe) => {
-      noeuds.push(...enteteGroupe(groupe, xColonne, y, ctx));
+      noeuds.push(...enteteGroupe(groupe, xColonne, y, ctx, iGroupe + iColonne * 2));
       y += densite.hauteurEnteteGroupe;
 
       groupe.rencontres.forEach((rencontre, iRencontre) => {
@@ -882,6 +959,7 @@ export function composerAffiche(
             largeurColonne,
             `${iColonne}-${iGroupe}-${iRencontre}`,
             ctx,
+            compteurRangee++,
           ),
         );
         y += densite.pasRangee;

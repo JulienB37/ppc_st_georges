@@ -91,6 +91,28 @@ export function bandeDechiree(
 }
 
 /**
+ * Parallelogramme a coins VIFS.
+ *
+ * Le surlignage de titre de la reference n'est pas un rectangle arrondi mais
+ * une bande cisaillee aux angles francs. Un coin arrondi lit « composant
+ * d'interface » ; un coin vif lit « affiche ».
+ */
+export function parallelogramme(
+  x: number,
+  y: number,
+  largeur: number,
+  hauteur: number,
+  cisaillement: number,
+): string {
+  return trace([
+    { x: x + cisaillement, y },
+    { x: x + largeur + cisaillement, y },
+    { x: x + largeur, y: y + hauteur },
+    { x, y: y + hauteur },
+  ]);
+}
+
+/**
  * Anneau peint : deux boucles de rayon irregulier, en sens opposes.
  *
  * L'enroulement inverse de la boucle interieure creuse le trou sans recourir a
@@ -390,6 +412,10 @@ export const FILTRES_DECOR: Filtre[] = [
     marge: 26,
   },
   { id: 'grain', type: 'grain', frequence: 0.85, octaves: 3, graine: 3, intensite: 0.24 },
+  // Liseré blanc epais : detoure le blason du club, pose sans pastille.
+  { id: 'contour-blason', type: 'contour', rayon: 7, couleur: '#FFFFFF', marge: 30 },
+  // Liseré fin, pour les logos adverses dans leur pastille.
+  { id: 'contour-fin', type: 'contour', rayon: 2, couleur: '#FFFFFF', marge: 20 },
 ];
 
 export function decorNocturne(
@@ -430,6 +456,7 @@ export function decorNocturne(
     halo('halo-accent', couleurAccent, largeur * 0.84, hauteurBandeau * 0.48, 520, 0.46),
     halo('halo-cyan', COULEURS.cyan, largeur * 0.04, hauteurBandeau * 1.3, 460, 0.26),
     halo('halo-violet', COULEURS.violet, largeur * 1.02, hauteur * 0.58, 480, 0.24),
+    halo('halo-orange', COULEURS.orange, largeur * 0.9, hauteur * 0.86, 420, 0.3),
     halo('halo-bas', couleurAccent, largeur * 0.2, hauteur * 0.96, 400, 0.24),
   ]) {
     degrades.push(h.degrade);

@@ -97,10 +97,20 @@ export interface NoeudTexte extends Commun {
   largeurMesuree: number;
   /** Hauteur de ligne reelle, ascendante + descendante. */
   hauteurMesuree: number;
+  /**
+   * Contour du texte.
+   *
+   * L'emetteur dessine alors le texte DEUX FOIS : une passe contouree puis une
+   * passe pleine par-dessus. `paint-order` ferait la meme chose en une passe,
+   * mais son support par resvg n'est pas verifie.
+   */
+  contour?: string;
+  epaisseurContour?: number;
 }
 
 export interface NoeudImage extends Commun {
   type: 'image';
+  filtre?: string;
   x: number;
   y: number;
   largeur: number;
@@ -185,6 +195,21 @@ export type Filtre =
       /** Amplitude de la deformation, en unites de la scene. */
       amplitude: number;
       /** Debordement autorise autour de la forme, en pourcentage. */
+      marge: number;
+    }
+  | {
+      /**
+       * Contour detoure, dit « sticker » : la silhouette alpha de la source est
+       * dilatee, remplie d'une couleur unie, et composee SOUS l'original.
+       *
+       * C'est ce qui permet de detourer un logo raster sans le vectoriser, et
+       * donc de le poser sans pastille sur un fond charge.
+       */
+      id: string;
+      type: 'contour';
+      /** Epaisseur du liseré, en unites de la scene. */
+      rayon: number;
+      couleur: string;
       marge: number;
     }
   | {

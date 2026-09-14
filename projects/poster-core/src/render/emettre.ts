@@ -84,11 +84,11 @@ function emettreNoeud(noeud: Noeud): string {
         ['filter', noeud.filtre ? `url(#${noeud.filtre})` : undefined],
       ])}/>`;
 
-    case 'texte':
+    case 'texte': {
       // Pas de `dominant-baseline` : son interpretation diverge d'un moteur a
       // l'autre. Les lignes de base sont calculees a la composition, a partir
       // des metriques reelles de la police, et emises en absolu.
-      return `<text${attributs([
+      const commun: [string, string | number | undefined][] = [
         ['x', noeud.x],
         ['y', noeud.y],
         ['font-family', noeud.famille],
@@ -99,7 +99,23 @@ function emettreNoeud(noeud: Noeud): string {
         ['letter-spacing', noeud.interlettrage ? noeud.interlettrage * noeud.taille : undefined],
         ['opacity', noeud.opacite],
         ['xml:space', 'preserve'],
-      ])}>${echapper(noeud.contenu)}</text>`;
+      ];
+      const passe = (extra: [string, string | number | undefined][] = []) =>
+        `<text${attributs([...commun, ...extra])}>${echapper(noeud.contenu)}</text>`;
+
+      // Passe contouree d'abord, passe pleine par-dessus : c'est ce qui donne
+      // un liseré exterieur net plutot qu'un trait qui mange les glyphes.
+      if (noeud.contour) {
+        return (
+          passe([
+            ['stroke', noeud.contour],
+            ['stroke-width', noeud.epaisseurContour],
+            ['stroke-linejoin', 'round'],
+          ]) + passe()
+        );
+      }
+      return passe();
+    }
 
     case 'image':
       // Garde dure : un `href` externe ne serait resolu ni par resvg, ni dans
@@ -118,6 +134,7 @@ function emettreNoeud(noeud: Noeud): string {
         ['height', noeud.hauteur],
         ['preserveAspectRatio', noeud.preserveAspectRatio ?? 'xMidYMid meet'],
         ['clip-path', noeud.clip ? `url(#${noeud.clip})` : undefined],
+        ['filter', noeud.filtre ? `url(#${noeud.filtre})` : undefined],
         ['href', noeud.source],
       ])}/>`;
 
@@ -170,6 +187,39 @@ function emettreDegrades(degrades: Degrade[]): string {
 function emettreFiltres(filtres: Filtre[]): string {
   return filtres
     .map((f) => {
+      if (f.type === 'contour') {
+        return (
+          `<filter${attributs([
+            ['id', f.id],
+            ['x', `${-f.marge}%`],
+            ['y', `${-f.marge}%`],
+            ['width', `${100 + 2 * f.marge}%`],
+            ['height', `${100 + 2 * f.marge}%`],
+          ])}>` +
+          `<feMorphology${attributs([
+            ['operator', 'dilate'],
+            ['radius', f.rayon],
+            ['in', 'SourceAlpha'],
+            ['result', 'silhouette'],
+          ])}/>` +
+          `<feFlood${attributs([
+            ['flood-color', f.couleur],
+            ['result', 'teinte'],
+          ])}/>` +
+          `<feComposite${attributs([
+            ['in', 'teinte'],
+            ['in2', 'silhouette'],
+            ['operator', 'in'],
+            ['result', 'liseré'],
+          ])}/>` +
+          `<feMerge>` +
+          `<feMergeNode${attributs([['in', 'liseré']])}/>` +
+          `<feMergeNode${attributs([['in', 'SourceGraphic']])}/>` +
+          `</feMerge>` +
+          `</filter>`
+        );
+      }
+
       if (f.type === 'peinture') {
         // Le bruit fractal sert de carte de deplacement : chaque pixel du
         // contour est pousse selon les canaux R et G du bruit, ce qui dechire
