@@ -124,11 +124,26 @@ export const COULEURS = {
  * La reference change de couleur a chaque creneau plutot que de coder le lieu :
  * cela rythme la liste et donne de la vie, le lieu restant porte par son icone
  * et son libelle.
+ *
+ * Les trois premieres sont reprises d'une maquette fournie par le club. Elles
+ * ne renvoient PLUS a la gamme de projection : celle-ci sert au decor, et la
+ * confondre avec les teintes de creneau ferait deriver l'une avec l'autre. Le
+ * rouge d'identite `rougePpc` en est egalement distinct, pour la meme raison.
+ *
+ * Valeurs estimees a l'oeil sur la maquette, faute de pouvoir en echantillonner
+ * les pixels. A reprendre par la mesure si le fichier est fourni.
  */
 export const TEINTES_CRENEAU = [
-  COULEURS.rougePpc,
-  COULEURS.cyan,
-  COULEURS.violet,
+  /** Rouge framboise : un cran plus rose que le rouge d'identite du club. */
+  '#DE1B4B',
+  /** Turquoise : plus profond et plus vert que le cyan de projection. */
+  '#1FA9B4',
+  /** Violet amethyste, et non le violet electrique de la gamme de projection. */
+  '#8B3FAE',
+  /**
+   * Quatrieme creneau, rare : trois suffisent a une journee ordinaire, mais la
+   * loi de densite en accepte quatre.
+   */
   COULEURS.orange,
 ] as const;
 
