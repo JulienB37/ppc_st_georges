@@ -43,6 +43,23 @@ export const PANNEAUX = {
 export const RETRAIT_PANNEAU = 18;
 
 /**
+ * Bande peinte rouge du gabarit, sous « LES RENCONTRES ».
+ *
+ * Mesuree en cherchant, ligne par ligne, la plus longue plage de pixels
+ * franchement rouges du gabarit, trou de 12 px tolere — le trace est
+ * mouchete. La plage utile s'ouvre a y 396 et se referme a y 448, la plus
+ * large courant de x 296 a x 608 vers y 427. Le rang de journee s'y inscrit :
+ * c'est la place que le gabarit lui reserve, et il n'a donc plus besoin de sa
+ * propre pastille de fond.
+ *
+ * La boite deborde volontairement de quelques pixels la plage mesuree. Les
+ * titres du gabarit debordent eux aussi leur coup de pinceau : s'en tenir au
+ * rouge strict donnait un rang de journee timide sous un « LES RENCONTRES »
+ * deux fois plus haut.
+ */
+export const BANDE_JOURNEE = { x: 278, y: 394, largeur: 330, hauteur: 56 } as const;
+
+/**
  * Cadre du format carre, qui n'a pas encore de gabarit.
  *
  * Il retombe donc sur une geometrie calculee — bandeau de titre en haut, bande
@@ -152,6 +169,13 @@ export const POLICES = {
   texte: 'Barlow Semi Condensed',
   /** Accents manuscrits : la chaleur que portait le Comic Sans, en tenue. */
   manuscrit: 'Caveat',
+  /**
+   * Pinceau sec, pour le rang de journee.
+   *
+   * Les titres du gabarit du club sont traces au pinceau. Y poser une
+   * grotesque comme Anton se voit immediatement : ce n'est pas la meme main.
+   */
+  pinceau: 'Protest Strike',
 } as const;
 
 export type FamillePolice = (typeof POLICES)[keyof typeof POLICES];
@@ -168,6 +192,7 @@ export const GRAISSES = {
   appuye: 600,
   fort: 700,
   manuscrit: 700,
+  pinceau: 400,
 } as const;
 
 /**

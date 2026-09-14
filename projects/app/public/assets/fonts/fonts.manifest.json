@@ -47,6 +47,15 @@
       "source": "BarlowSemiCondensed-Bold.ttf"
     },
     {
+      "fichier": "ProtestStrike-400.woff2",
+      "famille": "Protest Strike",
+      "graisse": 400,
+      "role": "pinceau",
+      "octets": 16944,
+      "unitsPerEm": 1000,
+      "source": "ProtestStrike-Regular.ttf"
+    },
+    {
       "fichier": "Caveat-700.woff2",
       "famille": "Caveat",
       "graisse": 700,

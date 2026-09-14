@@ -62,6 +62,27 @@ describe('metriques et ligne de base', () => {
     expect(m.descendante).toBeLessThan(0.5);
   });
 
+  it('centre les capitales sur leur propre hauteur', () => {
+    const centre = 100;
+    const base = moteur.ligneDeBaseCapitales(TEXTE, centre);
+    const m = moteur.metriques(TEXTE);
+    // L'encre d'une capitale occupe [base - capitale, base] : son centre doit
+    // tomber exactement sur l'ordonnee demandee.
+    expect(base - (m.capitale * TEXTE.taille) / 2).toBeCloseTo(centre, 6);
+  });
+
+  it('diverge du centrage sur boite em des que la face est asymetrique', () => {
+    // Barlow Semi Condensed reserve 1,0 en ascendante pour 0,7 de capitale :
+    // centrer sur la boite em decale les capitales de 5 % du corps. Sur
+    // Protest Strike, dont la boite est symetrique, les deux coincident — d'ou
+    // l'interet d'expliciter la regle plutot que de se fier a la face.
+    const centre = 100;
+    const ecart = (style: { famille: string; graisse: number; taille: number }) =>
+      moteur.ligneDeBaseCapitales(style, centre) - moteur.ligneDeBaseCentree(style, centre);
+    expect(Math.abs(ecart(TEXTE))).toBeGreaterThan(1);
+    expect(ecart({ famille: POLICES.pinceau, graisse: 400, taille: 34 })).toBeCloseTo(0, 6);
+  });
+
   it('centre verticalement sans recourir a dominant-baseline', () => {
     // L'interpretation de `dominant-baseline` diverge d'un moteur a l'autre :
     // la ligne de base est calculee ici, a partir des metriques reelles.
@@ -80,6 +101,16 @@ describe('glyphesManquants', () => {
       "ASJ La Chaussée St Victor — Azé TT, L'aigle Sellois, Mont-près-Chambord, " +
       'Samedi 19 septembre à 18h00 — 1re JOURNÉE « Œuvre » 100 % 12e';
     expect(moteur.glyphesManquants(echantillon, TEXTE)).toEqual([]);
+  });
+
+  it('couvre le rang de journee dans toutes les familles d affichage', () => {
+    // Le rang de journee est le seul texte pose sur le gabarit, et il porte un
+    // E accent aigu capital. Un sous-ensemble qui l'oublierait ne laisserait
+    // qu'un trou dans la bande peinte, sans erreur.
+    for (const famille of [POLICES.display, POLICES.pinceau]) {
+      const style = { famille, graisse: 400, taille: 40 };
+      expect(moteur.glyphesManquants('1RE JOURNÉE JEUNES', style), famille).toEqual([]);
+    }
   });
 
   it('demasque un caractere absent du sous-ensemble', () => {

@@ -4,10 +4,11 @@ import { monogramme } from '../clubs/normaliser';
 import { formatCreneau } from '../format/creneau';
 import { ordinalJournee } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
-import { decorPhoto, parallelogramme, type FondPhoto } from './decor';
+import { decorPhoto, type FondPhoto } from './decor';
 import { PINCEAU, transformPinceau } from './pinceau.generated';
 import type { Boite, Decoupe, Degrade, Filtre, Noeud, NoeudTexte, Scene } from './scene';
 import {
+  BANDE_JOURNEE,
   CADRAGE_LOGO,
   COULEURS,
   TEINTES_ANNEAU,
@@ -280,21 +281,47 @@ function iconeRepere(x: number, y: number, taille: number, couleur: string): Noe
   };
 }
 
-function bandeau(affiche: Affiche, numeroJournee: number, moteur: MoteurTexte): Noeud[] {
-  const couleurAccent = accent(affiche.categorie);
-
-  // Seul element du haut que le gabarit ne porte pas : le rang de la journee,
-  // qui change chaque semaine. Il se pose sous « LES RENCONTRES », sur la
-  // bande peinte que le gabarit y laisse libre.
+/**
+ * Rang de la journee, pose sur la bande peinte du gabarit.
+ *
+ * C'est le seul element du haut que le gabarit ne porte pas, puisque c'est le
+ * seul qui change chaque semaine. Il n'a plus de pastille : le gabarit lui
+ * reserve une bande rouge sous « LES RENCONTRES », et en redessiner une
+ * dessus faisait un rectangle rapporte sur une affiche peinte.
+ */
+function bandeau(
+  affiche: Affiche,
+  numeroJournee: number,
+  moteur: MoteurTexte,
+  diagnostics: Diagnostic[],
+): Noeud[] {
   const libelle =
     affiche.categorie === 'jeunes'
-      ? `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE — JEUNES`
+      ? `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE JEUNES`
       : `${ordinalJournee(numeroJournee).toUpperCase()} JOURNÉE`;
-  const style = styleDisplay(34);
-  const largeur = moteur.largeur(libelle, style) + ESPACES.s6;
-  const y = 404;
-  const h = 62;
-  const x = PANNEAUX.contenu.x + 24;
+
+  // Le corps se deduit de la bande : les capitales en occupent 86 % de la
+  // hauteur, puis la largeur mesuree le reduit si la mention « JEUNES »
+  // l'allonge.
+  const famille = { famille: POLICES.pinceau, graisse: GRAISSES.pinceau };
+  const metriques = moteur.metriques(famille);
+  const tailleHaute = (BANDE_JOURNEE.hauteur * 0.86) / metriques.capitale;
+  const ajuste = moteur.ajuster(
+    libelle,
+    BANDE_JOURNEE.largeur,
+    { ...famille, taille: tailleHaute },
+    echelonsDepuis(tailleHaute, tailleHaute * 0.55),
+  );
+  if (ajuste.deborde) {
+    diagnostics.push({
+      niveau: 'alerte',
+      message: `« ${libelle} » est trop long pour la bande du gabarit.`,
+    });
+  }
+
+  const style: StyleTexte = { ...famille, taille: ajuste.taille };
+  const cx = BANDE_JOURNEE.x + BANDE_JOURNEE.largeur / 2;
+  const cy = BANDE_JOURNEE.y + BANDE_JOURNEE.hauteur / 2;
 
   return [
     {
@@ -302,20 +329,23 @@ function bandeau(affiche: Affiche, numeroJournee: number, moteur: MoteurTexte): 
       role: 'journee',
       transform: `skewX(${INCLINAISON})`,
       enfants: [
-        {
-          type: 'chemin',
-          role: 'pastille-journee',
-          d: parallelogramme(x + compenser(y), y, largeur, h, 14),
-          remplissage: couleurAccent,
-        },
         texte(
           libelle,
-          x + largeur / 2 + compenser(y + h / 2),
-          moteur.ligneDeBaseCentree(style, y + h / 2),
+          cx + compenser(cy),
+          // Tout en capitales : la ligne de base se cale sur leur hauteur, et
+          // non sur la boite em, dont les reserves dependent de la face.
+          moteur.ligneDeBaseCapitales(style, cy),
           style,
           COULEURS.blanc,
           moteur,
-          { role: 'journee-texte', ancre: 'middle' },
+          {
+            role: 'journee-texte',
+            ancre: 'middle',
+            // Le trace peint est mouchete : le liseré sombre garantit la
+            // lisibilite la ou le rouge laisse voir le fond bleu.
+            contour: COULEURS.nuit,
+            epaisseurContour: style.taille * 0.07,
+          },
         ),
       ],
     },
@@ -910,7 +940,7 @@ export function composerAffiche(
     // cadre, et les invariants de mise en page doivent pouvoir l'ecarter sans
     // ecarter le contenu.
     { type: 'groupe', role: 'decor', enfants: decor.arriere },
-    ...bandeau(affiche, numeroJournee, moteur),
+    ...bandeau(affiche, numeroJournee, moteur, diagnostics),
   ];
 
   const colonnes =

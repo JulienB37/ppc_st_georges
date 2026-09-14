@@ -59,6 +59,15 @@ const FACES = [
     role: 'texte',
   },
   {
+    // Les titres du gabarit du club sont tracés au pinceau sec. Anton, une
+    // grotesque, ne peut pas s'en approcher : le rang de journee se pose sur
+    // la bande peinte du gabarit, il doit donc en partager la main.
+    fichier: 'ProtestStrike-Regular.ttf',
+    famille: 'Protest Strike',
+    graisse: 400,
+    role: 'pinceau',
+  },
+  {
     // Caveat n'existe qu'en police variable chez Google Fonts. resvg rendrait
     // silencieusement l'instance par defaut : on fige donc la graisse au
     // sous-ensemblage, ce qui produit une face statique ordinaire.

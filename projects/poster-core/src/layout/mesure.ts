@@ -35,6 +35,8 @@ export interface Metriques {
   ascendante: number;
   /** Profondeur sous la ligne de base, positive, en fraction du corps. */
   descendante: number;
+  /** Hauteur des capitales, en fraction du corps. */
+  capitale: number;
 }
 
 /** Un caractere que la police livree ne sait pas dessiner. */
@@ -49,6 +51,22 @@ export interface MoteurTexte {
   hauteurLigne(style: StyleTexte): number;
   /** Decalage de la ligne de base pour centrer verticalement dans une boite. */
   ligneDeBaseCentree(style: StyleTexte, centreY: number): number;
+  /**
+   * Ligne de base centrant les CAPITALES sur une ordonnee.
+   *
+   * Centrer sur la boite em place le centre des capitales a
+   * `(ascendante - descendante - capitale) / 2` du centre voulu, un ecart qui
+   * depend entierement de la face. Mesure sur les faces livrees : 5,0 % du
+   * corps sur Barlow Semi Condensed, -0,6 % sur Anton, et **0,0 % sur Protest
+   * Strike**, dont la boite em est symetrique.
+   *
+   * Autrement dit, sur la police du rang de journee cette methode rend
+   * exactement la meme ligne de base que `ligneDeBaseCentree`. Elle est
+   * neanmoins celle a employer sur un texte tout en capitales : l'egalite est
+   * une propriete de cette face, pas de la regle, et changer de police
+   * d'affichage deplacerait sinon le texte sans que rien ne le signale.
+   */
+  ligneDeBaseCapitales(style: StyleTexte, centreY: number): number;
   glyphesManquants(texte: string, style: Pick<StyleTexte, 'famille' | 'graisse'>): GlypheManquant[];
   ajuster(texte: string, largeurMax: number, style: StyleTexte, echelons: number[]): TexteAjuste;
   faces(): readonly FacePolice[];
@@ -139,6 +157,9 @@ export function creerMoteurTexte(faces: FacePolice[]): MoteurTexte {
       return {
         ascendante: police.ascent / police.unitsPerEm,
         descendante: Math.abs(police.descent) / police.unitsPerEm,
+        // Certaines polices d'affichage ne declarent pas capHeight : on
+        // retombe alors sur l'ascendante, qui en est proche sur une capitale.
+        capitale: (police.capHeight ?? police.ascent) / police.unitsPerEm,
       };
     },
 
@@ -151,6 +172,11 @@ export function creerMoteurTexte(faces: FacePolice[]): MoteurTexte {
       const m = moteur.metriques(style);
       const hauteur = (m.ascendante + m.descendante) * style.taille;
       return centreY - hauteur / 2 + m.ascendante * style.taille;
+    },
+
+    ligneDeBaseCapitales(style, centreY) {
+      const m = moteur.metriques(style);
+      return centreY + (m.capitale * style.taille) / 2;
     },
 
     glyphesManquants(texte, style) {
