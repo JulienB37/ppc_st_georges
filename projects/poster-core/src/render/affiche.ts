@@ -5,6 +5,7 @@ import { formatCreneau } from '../format/creneau';
 import { ordinalJournee } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
 import { decorPhoto, parallelogramme, type FondPhoto } from './decor';
+import { PINCEAU, transformPinceau } from './pinceau.generated';
 import type { Boite, Decoupe, Degrade, Filtre, Noeud, NoeudTexte, Scene } from './scene';
 import {
   CADRAGE_LOGO,
@@ -447,13 +448,25 @@ function enteteGroupe(
   const largeurPilule =
     ESPACES.s4 + tailleIcone + ESPACES.s2 + largeurDate + ESPACES.s3 + largeurLieu + ESPACES.s4;
 
+  // Le fond de la bande est un coup de pinceau vectoriel fourni par le club,
+  // etire a la longueur de la date. Il remplace le parallelogramme : une forme
+  // peinte se lit comme une affiche, un quadrilatere comme un gabarit.
+  //
+  // Le trace est plus haut que la bande utile — un coup de brosse baveux — donc
+  // on l'etire sur une hauteur superieure et on le recentre verticalement.
+  const largeurBande = largeurPilule + tailleIcone + ESPACES.s2;
+  const debord = h * 0.55;
   const noeuds: Noeud[] = [
     {
-      type: 'chemin',
+      type: 'groupe',
       role: 'entete-groupe',
-      // Coins vifs et cisaillement, comme les surlignages de titre.
-      d: parallelogramme(x, y, largeurPilule + tailleIcone + ESPACES.s2, h, h * 0.22),
-      remplissage: teinte,
+      transform: transformPinceau(
+        x - debord * 0.3,
+        y - debord / 2,
+        largeurBande + debord * 0.6,
+        h + debord,
+      ),
+      enfants: [{ type: 'chemin', d: PINCEAU.chemin, remplissage: teinte }],
     },
   ];
 
