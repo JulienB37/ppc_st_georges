@@ -676,7 +676,10 @@ function rangee(
   const cxVs = x + largeur / 2;
   noeuds.push(marqueVs(cxVs, cy, hauteurVs, teinteCreneau));
 
-  const styleNom = styleTexte(densite.tailleNom, GRAISSES.fort);
+  // Les deux camps partagent desormais graisse et couleur : le club n'est plus
+  // appuye ni l'adversaire estompe. Ce qui designe « nous » sur la ligne, c'est
+  // l'anneau colore du blason, pas une hierarchie typographique.
+  const styleNom = styleTexte(densite.tailleNom, GRAISSES.courant);
   const echelons = echelonsDepuis(densite.tailleNom, PLANCHERS.tailleNom);
 
   // Champ gauche : pastille de division puis nom du club.
@@ -726,11 +729,10 @@ function rangee(
 
   const xDroite = cxDroite - d / 2 - ESPACES.s2;
   const bordDroitVs = cxVs + largeurVs / 2 + ESPACES.s3;
-  const styleAdverse = styleTexte(densite.tailleNom, GRAISSES.courant);
   const adverse = moteur.ajuster(
     rencontre.adversaire.libelle,
     xDroite - bordDroitVs,
-    styleAdverse,
+    styleNom,
     echelons,
   );
   if (adverse.deborde) {
@@ -743,9 +745,9 @@ function rangee(
     texte(
       rencontre.adversaire.libelle,
       xDroite,
-      moteur.ligneDeBaseCentree({ ...styleAdverse, taille: adverse.taille }, cy),
-      { ...styleAdverse, taille: adverse.taille },
-      COULEURS.brume,
+      moteur.ligneDeBaseCentree({ ...styleNom, taille: adverse.taille }, cy),
+      { ...styleNom, taille: adverse.taille },
+      COULEURS.blanc,
       moteur,
       { role: 'nom-adverse', ancre: 'end' },
     ),
@@ -843,7 +845,7 @@ function rangeeDuel(
   // la carte pour qu'ils ne se rejoignent jamais au centre.
   const largeurNom = largeur * 0.44;
   const cyNom = y + h * 0.76;
-  const styleNom = styleTexte(Math.min(40, h * 0.11), GRAISSES.fort);
+  const styleNom = styleTexte(Math.min(40, h * 0.11), GRAISSES.courant);
   const echelons = echelonsDepuis(styleNom.taille, PLANCHERS.tailleNom);
 
   const nomLocal = `${ctx.nomClub} ${rencontre.equipeLocale.numero}`;
@@ -860,8 +862,7 @@ function rangeeDuel(
     ),
   );
 
-  const styleAdverse = styleTexte(styleNom.taille, GRAISSES.courant);
-  const adverse = moteur.ajuster(rencontre.adversaire.libelle, largeurNom, styleAdverse, echelons);
+  const adverse = moteur.ajuster(rencontre.adversaire.libelle, largeurNom, styleNom, echelons);
   if (adverse.deborde) {
     ctx.diagnostics.push({
       niveau: 'alerte',
@@ -872,9 +873,9 @@ function rangeeDuel(
     texte(
       rencontre.adversaire.libelle,
       cxDroite,
-      moteur.ligneDeBaseCentree({ ...styleAdverse, taille: adverse.taille }, cyNom),
-      { ...styleAdverse, taille: adverse.taille },
-      COULEURS.brume,
+      moteur.ligneDeBaseCentree({ ...styleNom, taille: adverse.taille }, cyNom),
+      { ...styleNom, taille: adverse.taille },
+      COULEURS.blanc,
       moteur,
       { role: 'nom-adverse', ancre: 'middle' },
     ),
