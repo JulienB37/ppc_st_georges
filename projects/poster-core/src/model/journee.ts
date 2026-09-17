@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { parseCreneau, saisonDe } from '../format/creneau';
+import { creneauValide, saisonDe } from '../format/creneau';
 
 /**
  * Modele de document v2.
@@ -22,17 +22,9 @@ export const VERSION_SCHEMA = 2;
 
 /** Un instant local, sans fuseau : `2026-09-19T18:00`. */
 export const CreneauSchema = z.object({
-  debutIso: z.string().refine(
-    (v) => {
-      try {
-        parseCreneau(v);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    { message: 'Creneau attendu au format AAAA-MM-JJThh:mm' },
-  ),
+  debutIso: z
+    .string()
+    .refine(creneauValide, { message: 'Creneau attendu au format AAAA-MM-JJThh:mm' }),
   /**
    * Echappatoire : remplace le libelle calcule. C'est la que la migration
    * depose les chaines saisies a la main (« Samedi 21 Mars à 18h00 »), pour

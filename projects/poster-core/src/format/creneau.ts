@@ -12,6 +12,23 @@ export interface CreneauParts {
 }
 
 /**
+ * Vrai si la chaine est un creneau local complet et coherent.
+ *
+ * Utile partout ou un creneau peut etre INCOMPLET sans que ce soit une erreur :
+ * un formulaire en cours de saisie, notamment, ou la date est vide avant que
+ * l'utilisateur ne la tape. Le predicat evite d'avoir a intercepter une
+ * exception pour poser une question.
+ */
+export function creneauValide(iso: string): boolean {
+  try {
+    parseCreneau(iso);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Decoupe un creneau local en composants.
  *
  * On n'utilise pas `new Date(iso)` : selon la forme de la chaine, le moteur

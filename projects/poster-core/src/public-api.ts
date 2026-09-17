@@ -16,3 +16,6 @@ export * from './sponsors/registre.generated';
 
 export * from './model/journee';
 export * from './migrate/v1';
+
+export * from './edition/modele';
+export * from './edition/mutations';
