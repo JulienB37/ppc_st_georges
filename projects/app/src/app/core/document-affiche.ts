@@ -1,7 +1,8 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import {
   afficheVide,
   deplacer,
+  dupliquerAffiche,
   equipeLibreDe,
   inserer,
   nouveauGroupe,
@@ -16,6 +17,8 @@ import {
   type Categorie,
   type Probleme,
 } from 'poster-core';
+
+import { DepotAffiches } from './depot-affiches';
 
 /**
  * L'affiche en cours d'edition.
@@ -40,6 +43,8 @@ import {
  */
 @Injectable({ providedIn: 'root' })
 export class DocumentAffiche {
+  private readonly depot = inject(DepotAffiches);
+
   /** Modele editable, partage avec le formulaire. */
   readonly affiche = signal<AfficheEditable>(afficheVide('adultes', 1, maintenant()));
 
@@ -69,9 +74,51 @@ export class DocumentAffiche {
     this.affiche().groupes.reduce((total, groupe) => total + groupe.rencontres.length, 0),
   );
 
+  /** Vrai des que la saisie a ete enregistree au moins une fois. */
+  readonly enregistre = signal(false);
+
+  /**
+   * Sauvegarde automatique.
+   *
+   * Un benevole ne pense pas a enregistrer, et le plan ne prevoit aucun bouton
+   * pour cela. L'effet observe le modele et ecrit a chaque changement.
+   *
+   * Deux precautions. Un document INCOMPLET n'est pas ecrit : une affiche
+   * neuve, sans date, n'a pas a peupler l'historique de brouillons vides — et
+   * le depot refuserait de toute facon un document invalide. Et l'ecriture est
+   * differee de 400 ms, sans quoi chaque frappe declencherait une transaction.
+   */
+  private readonly sauvegarde = effect((onCleanup) => {
+    const document = this.domaine();
+    if (!this.publiable()) return;
+
+    const minuteur = setTimeout(() => {
+      void this.depot
+        .enregistrer({ ...document, majLe: maintenant() })
+        .then(() => this.enregistre.set(true))
+        .catch((erreur: unknown) => {
+          // Ne pas avaler : un quota depasse ou une base fermee doit se voir.
+          console.error('Sauvegarde impossible', erreur);
+        });
+    }, 400);
+
+    onCleanup(() => clearTimeout(minuteur));
+  });
+
   /** Reprend une affiche existante — import, historique, duplication. */
   ouvrir(affiche: Affiche): void {
     this.affiche.set(versEditable(affiche));
+  }
+
+  /**
+   * Duplique le document courant pour la journee suivante.
+   *
+   * C'est le geste hebdomadaire du club. `dupliquerAffiche` avance le numero,
+   * decale les creneaux d'une semaine et EFFACE les libelles imposes, qui
+   * porteraient sinon la date de la semaine passee.
+   */
+  dupliquer(): void {
+    this.affiche.set(versEditable(dupliquerAffiche(this.domaine(), maintenant())));
   }
 
   /**

@@ -1,0 +1,47 @@
+:host {
+  display: block;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+h1 {
+  margin-bottom: 1.5rem;
+}
+
+.etat {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.entree {
+  margin-bottom: 0.75rem;
+}
+
+.entree--illisible {
+  border-color: var(--mat-sys-error);
+}
+
+.entree__corps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.entree__titre {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.entree__detail {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.entree__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}

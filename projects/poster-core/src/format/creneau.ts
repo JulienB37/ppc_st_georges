@@ -12,6 +12,31 @@ export interface CreneauParts {
 }
 
 /**
+ * Decale un creneau d'un nombre de jours, en conservant l'heure.
+ *
+ * L'arithmetique passe par `Date.UTC`, et c'est le seul endroit du projet ou
+ * une `Date` intervient sur un creneau. C'est licite ici parce que les
+ * composants sont poses A LA MAIN en UTC : aucun fuseau local n'est consulte,
+ * aucune heure d'ete ne s'applique, et le calcul est donc identique partout.
+ * Ce que le projet interdit, c'est `new Date(chaine)`, dont l'interpretation
+ * — locale ou UTC — depend de la forme de la chaine.
+ *
+ * L'heure est reportee telle quelle, volontairement : une journee decalee d'une
+ * semaine se joue a la meme heure, y compris de part et d'autre d'un changement
+ * d'heure.
+ */
+export function decalerCreneau(debutIso: string, jours: number): string {
+  const { annee, mois, jour, heures, minutes } = parseCreneau(debutIso);
+  const t = Date.UTC(annee, mois - 1, jour) + jours * 86_400_000;
+  const d = new Date(t);
+  const deuxChiffres = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${d.getUTCFullYear()}-${deuxChiffres(d.getUTCMonth() + 1)}-${deuxChiffres(d.getUTCDate())}` +
+    `T${deuxChiffres(heures)}:${deuxChiffres(minutes)}`
+  );
+}
+
+/**
  * Vrai si la chaine est un creneau local complet et coherent.
  *
  * Utile partout ou un creneau peut etre INCOMPLET sans que ce soit une erreur :

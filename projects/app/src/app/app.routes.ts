@@ -11,9 +11,8 @@ import type { Routes } from '@angular/router';
  * principe : c'est lui qui tirera le rasteriseur, soit 2,4 Mo de wasm, qu'un
  * benevole venu consulter son historique n'a aucune raison de telecharger.
  *
- * L'historique et la bibliotheque de clubs arrivent aux lots 6 et 7 ; leurs
- * chemins ne sont pas encore declares, pour qu'aucune route ne mene a une page
- * vide.
+ * La bibliotheque de clubs arrive au lot 7 ; son chemin n'est pas encore
+ * declare, pour qu'aucune route ne mene a une page vide.
  */
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'nouvelle' },
@@ -26,6 +25,11 @@ export const routes: Routes = [
     path: 'affiche/:categorie',
     title: 'Affiche de championnat — PPC St Georges/Cher',
     loadComponent: () => import('./features/editeur/editeur').then((m) => m.Editeur),
+  },
+  {
+    path: 'historique',
+    title: 'Affiches enregistrées — PPC St Georges/Cher',
+    loadComponent: () => import('./features/historique/historique').then((m) => m.Historique),
   },
   { path: '**', redirectTo: 'nouvelle' },
 ];

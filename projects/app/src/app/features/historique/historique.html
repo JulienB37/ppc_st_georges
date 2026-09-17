@@ -1,0 +1,60 @@
+<h1>Affiches enregistrées</h1>
+
+@if (entrees.isLoading()) {
+  <p class="etat">Lecture…</p>
+} @else if (entrees.error()) {
+  <p class="etat">La base locale n’a pas pu être lue.</p>
+} @else if (!entrees.value()?.length) {
+  <p class="etat">
+    Aucune affiche enregistrée pour l’instant. La sauvegarde est automatique dès qu’une affiche est
+    complète.
+  </p>
+} @else {
+  @for (entree of entrees.value(); track entree.type === 'ok' ? entree.affiche.id : entree.id) {
+    @if (entree.type === 'ok') {
+      <mat-card class="entree" appearance="outlined">
+        <mat-card-content class="entree__corps">
+          <div class="entree__titre">
+            <strong>{{ rang(entree.affiche) }} journée {{ entree.affiche.categorie }}</strong>
+            <span class="entree__detail">
+              {{ libelleCreneau(entree.affiche) }} · {{ compter(entree.affiche) }} rencontre(s) ·
+              saison {{ entree.affiche.saison }}
+            </span>
+          </div>
+
+          <div class="entree__actions">
+            <button matButton type="button" (click)="ouvrir(entree.affiche)">Ouvrir</button>
+            <button
+              matButton="filled"
+              type="button"
+              matTooltip="Reprend cette affiche pour la journée suivante"
+              (click)="dupliquer(entree.affiche)"
+            >
+              Journée suivante
+            </button>
+            <button
+              matIconButton
+              type="button"
+              matTooltip="Supprimer"
+              (click)="supprimer(entree.affiche.id)"
+            >
+              <ppc-icone nom="supprimer" />
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <mat-card class="entree entree--illisible" appearance="outlined">
+        <mat-card-content class="entree__corps">
+          <div class="entree__titre">
+            <strong>Document illisible</strong>
+            <span class="entree__detail">{{ entree.raison }}</span>
+          </div>
+          <div class="entree__actions">
+            <button matButton type="button" (click)="supprimer(entree.id)">Supprimer</button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+}
