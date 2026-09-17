@@ -13,6 +13,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { nomFichierAffiche } from 'poster-core';
 
 import { Apercu } from '../../core/apercu';
+import { telechargerBlob } from '../../shared/telechargement';
 import { DocumentAffiche } from '../../core/document-affiche';
 
 /** Largeur de rendu de l'apercu. Le spike a mesure 14 ms a cette taille. */
@@ -103,7 +104,7 @@ export class ApercuAffiche {
     try {
       const affiche = this.doc.domaine();
       const png = await this.apercu.exporter(affiche, LARGEUR_EXPORT);
-      declencherTelechargement(
+      telechargerBlob(
         new Blob([png as BlobPart], { type: 'image/png' }),
         // Le nom vient de `poster-core`, ou il est teste : journee completee a
         // deux chiffres, championnat, saison.
@@ -115,34 +116,4 @@ export class ApercuAffiche {
       this.exportEnCours.set(false);
     }
   }
-}
-
-/**
- * Declenche un telechargement.
- *
- * Isole ici, et non dans un service : c'est la seule capacite de plateforme
- * dont le lot 8 a besoin, et l'abstraction complete prevue par le plan — un
- * `PlatformAdapter` avec ses capacites — n'a de sens qu'avec Electron en face,
- * au lot 12. L'anticiper maintenant ne ferait qu'une indirection sans second
- * usage.
- */
-function declencherTelechargement(contenu: Blob, nom: string): void {
-  const url = URL.createObjectURL(contenu);
-  const lien = document.createElement('a');
-  lien.href = url;
-  lien.download = nom;
-
-  // Le lien doit etre DANS le document. Un ancrage detache voit son attribut
-  // `download` ignore par plusieurs navigateurs : le fichier prend alors le nom
-  // de l'URL blob, soit un identifiant sans extension.
-  lien.style.display = 'none';
-  document.body.appendChild(lien);
-  lien.click();
-  lien.remove();
-
-  // Et l'URL ne se libere pas dans la foulee : au moment du `click`, le
-  // navigateur n'a pas encore commence a lire le blob. Revoquer tout de suite
-  // annule le telechargement ou le renomme. Un tour de boucle d'evenements
-  // suffit a le laisser demarrer.
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
