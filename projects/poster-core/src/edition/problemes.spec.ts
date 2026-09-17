@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { versDomaine } from './modele';
+import { EQUIPES_CLUB } from '../clubs/equipes';
 import { journeeVide, nouvelleRencontre } from './mutations';
 import { problemesDe } from './problemes';
 import { CONFIG_V1_REELLE } from '../migrate/v1.fixture';
@@ -31,7 +32,7 @@ describe('problemesDe', () => {
     const groupe = editable.affiches[0]!.groupes[0]!;
     groupe.date = '2026-09-19';
     groupe.heure = '18:00';
-    groupe.rencontres = [nouvelleRencontre(1)];
+    groupe.rencontres = [nouvelleRencontre(EQUIPES_CLUB[0]!)];
 
     const problemes = problemesDe(versDomaine(editable));
     expect(problemes.map((p) => p.ou)).toContain('affiche adultes · creneau 1 · rencontre 1');

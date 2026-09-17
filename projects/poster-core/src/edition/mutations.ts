@@ -1,3 +1,4 @@
+import { equipeLibreSuivante, type EquipeClub } from '../clubs/equipes';
 import { emplacementsVides, graineParDefaut, nouvelId, type Categorie } from '../model/journee';
 import type { AfficheEditable, GroupeEditable, JourneeEditable, RencontreEditable } from './modele';
 
@@ -16,11 +17,18 @@ import type { AfficheEditable, GroupeEditable, JourneeEditable, RencontreEditabl
 /** Heure par defaut d'une rencontre : celle de la journee type du club. */
 const HEURE_PAR_DEFAUT = '18:00';
 
-export function nouvelleRencontre(numero: number): RencontreEditable {
+/**
+ * Nouvelle rencontre, pour une equipe du club.
+ *
+ * L'equipe porte a la fois son rang et sa division : les deux ne peuvent donc
+ * pas divergier, et « D2 (3) » — une combinaison qui n'existe pas — n'est plus
+ * representable par la saisie.
+ */
+export function nouvelleRencontre(equipe: EquipeClub): RencontreEditable {
   return {
     id: nouvelId(),
-    division: '',
-    numero,
+    division: equipe.division,
+    numero: equipe.numero,
     adversaireClubId: '',
     adversaireNumero: 0,
     adversaireLibelle: '',
@@ -99,13 +107,12 @@ export function remplacer<T>(liste: readonly T[], index: number, calculer: (elem
 }
 
 /**
- * Prochain numero d'equipe libre d'une affiche.
+ * Equipe a proposer au prochain ajout : la premiere que la journee n'engage pas
+ * encore, tous creneaux confondus.
  *
- * Le numero identifie l'equipe au sein du club et ne doit pas se repeter : on
- * prend donc le suivant du plus grand deja pose, tous creneaux confondus, et
- * non la taille de la liste — un creneau supprime laisserait sinon un doublon.
+ * Ce n'est pas « le suivant du plus grand numero » : les equipes se choisissent
+ * dans une table fixe, et une equipe retiree d'un creneau redevient disponible.
  */
-export function prochainNumeroEquipe(affiche: AfficheEditable): number {
-  const numeros = affiche.groupes.flatMap((g) => g.rencontres.map((r) => r.numero));
-  return numeros.length ? Math.max(...numeros) + 1 : 1;
+export function equipeLibreDe(affiche: AfficheEditable): EquipeClub {
+  return equipeLibreSuivante(affiche.groupes.flatMap((g) => g.rencontres.map((r) => r.numero)));
 }

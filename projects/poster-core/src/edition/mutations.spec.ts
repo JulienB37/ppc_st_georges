@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { EQUIPES_CLUB } from '../clubs/equipes';
 import { JourneeSchema } from '../model/journee';
 import { SAISON_INDETERMINEE, versDomaine } from './modele';
 import {
@@ -9,7 +10,7 @@ import {
   nouveauGroupe,
   nouvelleAffiche,
   nouvelleRencontre,
-  prochainNumeroEquipe,
+  equipeLibreDe,
   remplacer,
   retirer,
 } from './mutations';
@@ -76,7 +77,7 @@ describe('fabriques', () => {
   it('ne pose aucun null ni undefined, que les Signal Forms refusent', () => {
     const journee = journeeVide(12, MAINTENANT);
     const valeurs = [
-      ...Object.values(nouvelleRencontre(1)),
+      ...Object.values(nouvelleRencontre(EQUIPES_CLUB[0]!)),
       ...Object.values(nouveauGroupe()).filter((v) => !Array.isArray(v)),
       journee.numero,
       journee.id,
@@ -86,7 +87,11 @@ describe('fabriques', () => {
   });
 
   it('donne a chaque element un identifiant distinct', () => {
-    const ids = [nouvelleRencontre(1).id, nouvelleRencontre(1).id, nouveauGroupe().id];
+    const ids = [
+      nouvelleRencontre(EQUIPES_CLUB[0]!).id,
+      nouvelleRencontre(EQUIPES_CLUB[0]!).id,
+      nouveauGroupe().id,
+    ];
     expect(new Set(ids).size).toBe(3);
   });
 
@@ -108,25 +113,34 @@ describe('fabriques', () => {
   });
 });
 
-describe('prochainNumeroEquipe', () => {
-  it('suit le plus grand numero pose, tous creneaux confondus', () => {
+describe('equipeLibreDe', () => {
+  it('propose la premiere equipe que la journee n engage pas encore', () => {
     const affiche = nouvelleAffiche('adultes', 1);
-    affiche.groupes[0]!.rencontres = [nouvelleRencontre(1), nouvelleRencontre(2)];
-    affiche.groupes.push({ ...nouveauGroupe(), rencontres: [nouvelleRencontre(5)] });
-    expect(prochainNumeroEquipe(affiche)).toBe(6);
+    affiche.groupes[0]!.rencontres = [nouvelleRencontre(EQUIPES_CLUB[0]!)];
+    affiche.groupes.push({ ...nouveauGroupe(), rencontres: [nouvelleRencontre(EQUIPES_CLUB[1]!)] });
+    expect(equipeLibreDe(affiche)).toEqual({ numero: 3, division: 'PR1' });
   });
 
-  it('ne recycle pas un numero libere par une suppression', () => {
-    // Prendre la taille de la liste redonnerait 2 apres suppression de la
-    // deuxieme equipe, alors que le numero 2 vient d'etre retire : deux equipes
-    // porteraient le meme rang.
+  it('rend une equipe liberee par une suppression', () => {
+    // Les equipes se choisissent dans une table fixe : retirer l'equipe 1 d'un
+    // creneau la rend de nouveau disponible, la ou un compteur croissant
+    // l'aurait definitivement sautee.
     const affiche = nouvelleAffiche('adultes', 1);
-    affiche.groupes[0]!.rencontres = [nouvelleRencontre(1), nouvelleRencontre(2)];
+    affiche.groupes[0]!.rencontres = [
+      nouvelleRencontre(EQUIPES_CLUB[0]!),
+      nouvelleRencontre(EQUIPES_CLUB[1]!),
+    ];
     affiche.groupes[0]!.rencontres = retirer(affiche.groupes[0]!.rencontres, 0);
-    expect(prochainNumeroEquipe(affiche)).toBe(3);
+    expect(equipeLibreDe(affiche).numero).toBe(1);
   });
 
-  it('commence a 1 sur une affiche neuve', () => {
-    expect(prochainNumeroEquipe(nouvelleAffiche('adultes', 1))).toBe(1);
+  it('commence par l equipe 1 sur une affiche neuve', () => {
+    expect(equipeLibreDe(nouvelleAffiche('adultes', 1))).toEqual({ numero: 1, division: 'R2' });
+  });
+
+  it('rend la derniere equipe plutot que rien quand les huit sont prises', () => {
+    const affiche = nouvelleAffiche('adultes', 1);
+    affiche.groupes[0]!.rencontres = EQUIPES_CLUB.map((e) => nouvelleRencontre(e));
+    expect(equipeLibreDe(affiche).numero).toBe(8);
   });
 });

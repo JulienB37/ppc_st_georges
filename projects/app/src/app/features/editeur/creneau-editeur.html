@@ -58,14 +58,23 @@
 
 @for (rencontre of champs().rencontres; track rencontre().value().id; let i = $index) {
   <div class="rencontre">
-    <mat-form-field class="rencontre__division">
-      <mat-label>Division</mat-label>
-      <input matInput type="text" [formField]="rencontre.division" />
-    </mat-form-field>
-
-    <mat-form-field class="rencontre__numero">
-      <mat-label>Équipe n°</mat-label>
-      <input matInput type="number" [formField]="rencontre.numero" />
+    <mat-form-field class="rencontre__equipe">
+      <mat-label>Notre équipe</mat-label>
+      <mat-select
+        [formField]="rencontre.division"
+        (selectionChange)="choisirEquipe(rencontre, $event.value)"
+      >
+        @for (equipe of options(rencontre.division().value()); track equipe.division) {
+          <mat-option [value]="equipe.division">
+            {{ equipe.division }}
+            @if (equipe.numero) {
+              — équipe {{ equipe.numero }}
+            } @else {
+              — étiquette d’origine
+            }
+          </mat-option>
+        }
+      </mat-select>
     </mat-form-field>
 
     <mat-form-field class="rencontre__adversaire">

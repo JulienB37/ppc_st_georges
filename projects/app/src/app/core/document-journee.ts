@@ -6,7 +6,7 @@ import {
   nouveauGroupe,
   nouvelleAffiche,
   nouvelleRencontre,
-  prochainNumeroEquipe,
+  equipeLibreDe,
   problemesDe,
   remplacer,
   retirer,
@@ -119,7 +119,9 @@ export class DocumentJournee {
       ...affiche,
       groupes: remplacer(affiche.groupes, iGroupe, (groupe) => ({
         ...groupe,
-        rencontres: inserer(groupe.rencontres, nouvelleRencontre(prochainNumeroEquipe(affiche))),
+        // L'equipe proposee est la premiere que la journee n'engage pas
+        // encore : une equipe ne joue qu'une fois par journee.
+        rencontres: inserer(groupe.rencontres, nouvelleRencontre(equipeLibreDe(affiche))),
       })),
     }));
   }
