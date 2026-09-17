@@ -131,6 +131,18 @@ function declencherTelechargement(contenu: Blob, nom: string): void {
   const lien = document.createElement('a');
   lien.href = url;
   lien.download = nom;
+
+  // Le lien doit etre DANS le document. Un ancrage detache voit son attribut
+  // `download` ignore par plusieurs navigateurs : le fichier prend alors le nom
+  // de l'URL blob, soit un identifiant sans extension.
+  lien.style.display = 'none';
+  document.body.appendChild(lien);
   lien.click();
-  URL.revokeObjectURL(url);
+  lien.remove();
+
+  // Et l'URL ne se libere pas dans la foulee : au moment du `click`, le
+  // navigateur n'a pas encore commence a lire le blob. Revoquer tout de suite
+  // annule le telechargement ou le renomme. Un tour de boucle d'evenements
+  // suffit a le laisser demarrer.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
