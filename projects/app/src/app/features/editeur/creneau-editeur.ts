@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+import { CatalogueClubs } from '../../core/catalogue-clubs';
 import { Icone } from '../../shared/icone';
 import { FormField, type FieldTree } from '@angular/forms/signals';
 import {
@@ -13,6 +15,7 @@ import {
   equipeParDivision,
   formatCreneau,
   optionsDivision,
+  type EntreeClub,
   type GroupeEditable,
   type RencontreEditable,
 } from 'poster-core';
@@ -30,6 +33,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormField,
+    MatAutocompleteModule,
     MatButtonModule,
     MatCheckboxModule,
     MatFormFieldModule,
@@ -42,6 +46,8 @@ import {
   styleUrl: './creneau-editeur.scss',
 })
 export class CreneauEditeur {
+  protected readonly catalogue = inject(CatalogueClubs);
+
   readonly champs = input.required<FieldTree<GroupeEditable>>();
   /** Rang affiche, et bornes pour griser les fleches de deplacement. */
   readonly index = input.required<number>();
@@ -82,22 +88,37 @@ export class CreneauEditeur {
   }
 
   /**
-   * Deduit l'identifiant du club adverse de son libelle.
+   * Club retenu pour une rencontre, s'il a un logo.
    *
-   * PROVISOIRE, jusqu'au lot 7 : la selection du club s'y fera par
-   * autocompletion, avec la vignette du logo et une resolution explicite a
-   * trois issues. En attendant, `clubIdDepuisLibelle` — deja ecrite et testee —
-   * rend le document publiable, faute de quoi l'editeur resterait bloque sur
-   * « le club adverse n'est pas choisi ».
-   *
-   * Ce n'est PAS la regression de l'ancien script, qui devinait le club par une
-   * expression reguliere sur une chaine libre sans jamais le dire : ici
-   * l'identifiant est ecrit dans le document, et le lot 7 le rendra visible et
-   * corrigeable.
+   * Sert a montrer la vignette a cote du champ : c'est ainsi que le benevole
+   * VOIT que sa saisie a bien designe un club, au lieu de le decouvrir sur
+   * l'affiche. L'ancien script devinait le club par une expression reguliere et
+   * ne disait jamais s'il avait trouve.
    */
-  protected deriverClub(rencontre: FieldTree<RencontreEditable>): void {
+  protected clubRetenu(clubId: string): EntreeClub | undefined {
+    return this.catalogue.parId(clubId);
+  }
+
+  /**
+   * Met a jour l'identifiant du club adverse a chaque frappe.
+   *
+   * Seule une correspondance EXACTE est retenue : un rapprochement approximatif
+   * n'est jamais applique en silence, c'est la regle du domaine. A defaut,
+   * l'identifiant est deduit du libelle — le document reste ainsi valide et
+   * l'affiche portera un monogramme, ce que l'absence de vignette annonce.
+   */
+  protected accorderClub(rencontre: FieldTree<RencontreEditable>): void {
     const libelle = rencontre.adversaireLibelle().value();
-    rencontre.adversaireClubId().value.set(libelle ? clubIdDepuisLibelle(libelle) : '');
+    const exact = libelle ? this.catalogue.parLibelle(libelle) : undefined;
+    rencontre
+      .adversaireClubId()
+      .value.set(exact?.id ?? (libelle ? clubIdDepuisLibelle(libelle) : ''));
+  }
+
+  /** Selection dans la liste : le libelle et l'identifiant viennent du catalogue. */
+  protected choisirClub(rencontre: FieldTree<RencontreEditable>, club: EntreeClub): void {
+    rencontre.adversaireLibelle().value.set(club.libelle);
+    rencontre.adversaireClubId().value.set(club.id);
   }
 
   /**

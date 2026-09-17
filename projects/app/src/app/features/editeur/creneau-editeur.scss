@@ -71,3 +71,24 @@
 .pousser {
   margin-left: auto;
 }
+
+.option__logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+}
+
+.rencontre__vignette {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.rencontre__sans-logo {
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+  font-style: italic;
+  white-space: nowrap;
+}

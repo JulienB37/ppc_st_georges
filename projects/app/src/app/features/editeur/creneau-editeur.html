@@ -83,12 +83,34 @@
         matInput
         type="text"
         [formField]="rencontre.adversaireLibelle"
-        (input)="deriverClub(rencontre)"
+        [matAutocomplete]="liste"
+        (input)="accorderClub(rencontre)"
       />
+      <mat-autocomplete #liste requireSelection="false">
+        @for (club of catalogue.chercher(rencontre.adversaireLibelle().value()); track club.id) {
+          <mat-option [value]="club.libelle" (onSelectionChange)="choisirClub(rencontre, club)">
+            <img class="option__logo" [src]="catalogue.vignette(club)" alt="" />
+            {{ club.libelle }}
+          </mat-option>
+        }
+      </mat-autocomplete>
       @if (rencontre.adversaireLibelle().invalid() && rencontre.adversaireLibelle().touched()) {
         <mat-error>{{ rencontre.adversaireLibelle().errors()[0]?.message }}</mat-error>
       }
     </mat-form-field>
+
+    @if (clubRetenu(rencontre.adversaireClubId().value()); as club) {
+      <img
+        class="rencontre__vignette"
+        [src]="catalogue.vignette(club)"
+        [alt]="'Logo de ' + club.libelle"
+        [matTooltip]="club.libelle"
+      />
+    } @else if (rencontre.adversaireLibelle().value()) {
+      <span class="rencontre__sans-logo" matTooltip="L’affiche portera un monogramme">
+        pas de logo
+      </span>
+    }
 
     <mat-form-field class="rencontre__numero-adverse">
       <mat-label>Son n°</mat-label>
