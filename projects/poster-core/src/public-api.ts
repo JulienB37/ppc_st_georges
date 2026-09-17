@@ -8,6 +8,7 @@
 
 export * from './format/ordinal';
 export * from './format/creneau';
+export * from './format/nom-fichier';
 
 export * from './clubs/normaliser';
 export * from './clubs/resoudre';

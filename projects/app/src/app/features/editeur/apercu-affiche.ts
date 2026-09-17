@@ -10,6 +10,8 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+import { nomFichierAffiche } from 'poster-core';
+
 import { Apercu } from '../../core/apercu';
 import { DocumentAffiche } from '../../core/document-affiche';
 
@@ -99,11 +101,13 @@ export class ApercuAffiche {
   protected async telecharger(): Promise<void> {
     this.exportEnCours.set(true);
     try {
-      const png = await this.apercu.exporter(this.doc.domaine(), LARGEUR_EXPORT);
       const affiche = this.doc.domaine();
+      const png = await this.apercu.exporter(affiche, LARGEUR_EXPORT);
       declencherTelechargement(
         new Blob([png as BlobPart], { type: 'image/png' }),
-        `journee-${affiche.numero}-${affiche.categorie}.png`,
+        // Le nom vient de `poster-core`, ou il est teste : journee completee a
+        // deux chiffres, championnat, saison.
+        nomFichierAffiche(affiche, 'png'),
       );
     } catch (e: unknown) {
       this.erreur.set(e instanceof Error ? e.message : String(e));
