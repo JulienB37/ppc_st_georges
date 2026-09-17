@@ -62,7 +62,7 @@ async function main(): Promise<void> {
       if (y > yMax) yMax = y;
     }
   }
-  if (!encre.length) throw new Error("Aucune encre detectee dans le trace.");
+  if (!encre.length) throw new Error('Aucune encre detectee dans le trace.');
 
   // Centre de la boite d'encre, et non centroide : sur un anneau discontinu, le
   // centroide derive vers l'arc le plus epais.

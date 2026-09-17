@@ -1,6 +1,6 @@
 import { equipeLibreSuivante, type EquipeClub } from '../clubs/equipes';
 import { emplacementsVides, graineParDefaut, nouvelId, type Categorie } from '../model/journee';
-import type { AfficheEditable, GroupeEditable, JourneeEditable, RencontreEditable } from './modele';
+import type { AfficheEditable, GroupeEditable, RencontreEditable } from './modele';
 
 /**
  * Fabriques et mutations de liste du modele editable.
@@ -53,25 +53,29 @@ export function nouveauGroupe(precedent?: GroupeEditable): GroupeEditable {
   };
 }
 
-export function nouvelleAffiche(categorie: Categorie, numeroJournee: number): AfficheEditable {
+/**
+ * Affiche vierge.
+ *
+ * La categorie est choisie ICI, a la creation, et ne change plus : un document
+ * est une affiche adultes OU une affiche jeunes. Les deux championnats
+ * n'avancent pas a la meme journee, et rien ne justifie de les saisir ensemble.
+ */
+export function afficheVide(
+  categorie: Categorie,
+  numero: number,
+  maintenant: string,
+): AfficheEditable {
   return {
     id: nouvelId(),
     categorie,
+    numero,
     groupes: [nouveauGroupe()],
     sponsors: {
-      graine: graineParDefaut(numeroJournee, categorie),
+      graine: graineParDefaut(numero, categorie),
       emplacements: emplacementsVides(),
     },
-  };
-}
-
-export function journeeVide(numero: number, maintenant: string): JourneeEditable {
-  return {
-    id: nouvelId(),
-    numero,
     creeLe: maintenant,
     majLe: maintenant,
-    affiches: [nouvelleAffiche('adultes', numero)],
   };
 }
 

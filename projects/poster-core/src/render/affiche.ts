@@ -321,13 +321,8 @@ function iconeRepere(x: number, y: number, taille: number, couleur: string): Noe
  * reserve une bande rouge sous « LES RENCONTRES », et en redessiner une
  * dessus faisait un rectangle rapporte sur une affiche peinte.
  */
-function bandeau(
-  affiche: Affiche,
-  numeroJournee: number,
-  moteur: MoteurTexte,
-  diagnostics: Diagnostic[],
-): Noeud[] {
-  const { chiffre, suffixe } = rangJourneeParties(numeroJournee);
+function bandeau(affiche: Affiche, moteur: MoteurTexte, diagnostics: Diagnostic[]): Noeud[] {
+  const { chiffre, suffixe } = rangJourneeParties(affiche.numero);
   const famille = { famille: POLICES.display, graisse: GRAISSES.display };
   const metriques = moteur.metriques(famille);
 
@@ -1018,7 +1013,6 @@ function hauteurGroupe(groupe: Groupe, densite: Densite): number {
 
 export function composerAffiche(
   affiche: Affiche,
-  numeroJournee: number,
   assets: AssetsAffiche,
   moteur: MoteurTexte,
   options: OptionsComposition = {},
@@ -1070,7 +1064,7 @@ export function composerAffiche(
     // cadre, et les invariants de mise en page doivent pouvoir l'ecarter sans
     // ecarter le contenu.
     { type: 'groupe', role: 'decor', enfants: decor.arriere },
-    ...bandeau(affiche, numeroJournee, moteur, diagnostics),
+    ...bandeau(affiche, moteur, diagnostics),
   ];
 
   const colonnes =

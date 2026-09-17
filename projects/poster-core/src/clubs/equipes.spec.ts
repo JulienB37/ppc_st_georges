@@ -29,8 +29,8 @@ describe('table des equipes', () => {
     // La configuration du club porte « R2 (1) », « D1 (5) », « D3 (7) »... Le
     // RANG est l'identite stable de l'equipe : si la table le contredisait, les
     // journees archivees changeraient d'equipe en etant reouvertes.
-    const journee = migrerDepuisV1(CONFIG_V1_REELLE, { anneeSaison: 2026 }).journee;
-    const paires = journee.affiches
+    const { affiches } = migrerDepuisV1(CONFIG_V1_REELLE, { anneeSaison: 2026 });
+    const paires = affiches
       .flatMap((a) => a.groupes)
       .flatMap((g) => g.rencontres)
       .map((r) => r.equipeLocale)

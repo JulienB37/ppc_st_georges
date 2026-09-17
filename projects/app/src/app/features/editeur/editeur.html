@@ -1,8 +1,8 @@
 <div class="entete">
-  <h1>Journée de championnat</h1>
+  <h1>Affiche {{ libelleCategorie(doc.affiche().categorie) }}</h1>
 
   <mat-form-field class="entete__numero">
-    <mat-label>Numéro</mat-label>
+    <mat-label>Journée n°</mat-label>
     <input matInput type="number" [formField]="formulaire.numero" />
     @if (formulaire.numero().invalid() && formulaire.numero().touched()) {
       <mat-error>{{ formulaire.numero().errors()[0]?.message }}</mat-error>
@@ -10,8 +10,10 @@
   </mat-form-field>
 
   <span class="compteur">
-    {{ nbRencontres() }} rencontre(s) · saison {{ doc.domaine().saison }}
+    {{ doc.nbRencontres() }} rencontre(s) · saison {{ doc.domaine().saison }}
   </span>
+
+  <a class="pousser" matButton routerLink="/nouvelle">Changer de catégorie</a>
 </div>
 
 @if (!doc.publiable()) {
@@ -31,54 +33,26 @@
   </div>
 }
 
-@for (affiche of formulaire.affiches; track affiche().value().id; let iAffiche = $index) {
-  <mat-card class="affiche">
-    <mat-card-header class="affiche__titre">
-      <mat-card-title class="affiche__categorie">
-        Affiche {{ affiche().value().categorie }}
-      </mat-card-title>
-      @if (formulaire.affiches.length > 1) {
-        <button
-          matIconButton
-          type="button"
-          matTooltip="Supprimer cette affiche"
-          (click)="doc.retirerAffiche(iAffiche)"
-        >
-          <ppc-icone nom="supprimer" />
-        </button>
-      }
-    </mat-card-header>
+<mat-card class="affiche">
+  <mat-card-content>
+    @for (groupe of formulaire.groupes; track groupe().value().id; let iGroupe = $index) {
+      <ppc-creneau-editeur
+        [champs]="groupe"
+        [index]="iGroupe"
+        [dernier]="iGroupe === formulaire.groupes.length - 1"
+        (ajouterRencontre)="doc.ajouterRencontre(iGroupe)"
+        (retirerRencontre)="doc.retirerRencontre(iGroupe, $event)"
+        (deplacerRencontre)="doc.deplacerRencontre(iGroupe, $event.de, $event.vers)"
+        (retirer)="doc.retirerGroupe(iGroupe)"
+        (deplacer)="doc.deplacerGroupe(iGroupe, $event)"
+      />
+    } @empty {
+      <p>Aucun créneau : ajoutez-en un pour saisir les rencontres.</p>
+    }
 
-    <mat-card-content>
-      @for (groupe of affiche.groupes; track groupe().value().id; let iGroupe = $index) {
-        <ppc-creneau-editeur
-          [champs]="groupe"
-          [index]="iGroupe"
-          [dernier]="iGroupe === affiche.groupes.length - 1"
-          (ajouterRencontre)="doc.ajouterRencontre(iAffiche, iGroupe)"
-          (retirerRencontre)="doc.retirerRencontre(iAffiche, iGroupe, $event)"
-          (deplacerRencontre)="doc.deplacerRencontre(iAffiche, iGroupe, $event.de, $event.vers)"
-          (retirer)="doc.retirerGroupe(iAffiche, iGroupe)"
-          (deplacer)="doc.deplacerGroupe(iAffiche, iGroupe, $event)"
-        />
-      } @empty {
-        <p>Aucun créneau : ajoutez-en un pour saisir les rencontres.</p>
-      }
-
-      <button matButton="outlined" type="button" (click)="doc.ajouterGroupe(iAffiche)">
-        <ppc-icone nom="ajouter" />
-        Ajouter un créneau
-      </button>
-    </mat-card-content>
-  </mat-card>
-}
-
-<div class="actions">
-  <button matButton="filled" type="button" (click)="doc.ajouterAffiche('jeunes')">
-    <ppc-icone nom="ajouter" />
-    Ajouter une affiche jeunes
-  </button>
-  <button matButton type="button" (click)="doc.recommencer(doc.journee().numero)">
-    Vider la journée
-  </button>
-</div>
+    <button matButton="outlined" type="button" (click)="doc.ajouterGroupe()">
+      <ppc-icone nom="ajouter" />
+      Ajouter un créneau
+    </button>
+  </mat-card-content>
+</mat-card>

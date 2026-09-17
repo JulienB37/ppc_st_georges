@@ -3,22 +3,36 @@ import { z } from 'zod';
 import { creneauValide, saisonDe } from '../format/creneau';
 
 /**
- * Modele de document v2.
+ * Modele de document v3.
  *
- * Trois ruptures assumees avec le format historique (`legacy/journee_config.json`),
+ * Un document EST une affiche : une categorie, un numero de journee, ses
+ * creneaux. La v2 enveloppait plusieurs affiches dans une « journee » portant
+ * un numero unique, ce qui etait faux — le championnat adultes et le
+ * championnat jeunes ne sont pas a la meme journee. La configuration
+ * historique du club le montrait deja : adultes en journee 1, jeunes en
+ * journee 8. L'importateur v1 devait choisir, et avertissait qu'il jetait
+ * l'autre numero.
+ *
+ * Aucune migration v2 -> v3 n'accompagne ce changement, et c'est verifiable :
+ * la v2 n'a jamais ete persistee. Elle n'a existe qu'en memoire, la
+ * sauvegarde etant prevue au lot 6. Il n'existe donc aucun document v2 a
+ * migrer, et l'importateur v1 rend directement du v3.
+ *
+ * Quatre ruptures avec le format historique (`legacy/journee_config.json`),
  * chacune corrigeant un defaut de conception :
  *
- * 1. Les affiches adultes et jeunes partagent la meme forme. L'ancienne
+ * 1. Une affiche par document, avec son propre numero de journee.
+ * 2. Les affiches adultes et jeunes partagent la meme forme. L'ancienne
  *    section `enfant` etait figee a exactement deux rencontres
  *    (`matche_1` / `matche_2`), ce qui rendait toute troisieme rencontre
  *    impossible a saisir et dupliquait le code de dessin.
- * 2. L'adversaire porte un identifiant de club et un numero d'equipe separes,
+ * 3. L'adversaire porte un identifiant de club et un numero d'equipe separes,
  *    la ou une chaine libre obligeait le moteur de rendu a deviner le club par
  *    expression reguliere au moment de dessiner.
- * 3. La date est un instant, plus une chaine saisie a la main. Le libelle
+ * 4. La date est un instant, plus une chaine saisie a la main. Le libelle
  *    imprime en est calcule, ce qui supprime « Samedi 09 Mai » et consorts.
  */
-export const VERSION_SCHEMA = 2;
+export const VERSION_SCHEMA = 3;
 
 /** Un instant local, sans fuseau : `2026-09-19T18:00`. */
 export const CreneauSchema = z.object({
@@ -98,19 +112,20 @@ export const SelectionSponsorsSchema = z.object({
 export const CategorieSchema = z.enum(['adultes', 'jeunes']);
 
 export const AfficheSchema = z.object({
-  id: z.string().min(1),
-  categorie: CategorieSchema,
-  groupes: z.array(GroupeSchema),
-  sponsors: SelectionSponsorsSchema,
-});
-
-export const JourneeSchema = z.object({
   versionSchema: z.literal(VERSION_SCHEMA),
   id: z.string().min(1),
+  categorie: CategorieSchema,
+  /**
+   * Numero de journee, propre a cette affiche.
+   *
+   * Il vit ici et non au-dessus : les championnats adultes et jeunes
+   * n'avancent pas au meme rythme.
+   */
   numero: z.number().int().positive(),
   /** Saison sportive, « 2025-2026 ». Deduite de la date, jamais saisie. */
   saison: z.string().regex(/^\d{4}-\d{4}$/),
-  affiches: z.array(AfficheSchema).min(1),
+  groupes: z.array(GroupeSchema),
+  sponsors: SelectionSponsorsSchema,
   creeLe: z.string(),
   majLe: z.string(),
 });
@@ -124,7 +139,6 @@ export type EmplacementSponsor = z.infer<typeof EmplacementSponsorSchema>;
 export type SelectionSponsors = z.infer<typeof SelectionSponsorsSchema>;
 export type Categorie = z.infer<typeof CategorieSchema>;
 export type Affiche = z.infer<typeof AfficheSchema>;
-export type Journee = z.infer<typeof JourneeSchema>;
 
 /** Identifiants opaques. `crypto.randomUUID` est disponible partout ou tourne cette librairie. */
 export function nouvelId(): string {
@@ -147,37 +161,61 @@ export function graineParDefaut(numero: number, categorie: Categorie): string {
   return `j${numero}-${categorie}`;
 }
 
+/**
+ * Cree une affiche vierge.
+ *
+ * `maintenant` est passe par l'appelant : la librairie ne lit pas l'horloge,
+ * pour que ses fonctions restent pures et testables sans geler le temps.
+ */
 export function creerAffiche(
   categorie: Categorie,
   numero: number,
+  maintenant: string,
   groupes: Groupe[] = [],
 ): Affiche {
   return {
+    versionSchema: VERSION_SCHEMA,
     id: nouvelId(),
     categorie,
+    numero,
+    saison: saisonDesGroupes(groupes) ?? SAISON_INDETERMINEE,
     groupes,
     sponsors: { graine: graineParDefaut(numero, categorie), emplacements: emplacementsVides() },
+    creeLe: maintenant,
+    majLe: maintenant,
   };
 }
 
-/** Nombre total de rencontres d'une affiche, dont depend la variante de mise en page. */
+/**
+ * Saison de repli, le temps qu'une date soit saisie.
+ *
+ * Volontairement absurde et non « l'annee en cours » : elle doit se remarquer
+ * si elle atteignait une affiche, la librairie ne lisant de toute facon pas
+ * l'horloge.
+ */
+export const SAISON_INDETERMINEE = '0000-0000';
+
+/** Nombre total de rencontres, dont depend la variante de mise en page. */
 export function compterRencontres(affiche: Affiche): number {
   return affiche.groupes.reduce((total, groupe) => total + groupe.rencontres.length, 0);
 }
 
 /**
- * Date du premier creneau d'une affiche, utilisee pour deduire la saison et
- * pour ordonner l'historique.
+ * Date du premier creneau, utilisee pour deduire la saison et pour ordonner
+ * l'historique.
+ *
+ * Les creneaux INCOMPLETS sont ignores : un formulaire en cours de saisie porte
+ * des dates vides, et il ne faut pas qu'elles empechent d'en deduire la saison.
  */
-export function premierCreneau(affiches: Affiche[]): string | null {
-  const debuts = affiches
-    .flatMap((a) => a.groupes)
+export function premierCreneau(groupes: readonly Groupe[]): string | null {
+  const debuts = groupes
     .map((g) => g.creneau.debutIso)
+    .filter(creneauValide)
     .sort();
   return debuts[0] ?? null;
 }
 
-export function saisonDeJournee(affiches: Affiche[]): string | null {
-  const premier = premierCreneau(affiches);
+export function saisonDesGroupes(groupes: readonly Groupe[]): string | null {
+  const premier = premierCreneau(groupes);
   return premier ? saisonDe(premier) : null;
 }

@@ -1,0 +1,26 @@
+<h1>Quelle affiche préparez-vous ?</h1>
+<p class="explication">
+  Une affiche par championnat : les adultes et les jeunes ne sont pas à la même journée.
+</p>
+
+<div class="choix">
+  <mat-card class="carte" appearance="outlined">
+    <mat-card-content>
+      <h2>Adultes</h2>
+      <p>Championnat par équipe, jusqu’à huit équipes engagées.</p>
+      <button matButton="filled" type="button" (click)="commencer('adultes')">
+        Préparer l’affiche adultes
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="carte" appearance="outlined">
+    <mat-card-content>
+      <h2>Jeunes</h2>
+      <p>Rencontres jeunes, avec leur propre numéro de journée.</p>
+      <button matButton="filled" type="button" (click)="commencer('jeunes')">
+        Préparer l’affiche jeunes
+      </button>
+    </mat-card-content>
+  </mat-card>
+</div>

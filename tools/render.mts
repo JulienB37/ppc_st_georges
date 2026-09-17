@@ -23,7 +23,7 @@ import { creerMoteurTexte, type FacePolice } from '../projects/poster-core/src/l
 import { emettreSvg } from '../projects/poster-core/src/render/emettre.ts';
 import { migrerDepuisV1 } from '../projects/poster-core/src/migrate/v1.ts';
 import { tirerSponsors } from '../projects/poster-core/src/sponsors/tirage.ts';
-import type { Journee } from '../projects/poster-core/src/model/journee.ts';
+import type { Affiche } from '../projects/poster-core/src/model/journee.ts';
 
 const RACINE = path.resolve(import.meta.dirname, '..');
 const ASSETS = path.join(RACINE, 'projects/app/public/assets');
@@ -58,9 +58,7 @@ async function chargerPolices(): Promise<{ faces: FacePolice[]; tampons: Uint8Ar
   return { faces, tampons };
 }
 
-async function chargerAssets(journee: Journee, indexAffiche: number): Promise<AssetsAffiche> {
-  const affiche = journee.affiches[indexAffiche]!;
-
+async function chargerAssets(affiche: Affiche): Promise<AssetsAffiche> {
   const blasonEntree = CLUBS['pp-st-georgescher'];
   const blason: LogoResolu = {
     source: await dataUrl(path.join(ASSETS, 'clubs', blasonEntree.fichier)),
@@ -127,7 +125,7 @@ async function main(): Promise<void> {
     : path.join(RACINE, 'legacy/journee_config.json');
 
   const brut = JSON.parse(await readFile(chemin, 'utf8')) as unknown;
-  const { journee, avertissements } = migrerDepuisV1(brut, { anneeSaison });
+  const { affiches, avertissements } = migrerDepuisV1(brut, { anneeSaison });
 
   for (const a of avertissements) console.warn(`  avertissement : ${a}`);
 
@@ -136,12 +134,16 @@ async function main(): Promise<void> {
   const moteur = creerMoteurTexte(faces);
   await mkdir(SORTIE, { recursive: true });
 
-  const rangs = rangsDemandes ?? [journee.numero];
-
-  for (const [i, affiche] of journee.affiches.entries()) {
-    const assets = await chargerAssets(journee, i);
-    for (const rang of rangs) {
-      const { scene, densite, diagnostics } = composerAffiche(affiche, rang, assets, moteur);
+  for (const affiche of affiches) {
+    const assets = await chargerAssets(affiche);
+    // Sans `--journees`, on rend le rang porte par l'affiche elle-meme : chaque
+    // championnat a le sien.
+    for (const rang of rangsDemandes ?? [affiche.numero]) {
+      const { scene, densite, diagnostics } = composerAffiche(
+        { ...affiche, numero: rang },
+        assets,
+        moteur,
+      );
 
       const svg = emettreSvg(scene);
       const base = `J${rang}_${affiche.categorie}`;

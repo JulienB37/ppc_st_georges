@@ -3,13 +3,12 @@ import { z } from 'zod';
 import { clubIdDepuisLibelle, separerNumeroEquipe } from '../clubs/normaliser';
 import { saisonDe } from '../format/creneau';
 import {
-  VERSION_SCHEMA,
   creerAffiche,
   nouvelId,
+  saisonDesGroupes,
   type Affiche,
   type EquipeLocale,
   type Groupe,
-  type Journee,
   type Rencontre,
 } from '../model/journee';
 
@@ -194,7 +193,13 @@ export interface OptionsMigrationV1 {
 }
 
 export interface ResultatMigrationV1 {
-  journee: Journee;
+  /**
+   * Une affiche par section du fichier d'origine, chacune avec son numero.
+   *
+   * C'est un TABLEAU et non un document unique : un fichier v1 portait jusqu'a
+   * deux championnats, a des journees differentes.
+   */
+  affiches: Affiche[];
   /** Creneaux dont la date n'a pas pu etre relue et qui ont pris la date de repli. */
   datesNonLues: string[];
   /**
@@ -206,11 +211,17 @@ export interface ResultatMigrationV1 {
 }
 
 /**
- * Convertit une configuration v1 en document v2.
+ * Convertit une configuration v1 en documents v3.
  *
- * Les deux sections `adulte` et `enfant` deviennent deux affiches d'une meme
- * journee. Les rencontres jeunes, figees a deux dans l'ancien format, sont
- * regroupees par lieu : le modele en accepte desormais un nombre quelconque.
+ * Les sections `adulte` et `enfant` deviennent DEUX AFFICHES INDEPENDANTES,
+ * chacune avec son propre numero de journee. La v2 les enveloppait dans une
+ * journee unique et devait donc choisir un numero : elle jetait l'autre, en
+ * l'annoncant par un avertissement. La configuration reelle du club rendait ce
+ * choix visible — adultes en journee 1, jeunes en journee 8 — et plus rien ne
+ * se perd ici.
+ *
+ * Les rencontres jeunes, figees a deux dans l'ancien format, sont regroupees
+ * par lieu : le modele en accepte desormais un nombre quelconque.
  */
 export function migrerDepuisV1(brut: unknown, options: OptionsMigrationV1): ResultatMigrationV1 {
   const config = ConfigV1Schema.parse(brut);
@@ -222,18 +233,7 @@ export function migrerDepuisV1(brut: unknown, options: OptionsMigrationV1): Resu
   const avertissements: string[] = [];
   const repli = `${options.anneeSaison}-09-01T18:00`;
   const affiches: Affiche[] = [];
-
-  const numero = config.adulte?.journee ?? config.enfant?.journee ?? 1;
-
-  // Le format v1 portait un numero de journee par section, sans rien pour les
-  // maintenir d'accord. Les fichiers reels finissent par diverger a force
-  // d'etre edites a la main.
-  if (config.adulte && config.enfant && config.adulte.journee !== config.enfant.journee) {
-    avertissements.push(
-      `Numeros de journee divergents : adultes ${config.adulte.journee}, ` +
-        `jeunes ${config.enfant.journee}. La journee ${numero} a ete retenue.`,
-    );
-  }
+  const maintenant = new Date().toISOString();
 
   // Une meme date apparait sur plusieurs groupes : on ne signale qu'une fois.
   const dejaExaminees = new Set<string>();
@@ -260,7 +260,7 @@ export function migrerDepuisV1(brut: unknown, options: OptionsMigrationV1): Resu
       examinerDate(g.date);
       return groupeDepuis(g.date, g.domicile, g.matches, options.anneeSaison, repli);
     });
-    affiches.push({ ...creerAffiche('adultes', config.adulte.journee), groupes });
+    affiches.push(creerAffiche('adultes', config.adulte.journee, maintenant, groupes));
   }
 
   if (config.enfant) {
@@ -283,23 +283,16 @@ export function migrerDepuisV1(brut: unknown, options: OptionsMigrationV1): Resu
         groupeDepuis(enfant.date, domicile, matches, options.anneeSaison, repli),
       );
 
-    affiches.push({ ...creerAffiche('jeunes', enfant.journee), groupes });
+    affiches.push(creerAffiche('jeunes', enfant.journee, maintenant, groupes));
   }
 
-  const debuts = affiches.flatMap((a) => a.groupes.map((g) => g.creneau.debutIso)).sort();
-  const maintenant = new Date().toISOString();
+  // Une affiche sans aucune date lisible garde une saison de repli plutot que
+  // d'etre rejetee : l'utilisateur corrigera dans l'interface, et
+  // `datesNonLues` lui dit lesquelles.
+  const aSaison = affiches.map((affiche) => ({
+    ...affiche,
+    saison: saisonDesGroupes(affiche.groupes) ?? saisonDe(repli),
+  }));
 
-  return {
-    journee: {
-      versionSchema: VERSION_SCHEMA,
-      id: nouvelId(),
-      numero,
-      saison: saisonDe(debuts[0] ?? repli),
-      affiches,
-      creeLe: maintenant,
-      majLe: maintenant,
-    },
-    datesNonLues,
-    avertissements,
-  };
+  return { affiches: aSaison, datesNonLues, avertissements };
 }

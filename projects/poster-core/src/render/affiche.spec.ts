@@ -55,8 +55,10 @@ function groupe(domicile: boolean, nb: number, debutIso = '2026-09-19T18:00'): G
   };
 }
 
-function afficheDe(groupes: Groupe[]): Affiche {
-  return { ...creerAffiche('adultes', 1), groupes };
+const MAINTENANT = '2026-09-17T10:00:00.000Z';
+
+function afficheDe(groupes: Groupe[], numero = 12): Affiche {
+  return creerAffiche('adultes', numero, MAINTENANT, groupes);
 }
 
 describe('cadrerLogo', () => {
@@ -109,7 +111,7 @@ describe('composerAffiche — invariants de mise en page', () => {
 
   for (const [nom, affiche] of cas) {
     describe(nom, () => {
-      const { scene, zoneContenu } = composerAffiche(affiche, 12, assets(['club-test']), moteur);
+      const { scene, zoneContenu } = composerAffiche(affiche, assets(['club-test']), moteur);
       // Deux exclusions, chacune pour une raison distincte : le decor deborde
       // du cadre par construction, et les sous-arbres inclines expriment leurs
       // coordonnees dans un autre repere.
@@ -198,14 +200,14 @@ describe('composerAffiche — formats sans gabarit', () => {
     // zone de contenu rendue par la composition elle-meme.
     const affiche = afficheDe([groupe(true, 2)]);
     expect(() =>
-      composerAffiche(affiche, 1, assets(['club-test']), moteur, { format: 'carre' }),
+      composerAffiche(affiche, assets(['club-test']), moteur, { format: 'carre' }),
     ).toThrow(/gabarit/);
   });
 });
 
 describe('composerAffiche — sortie', () => {
   const affiche = afficheDe([groupe(false, 1), groupe(true, 5), groupe(true, 2)]);
-  const { scene, diagnostics } = composerAffiche(affiche, 12, assets(['club-test']), moteur);
+  const { scene, diagnostics } = composerAffiche(affiche, assets(['club-test']), moteur);
   const svg = emettreSvg(scene);
 
   it('emet un SVG aux dimensions du format', () => {
@@ -233,7 +235,7 @@ describe('composerAffiche — sortie', () => {
   });
 
   it('signale un logo manquant plutot que de le remplacer en silence', () => {
-    const sansLogo = composerAffiche(affiche, 12, assets([]), moteur);
+    const sansLogo = composerAffiche(affiche, assets([]), moteur);
     expect(sansLogo.diagnostics.some((d) => d.niveau === 'alerte')).toBe(true);
     // Et il pose un monogramme, pas un pictogramme generique.
     expect([...parcourir(sansLogo.scene.noeuds)].some((n) => n.role === 'monogramme')).toBe(true);
@@ -241,12 +243,12 @@ describe('composerAffiche — sortie', () => {
 });
 
 describe('composerAffiche — sur les donnees reelles du club', () => {
-  const { journee } = migrerDepuisV1(CONFIG_V1_REELLE, { anneeSaison: 2026 });
+  const { affiches } = migrerDepuisV1(CONFIG_V1_REELLE, { anneeSaison: 2026 });
 
   it('compose les deux affiches sans rien perdre ni rien deborder', () => {
-    for (const affiche of journee.affiches) {
+    for (const affiche of affiches) {
       const ids = affiche.groupes.flatMap((g) => g.rencontres.map((r) => r.adversaire.clubId));
-      const { scene } = composerAffiche(affiche, journee.numero, assets(ids), moteur);
+      const { scene } = composerAffiche(affiche, assets(ids), moteur);
 
       const nbRencontres = affiche.groupes.reduce((t, g) => t + g.rencontres.length, 0);
       const cartes = [...parcourir(scene.noeuds)].filter((n) => n.role === 'carte');
@@ -263,7 +265,7 @@ describe('composerAffiche — sur les donnees reelles du club', () => {
   });
 
   it('imprime le libelle de date d origine des journees importees', () => {
-    const { scene } = composerAffiche(journee.affiches[0]!, 1, assets([]), moteur);
+    const { scene } = composerAffiche(affiches[0]!, assets([]), moteur);
     const dates = [...parcourir(scene.noeuds)]
       .filter((n) => n.role === 'date')
       .map((n) => (n.type === 'texte' ? n.contenu : ''));

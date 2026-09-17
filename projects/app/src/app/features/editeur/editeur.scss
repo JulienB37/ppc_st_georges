@@ -26,18 +26,6 @@
   margin-bottom: 1.5rem;
 }
 
-.affiche__titre {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.affiche__categorie {
-  font-family: 'Anton', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
 .problemes {
   border-left: 4px solid var(--mat-sys-error);
   background: var(--mat-sys-error-container);
@@ -52,8 +40,6 @@
   padding-left: 1.25rem;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+.pousser {
+  margin-left: auto;
 }

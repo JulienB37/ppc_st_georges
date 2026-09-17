@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { EQUIPES_CLUB } from '../clubs/equipes';
-import { JourneeSchema } from '../model/journee';
-import { SAISON_INDETERMINEE, versDomaine } from './modele';
+import { AfficheSchema, SAISON_INDETERMINEE } from '../model/journee';
+import { versDomaine } from './modele';
 import {
   deplacer,
   inserer,
-  journeeVide,
+  afficheVide,
   nouveauGroupe,
-  nouvelleAffiche,
   nouvelleRencontre,
   equipeLibreDe,
   remplacer,
@@ -75,12 +74,12 @@ describe('fabriques', () => {
   });
 
   it('ne pose aucun null ni undefined, que les Signal Forms refusent', () => {
-    const journee = journeeVide(12, MAINTENANT);
+    const affiche = afficheVide('adultes', 12, MAINTENANT);
     const valeurs = [
       ...Object.values(nouvelleRencontre(EQUIPES_CLUB[0]!)),
       ...Object.values(nouveauGroupe()).filter((v) => !Array.isArray(v)),
-      journee.numero,
-      journee.id,
+      affiche.numero,
+      affiche.id,
     ];
     for (const valeur of valeurs) expect(valeur).not.toBe(null);
     for (const valeur of valeurs) expect(valeur).toBeDefined();
@@ -95,27 +94,27 @@ describe('fabriques', () => {
     expect(new Set(ids).size).toBe(3);
   });
 
-  it('cree une journee vide que la conversion accepte sans lever', () => {
-    // Une journee neuve n'a aucune date. La conversion doit malgre tout rendre
+  it('cree une affiche vierge que la conversion accepte sans lever', () => {
+    // Une affiche neuve n'a aucune date. La conversion doit malgre tout rendre
     // un document — sinon l'editeur ne peut pas afficher le formulaire a
     // remplir — et c'est la VALIDATION qui signale ce qui manque.
-    const domaine = versDomaine(journeeVide(1, MAINTENANT));
+    const domaine = versDomaine(afficheVide('adultes', 1, MAINTENANT));
     expect(domaine.saison).toBe(SAISON_INDETERMINEE);
 
-    const verdict = JourneeSchema.safeParse(domaine);
+    const verdict = AfficheSchema.safeParse(domaine);
     expect(verdict.success).toBe(false);
     // Et l'erreur designe le creneau, ce que l'interface pourra montrer.
     expect(JSON.stringify(verdict.error?.issues)).toMatch(/debutIso|Creneau/);
   });
 
   it('graine les sponsors par journee et categorie', () => {
-    expect(nouvelleAffiche('jeunes', 8).sponsors.graine).toBe('j8-jeunes');
+    expect(afficheVide('jeunes', 8, MAINTENANT).sponsors.graine).toBe('j8-jeunes');
   });
 });
 
 describe('equipeLibreDe', () => {
   it('propose la premiere equipe que la journee n engage pas encore', () => {
-    const affiche = nouvelleAffiche('adultes', 1);
+    const affiche = afficheVide('adultes', 1, MAINTENANT);
     affiche.groupes[0]!.rencontres = [nouvelleRencontre(EQUIPES_CLUB[0]!)];
     affiche.groupes.push({ ...nouveauGroupe(), rencontres: [nouvelleRencontre(EQUIPES_CLUB[1]!)] });
     expect(equipeLibreDe(affiche)).toEqual({ numero: 3, division: 'PR1' });
@@ -125,7 +124,7 @@ describe('equipeLibreDe', () => {
     // Les equipes se choisissent dans une table fixe : retirer l'equipe 1 d'un
     // creneau la rend de nouveau disponible, la ou un compteur croissant
     // l'aurait definitivement sautee.
-    const affiche = nouvelleAffiche('adultes', 1);
+    const affiche = afficheVide('adultes', 1, MAINTENANT);
     affiche.groupes[0]!.rencontres = [
       nouvelleRencontre(EQUIPES_CLUB[0]!),
       nouvelleRencontre(EQUIPES_CLUB[1]!),
@@ -135,11 +134,14 @@ describe('equipeLibreDe', () => {
   });
 
   it('commence par l equipe 1 sur une affiche neuve', () => {
-    expect(equipeLibreDe(nouvelleAffiche('adultes', 1))).toEqual({ numero: 1, division: 'R2' });
+    expect(equipeLibreDe(afficheVide('adultes', 1, MAINTENANT))).toEqual({
+      numero: 1,
+      division: 'R2',
+    });
   });
 
   it('rend la derniere equipe plutot que rien quand les huit sont prises', () => {
-    const affiche = nouvelleAffiche('adultes', 1);
+    const affiche = afficheVide('adultes', 1, MAINTENANT);
     affiche.groupes[0]!.rencontres = EQUIPES_CLUB.map((e) => nouvelleRencontre(e));
     expect(equipeLibreDe(affiche).numero).toBe(8);
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { formatCreneau } from '../format/creneau';
-import { JourneeSchema, compterRencontres } from '../model/journee';
+import { AfficheSchema, compterRencontres } from '../model/journee';
 import { CONFIG_V1_REELLE } from './v1.fixture';
 import { lireDateFrancaise, lireEquipeLocale, migrerDepuisV1 } from './v1';
 
@@ -50,35 +50,51 @@ describe('lireEquipeLocale', () => {
 describe('migrerDepuisV1', () => {
   const resultat = migrerDepuisV1(CONFIG_V1_REELLE, OPTIONS);
 
-  it('produit un document conforme au schema v2', () => {
-    expect(() => JourneeSchema.parse(resultat.journee)).not.toThrow();
-    expect(resultat.journee.versionSchema).toBe(2);
+  it('produit des documents conformes au schema v3', () => {
+    for (const affiche of resultat.affiches) {
+      expect(() => AfficheSchema.parse(affiche)).not.toThrow();
+      expect(affiche.versionSchema).toBe(3);
+    }
+  });
+
+  it('rend UNE AFFICHE PAR CHAMPIONNAT, chacune a son numero de journee', () => {
+    // La v2 enveloppait les deux dans une journee unique et devait donc choisir
+    // un numero : elle jetait l'autre en l'annoncant. La configuration reelle
+    // du club rendait la perte visible — adultes en journee 1, jeunes en 8.
+    expect(resultat.affiches.map((a) => [a.categorie, a.numero])).toEqual([
+      ['adultes', 1],
+      ['jeunes', 8],
+    ]);
+  });
+
+  it("n'avertit plus d'un numero jete, puisque rien n'est jete", () => {
+    expect(resultat.avertissements.join(' ')).not.toMatch(/divergent/i);
   });
 
   it('deduit la saison de la premiere date, sans la demander', () => {
-    expect(resultat.journee.saison).toBe('2025-2026');
+    expect(resultat.affiches[0]!.saison).toBe('2025-2026');
   });
 
   it('convertit les deux sections en deux affiches', () => {
-    expect(resultat.journee.affiches.map((a) => a.categorie)).toEqual(['adultes', 'jeunes']);
+    expect(resultat.affiches.map((a) => a.categorie)).toEqual(['adultes', 'jeunes']);
   });
 
   it('ne perd aucune rencontre', () => {
-    const [adultes, jeunes] = resultat.journee.affiches;
+    const [adultes, jeunes] = resultat.affiches;
     expect(compterRencontres(adultes!)).toBe(8);
     expect(compterRencontres(jeunes!)).toBe(2);
     expect(adultes!.groupes).toHaveLength(3);
   });
 
   it('porte le lieu sur le creneau et non plus sur chaque rencontre', () => {
-    const adultes = resultat.journee.affiches[0]!;
+    const adultes = resultat.affiches[0]!;
     expect(adultes.groupes.map((g) => g.domicile)).toEqual([false, true, true]);
     // Les deux rencontres jeunes se jouent au meme endroit : un seul groupe.
-    expect(resultat.journee.affiches[1]!.groupes).toHaveLength(1);
+    expect(resultat.affiches[1]!.groupes).toHaveLength(1);
   });
 
   it('separe club et numero d equipe chez l adversaire', () => {
-    const premiere = resultat.journee.affiches[0]!.groupes[0]!.rencontres[0]!;
+    const premiere = resultat.affiches[0]!.groupes[0]!.rencontres[0]!;
     expect(premiere.adversaire).toEqual({
       clubId: 'st-sulpice-tt',
       numero: 1,
@@ -90,7 +106,7 @@ describe('migrerDepuisV1', () => {
   it('conserve le libelle de date d origine, au caractere pres', () => {
     // Garantie forte : l'affiche migree imprime exactement le meme texte que
     // l'ancienne, quelle que soit la qualite de la relecture de la date.
-    const libelles = resultat.journee.affiches
+    const libelles = resultat.affiches
       .flatMap((a) => a.groupes)
       .map((g) => g.creneau.libelleOverride);
     expect(libelles).toEqual([
@@ -103,14 +119,8 @@ describe('migrerDepuisV1', () => {
 
   it('relit toutes les dates du fichier reel', () => {
     expect(resultat.datesNonLues).toEqual([]);
-    const premier = resultat.journee.affiches[0]!.groupes[0]!.creneau;
+    const premier = resultat.affiches[0]!.groupes[0]!.creneau;
     expect(premier.debutIso).toBe('2025-09-19T18:00');
-  });
-
-  it('signale les numeros de journee divergents plutot que de les taire', () => {
-    const divergence = resultat.avertissements.find((a) => a.includes('Numeros de journee'));
-    expect(divergence).toContain('adultes 1');
-    expect(divergence).toContain('jeunes 8');
   });
 
   it('detecte un jour de semaine qui ne colle pas a la date', () => {
@@ -129,7 +139,7 @@ describe('migrerDepuisV1', () => {
     const bonneSaison = migrerDepuisV1({ adulte: CONFIG_V1_REELLE.adulte }, { anneeSaison: 2026 });
     expect(bonneSaison.avertissements).toEqual([]);
 
-    const premier = bonneSaison.journee.affiches[0]!.groupes[0]!.creneau;
+    const premier = bonneSaison.affiches[0]!.groupes[0]!.creneau;
     expect(premier.debutIso).toBe('2026-09-19T18:00');
     // Ce que le nouveau formatage imprimerait, une fois l'override retire.
     expect(formatCreneau(premier.debutIso)).toBe('Samedi 19 septembre à 18h00');
@@ -161,7 +171,7 @@ describe('migrerDepuisV1', () => {
   });
 
   it('donne a chaque affiche une graine de sponsors stable', () => {
-    const [adultes, jeunes] = resultat.journee.affiches;
+    const [adultes, jeunes] = resultat.affiches;
     expect(adultes!.sponsors.graine).toBe('j1-adultes');
     expect(jeunes!.sponsors.graine).toBe('j8-jeunes');
     expect(adultes!.sponsors.emplacements).toHaveLength(3);
@@ -173,7 +183,7 @@ describe('migrerDepuisV1', () => {
 
   it('accepte une configuration adultes seule', () => {
     const seul = migrerDepuisV1({ adulte: CONFIG_V1_REELLE.adulte }, OPTIONS);
-    expect(seul.journee.affiches).toHaveLength(1);
+    expect(seul.affiches).toHaveLength(1);
     expect(seul.avertissements.filter((a) => a.includes('Numeros de journee'))).toEqual([]);
   });
 });

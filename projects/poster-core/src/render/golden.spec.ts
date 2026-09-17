@@ -84,23 +84,20 @@ function groupe(domicile: boolean, nb: number, debutIso: string): Groupe {
  * construite ici et non chargee : seules comptent les formes, et les
  * identifiants ne paraissent pas dans le SVG.
  */
-const CAS: { nom: string; affiche: Affiche; rang: number }[] = [
+const MAINTENANT = '2026-09-17T10:00:00.000Z';
+
+const CAS: { nom: string; affiche: Affiche }[] = [
   {
     nom: 'duel',
-    rang: 1,
-    affiche: { ...creerAffiche('jeunes', 1), groupes: [groupe(true, 2, '2026-09-19T18:00')] },
+    affiche: creerAffiche('jeunes', 1, MAINTENANT, [groupe(true, 2, '2026-09-19T18:00')]),
   },
   {
     nom: 'liste',
-    rang: 12,
-    affiche: {
-      ...creerAffiche('adultes', 1),
-      groupes: [
-        groupe(false, 1, '2026-09-19T18:00'),
-        groupe(true, 5, '2026-09-19T18:00'),
-        groupe(true, 2, '2026-09-20T09:30'),
-      ],
-    },
+    affiche: creerAffiche('adultes', 12, MAINTENANT, [
+      groupe(false, 1, '2026-09-19T18:00'),
+      groupe(true, 5, '2026-09-19T18:00'),
+      groupe(true, 2, '2026-09-20T09:30'),
+    ]),
   },
   {
     /**
@@ -113,25 +110,26 @@ const CAS: { nom: string; affiche: Affiche; rang: number }[] = [
      * en liste unique jusqu'au plancher d'echelle, 0,62.
      */
     nom: 'liste-saturee',
-    rang: 22,
-    affiche: {
-      ...creerAffiche('adultes', 1),
-      groupes: [0, 1, 2, 3].map((i) =>
+    affiche: creerAffiche(
+      'adultes',
+      22,
+      MAINTENANT,
+      [0, 1, 2, 3].map((i) =>
         groupe(i % 2 === 0, 4, i < 2 ? '2026-09-19T18:00' : '2026-09-20T09:30'),
       ),
-    },
+    ),
   },
 ];
 
-describe.each(CAS)('image de reference — $nom', ({ nom, affiche, rang }) => {
+describe.each(CAS)('image de reference — $nom', ({ nom, affiche }) => {
   it('rend le meme SVG', () => {
-    const { scene } = composerAffiche(affiche, rang, assets(), moteurTexte);
+    const { scene } = composerAffiche(affiche, assets(), moteurTexte);
     const obtenu = normaliserSvg(emettreSvg(scene));
     expect(obtenu).toBe(referenceOuBenir(`${nom}.svg`, obtenu));
   });
 
   it('rend les memes pixels', () => {
-    const { scene } = composerAffiche(affiche, rang, assets(), moteurTexte);
+    const { scene } = composerAffiche(affiche, assets(), moteurTexte);
     const image = moteurRendu.pixels(emettreSvg(scene), LARGEUR_APERCU);
     const obtenu = condenser(image);
     const attendu = referenceOuBenir(`${nom}.pixels`, obtenu);

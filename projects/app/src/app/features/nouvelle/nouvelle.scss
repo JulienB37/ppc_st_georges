@@ -1,0 +1,26 @@
+:host {
+  display: block;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+}
+
+.explication {
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0.5rem 0 2rem;
+}
+
+.choix {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.5rem;
+}
+
+.carte h2 {
+  margin-bottom: 0.5rem;
+}
+
+.carte p {
+  color: var(--mat-sys-on-surface-variant);
+  min-height: 3rem;
+}

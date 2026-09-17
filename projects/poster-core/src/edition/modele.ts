@@ -1,16 +1,17 @@
-import { creneauValide, saisonDe } from '../format/creneau';
+import { creneauValide } from '../format/creneau';
 import {
+  SAISON_INDETERMINEE,
   VERSION_SCHEMA,
+  saisonDesGroupes,
   type Affiche,
   type Categorie,
   type Groupe,
-  type Journee,
   type Rencontre,
   type SelectionSponsors,
 } from '../model/journee';
 
 /**
- * Modele EDITABLE de la journee, et sa conversion vers le domaine.
+ * Modele EDITABLE d'une affiche, et sa conversion vers le domaine.
  *
  * Les Signal Forms derivent la structure du formulaire du modele lui-meme et
  * lient chaque champ a un `<input>`. Or un `<input>` n'accepte ni `null` ni
@@ -61,17 +62,13 @@ export interface GroupeEditable {
 
 export interface AfficheEditable {
   id: string;
+  /** Choisie a la creation et non modifiable ensuite : elle decide du document. */
   categorie: Categorie;
-  groupes: GroupeEditable[];
-  /** Non saisi au lot 5 : traverse inchange pour ne rien perdre. */
-  sponsors: SelectionSponsors;
-}
-
-export interface JourneeEditable {
-  id: string;
+  /** Numero de journee, propre a cette affiche. */
   numero: number;
-  affiches: AfficheEditable[];
+  groupes: GroupeEditable[];
   /** Non saisis : conserves pour l'aller-retour. */
+  sponsors: SelectionSponsors;
   creeLe: string;
   majLe: string;
 }
@@ -87,29 +84,26 @@ export function joindreCreneau(date: string, heure: string): string {
   return `${date}T${heure}`;
 }
 
-export function versEditable(journee: Journee): JourneeEditable {
+export function versEditable(affiche: Affiche): AfficheEditable {
   return {
-    id: journee.id,
-    numero: journee.numero,
-    creeLe: journee.creeLe,
-    majLe: journee.majLe,
-    affiches: journee.affiches.map((affiche) => ({
-      id: affiche.id,
-      categorie: affiche.categorie,
-      sponsors: affiche.sponsors,
-      groupes: affiche.groupes.map((groupe) => ({
-        id: groupe.id,
-        ...scinderCreneau(groupe.creneau.debutIso),
-        libelleOverride: groupe.creneau.libelleOverride ?? '',
-        domicile: groupe.domicile,
-        rencontres: groupe.rencontres.map((rencontre) => ({
-          id: rencontre.id,
-          division: rencontre.equipeLocale.division ?? '',
-          numero: rencontre.equipeLocale.numero,
-          adversaireClubId: rencontre.adversaire.clubId,
-          adversaireNumero: rencontre.adversaire.numero ?? 0,
-          adversaireLibelle: rencontre.adversaire.libelle,
-        })),
+    id: affiche.id,
+    categorie: affiche.categorie,
+    numero: affiche.numero,
+    sponsors: affiche.sponsors,
+    creeLe: affiche.creeLe,
+    majLe: affiche.majLe,
+    groupes: affiche.groupes.map((groupe) => ({
+      id: groupe.id,
+      ...scinderCreneau(groupe.creneau.debutIso),
+      libelleOverride: groupe.creneau.libelleOverride ?? '',
+      domicile: groupe.domicile,
+      rencontres: groupe.rencontres.map((rencontre) => ({
+        id: rencontre.id,
+        division: rencontre.equipeLocale.division ?? '',
+        numero: rencontre.equipeLocale.numero,
+        adversaireClubId: rencontre.adversaire.clubId,
+        adversaireNumero: rencontre.adversaire.numero ?? 0,
+        adversaireLibelle: rencontre.adversaire.libelle,
       })),
     })),
   };
@@ -130,62 +124,46 @@ export function versEditable(journee: Journee): JourneeEditable {
  * validation du schema qui signale ce qui manque, et l'interface qui le
  * montre ; une exception ici empecherait d'afficher le formulaire a corriger.
  */
-export function versDomaine(editable: JourneeEditable, majLe = editable.majLe): Journee {
-  const affiches: Affiche[] = editable.affiches.map((affiche) => ({
-    id: affiche.id,
-    categorie: affiche.categorie,
-    sponsors: affiche.sponsors,
-    groupes: affiche.groupes.map((groupe): Groupe => ({
-      id: groupe.id,
-      creneau: {
-        debutIso: joindreCreneau(groupe.date, groupe.heure),
-        ...(groupe.libelleOverride ? { libelleOverride: groupe.libelleOverride } : {}),
+export function versDomaine(editable: AfficheEditable, majLe = editable.majLe): Affiche {
+  const groupes: Groupe[] = editable.groupes.map((groupe) => ({
+    id: groupe.id,
+    creneau: {
+      debutIso: joindreCreneau(groupe.date, groupe.heure),
+      ...(groupe.libelleOverride ? { libelleOverride: groupe.libelleOverride } : {}),
+    },
+    domicile: groupe.domicile,
+    rencontres: groupe.rencontres.map((rencontre): Rencontre => ({
+      id: rencontre.id,
+      equipeLocale: {
+        division: rencontre.division || null,
+        numero: rencontre.numero,
       },
-      domicile: groupe.domicile,
-      rencontres: groupe.rencontres.map((rencontre): Rencontre => ({
-        id: rencontre.id,
-        equipeLocale: {
-          division: rencontre.division || null,
-          numero: rencontre.numero,
-        },
-        adversaire: {
-          clubId: rencontre.adversaireClubId,
-          numero: rencontre.adversaireNumero || null,
-          libelle: rencontre.adversaireLibelle,
-        },
-      })),
+      adversaire: {
+        clubId: rencontre.adversaireClubId,
+        numero: rencontre.adversaireNumero || null,
+        libelle: rencontre.adversaireLibelle,
+      },
     })),
   }));
-
-  // Seuls les creneaux COMPLETS servent a deduire la saison. Un formulaire en
-  // cours de saisie porte des dates vides, et la conversion ne doit jamais
-  // lever : sinon l'editeur ne peut pas afficher une journee neuve, dont aucune
-  // date n'est encore renseignee.
-  const premier = affiches
-    .flatMap((a) => a.groupes)
-    .map((g) => g.creneau.debutIso)
-    .filter(creneauValide)
-    .sort()[0];
 
   return {
     versionSchema: VERSION_SCHEMA,
     id: editable.id,
+    categorie: editable.categorie,
     numero: editable.numero,
-    // Une journee sans aucun creneau ne permet pas de deduire la saison ; le
-    // schema en exige une, et c'est l'appelant qui la corrigera en saisissant
-    // une date.
-    saison: premier ? saisonDe(premier) : SAISON_INDETERMINEE,
-    affiches,
+    // Seuls les creneaux COMPLETS servent a deduire la saison. Un formulaire en
+    // cours de saisie porte des dates vides, et la conversion ne doit jamais
+    // lever : sinon l'editeur ne peut pas afficher une affiche neuve, dont
+    // aucune date n'est encore renseignee.
+    saison: saisonDesGroupes(groupes) ?? SAISON_INDETERMINEE,
+    groupes,
+    sponsors: editable.sponsors,
     creeLe: editable.creeLe,
     majLe,
   };
 }
 
-/**
- * Saison de repli, le temps qu'une date soit saisie.
- *
- * Volontairement absurde et non « l'annee en cours » : elle doit se remarquer
- * si elle atteignait une affiche, la librairie ne lisant de toute facon pas
- * l'horloge.
- */
-export const SAISON_INDETERMINEE = '0000-0000';
+/** Vrai si tous les creneaux portent une date et une heure exploitables. */
+export function creneauxComplets(editable: AfficheEditable): boolean {
+  return editable.groupes.every((g) => creneauValide(joindreCreneau(g.date, g.heure)));
+}
