@@ -3,10 +3,11 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    // Le builder Angular gere sa propre sortie ; ces chemins ne servent qu'a
-    // `npm run typecheck` (tsc -b), pour qu'il n'emette pas de .js a cote des sources.
-    "outDir": "../../out-tsc/app",
-    "rootDir": "src",
+    // Le builder Angular gere sa propre sortie : ce projet n'a besoin que
+    // d'etre VERIFIE, jamais emis. `noEmit` remplace le couple rootDir/outDir,
+    // qui interdisait a l'application d'importer les sources de `poster-core` —
+    // le mapping de chemins pointe sur elles, et elles sont hors de `src`.
+    "noEmit": true,
     "types": []
   },
   "include": ["src/**/*.ts"],

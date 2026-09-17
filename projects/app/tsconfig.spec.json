@@ -3,8 +3,11 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../out-tsc/spec-app",
-    "rootDir": "src",
+    // Le builder Angular gere sa propre sortie : ce projet n'a besoin que
+    // d'etre VERIFIE, jamais emis. `noEmit` remplace le couple rootDir/outDir,
+    // qui interdisait a l'application d'importer les sources de `poster-core` —
+    // le mapping de chemins pointe sur elles, et elles sont hors de `src`.
+    "noEmit": true,
     "types": ["vitest/globals"]
   },
   "include": ["src/**/*.d.ts", "src/**/*.spec.ts"]

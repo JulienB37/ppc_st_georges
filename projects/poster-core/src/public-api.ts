@@ -19,3 +19,4 @@ export * from './migrate/v1';
 
 export * from './edition/modele';
 export * from './edition/mutations';
+export * from './edition/problemes';

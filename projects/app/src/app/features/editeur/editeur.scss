@@ -1,0 +1,59 @@
+:host {
+  display: block;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 6rem;
+}
+
+.entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.entete__numero {
+  width: 9rem;
+}
+
+.compteur {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.95rem;
+}
+
+.affiche {
+  margin-bottom: 1.5rem;
+}
+
+.affiche__titre {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.affiche__categorie {
+  font-family: 'Anton', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.problemes {
+  border-left: 4px solid var(--mat-sys-error);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 0 6px 6px 0;
+}
+
+.problemes ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

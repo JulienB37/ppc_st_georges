@@ -59,3 +59,6 @@ legacy/node_modules
 
 # Bundles temporaires des outils
 .tmp
+
+# Captures et instantanes de Playwright MCP, produits pendant la verification manuelle.
+.playwright-mcp/

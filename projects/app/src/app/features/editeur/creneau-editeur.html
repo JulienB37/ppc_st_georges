@@ -1,0 +1,123 @@
+<div class="creneau__entete">
+  <span class="creneau__rang">Créneau {{ index() + 1 }}</span>
+
+  <mat-checkbox [formField]="champs().domicile">À domicile</mat-checkbox>
+
+  <span class="pousser">
+    <button
+      matIconButton
+      type="button"
+      matTooltip="Monter ce créneau"
+      [disabled]="index() === 0"
+      (click)="deplacer.emit(index() - 1)"
+    >
+      <ppc-icone nom="monter" />
+    </button>
+    <button
+      matIconButton
+      type="button"
+      matTooltip="Descendre ce créneau"
+      [disabled]="dernier()"
+      (click)="deplacer.emit(index() + 1)"
+    >
+      <ppc-icone nom="descendre" />
+    </button>
+    <button matIconButton type="button" matTooltip="Supprimer ce créneau" (click)="retirer.emit()">
+      <ppc-icone nom="supprimer" />
+    </button>
+  </span>
+</div>
+
+<div class="creneau__champs">
+  <mat-form-field class="creneau__date">
+    <mat-label>Date</mat-label>
+    <input matInput type="date" [formField]="champs().date" />
+    @if (champs().date().invalid() && champs().date().touched()) {
+      <mat-error>{{ champs().date().errors()[0]?.message }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field class="creneau__heure">
+    <mat-label>Heure</mat-label>
+    <input matInput type="time" [formField]="champs().heure" />
+    @if (champs().heure().invalid() && champs().heure().touched()) {
+      <mat-error>{{ champs().heure().errors()[0]?.message }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field class="creneau__libelle">
+    <mat-label>Libellé imposé (facultatif)</mat-label>
+    <input matInput type="text" [formField]="champs().libelleOverride" />
+    <mat-hint>Laissez vide : le libellé est calculé depuis la date.</mat-hint>
+  </mat-form-field>
+</div>
+
+<p class="creneau__apercu">
+  Sur l’affiche : <strong>{{ apercuDate(champs()().value()) }}</strong>
+</p>
+
+@for (rencontre of champs().rencontres; track rencontre().value().id; let i = $index) {
+  <div class="rencontre">
+    <mat-form-field class="rencontre__division">
+      <mat-label>Division</mat-label>
+      <input matInput type="text" [formField]="rencontre.division" />
+    </mat-form-field>
+
+    <mat-form-field class="rencontre__numero">
+      <mat-label>Équipe n°</mat-label>
+      <input matInput type="number" [formField]="rencontre.numero" />
+    </mat-form-field>
+
+    <mat-form-field class="rencontre__adversaire">
+      <mat-label>Adversaire</mat-label>
+      <input
+        matInput
+        type="text"
+        [formField]="rencontre.adversaireLibelle"
+        (input)="deriverClub(rencontre)"
+      />
+      @if (rencontre.adversaireLibelle().invalid() && rencontre.adversaireLibelle().touched()) {
+        <mat-error>{{ rencontre.adversaireLibelle().errors()[0]?.message }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="rencontre__numero-adverse">
+      <mat-label>Son n°</mat-label>
+      <input matInput type="number" [formField]="rencontre.adversaireNumero" />
+    </mat-form-field>
+
+    <button
+      matIconButton
+      type="button"
+      matTooltip="Monter cette rencontre"
+      [disabled]="i === 0"
+      (click)="deplacerRencontre.emit({ de: i, vers: i - 1 })"
+    >
+      <ppc-icone nom="monter" />
+    </button>
+    <button
+      matIconButton
+      type="button"
+      matTooltip="Descendre cette rencontre"
+      [disabled]="i === champs().rencontres.length - 1"
+      (click)="deplacerRencontre.emit({ de: i, vers: i + 1 })"
+    >
+      <ppc-icone nom="descendre" />
+    </button>
+    <button
+      matIconButton
+      type="button"
+      matTooltip="Supprimer cette rencontre"
+      (click)="retirerRencontre.emit(i)"
+    >
+      <ppc-icone nom="fermer" />
+    </button>
+  </div>
+} @empty {
+  <p class="vide">Aucune rencontre dans ce créneau.</p>
+}
+
+<button matButton type="button" (click)="ajouterRencontre.emit()">
+  <ppc-icone nom="ajouter" />
+  Ajouter une rencontre
+</button>

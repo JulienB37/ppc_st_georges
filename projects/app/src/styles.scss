@@ -1,1 +1,105 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+/*
+ * Habillage de l'application.
+ *
+ * Les polices sont celles de l'AFFICHE, deja livrees en woff2 par
+ * `tools/build-fonts.mjs` : l'interface et le produit parlent ainsi la meme
+ * langue typographique, sans un octet de plus a telecharger. Elles sont
+ * sous-ensemblees au francais, ce qui suffit a une interface francaise.
+ */
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('/assets/fonts/BarlowSemiCondensed-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('/assets/fonts/BarlowSemiCondensed-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('/assets/fonts/BarlowSemiCondensed-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('/assets/fonts/BarlowSemiCondensed-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Anton';
+  src: url('/assets/fonts/Anton-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+html {
+  /*
+   * Theme Material 3. Le rouge du club porte la couleur primaire, pour que
+   * l'outil ait l'air d'appartenir au club et non a Google — c'est la raison
+   * pour laquelle le plan retenait un theme personnalise.
+   */
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$red-palette,
+        tertiary: mat.$azure-palette,
+      ),
+      typography: (
+        plain-family: 'Barlow Semi Condensed',
+        brand-family: 'Anton',
+      ),
+      density: 0,
+    )
+  );
+
+  color-scheme: light;
+
+  /*
+   * Surfaces NEUTRALISEES.
+   *
+   * Material 3 derive les fonds de la couleur primaire : avec le rouge du club
+   * en primaire, toute l'interface prenait une teinte rose, ce qui donnait
+   * l'air d'un theme mal regle plutot que d'une identite. Le rouge est donc
+   * reserve aux actions et aux accents, et les fonds reviennent au gris.
+   */
+  --mat-sys-surface: #fbfbfa;
+  --mat-sys-surface-container-low: #f5f5f4;
+  --mat-sys-surface-container: #eeeeec;
+  --mat-sys-surface-container-high: #e7e7e5;
+  --mat-sys-surface-container-highest: #e0e0de;
+  --mat-sys-surface-variant: #e6e6e3;
+  --mat-sys-on-surface: #1b1b1a;
+  --mat-sys-on-surface-variant: #494947;
+  --mat-sys-outline: #7a7a77;
+  --mat-sys-outline-variant: #cbcbc8;
+
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Barlow Semi Condensed', system-ui, sans-serif;
+}
+
+/* Les titres reprennent la police d'affichage, comme sur l'affiche. */
+h1,
+h2,
+h3 {
+  font-family: 'Anton', 'Barlow Semi Condensed', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  margin: 0;
+}
