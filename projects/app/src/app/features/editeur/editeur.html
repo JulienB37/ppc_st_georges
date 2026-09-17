@@ -33,26 +33,34 @@
   </div>
 }
 
-<mat-card class="affiche">
-  <mat-card-content>
-    @for (groupe of formulaire.groupes; track groupe().value().id; let iGroupe = $index) {
-      <ppc-creneau-editeur
-        [champs]="groupe"
-        [index]="iGroupe"
-        [dernier]="iGroupe === formulaire.groupes.length - 1"
-        (ajouterRencontre)="doc.ajouterRencontre(iGroupe)"
-        (retirerRencontre)="doc.retirerRencontre(iGroupe, $event)"
-        (deplacerRencontre)="doc.deplacerRencontre(iGroupe, $event.de, $event.vers)"
-        (retirer)="doc.retirerGroupe(iGroupe)"
-        (deplacer)="doc.deplacerGroupe(iGroupe, $event)"
-      />
-    } @empty {
-      <p>Aucun créneau : ajoutez-en un pour saisir les rencontres.</p>
-    }
+<div class="colonnes">
+  <div class="colonnes__saisie">
+    <mat-card class="affiche">
+      <mat-card-content>
+        @for (groupe of formulaire.groupes; track groupe().value().id; let iGroupe = $index) {
+          <ppc-creneau-editeur
+            [champs]="groupe"
+            [index]="iGroupe"
+            [dernier]="iGroupe === formulaire.groupes.length - 1"
+            (ajouterRencontre)="doc.ajouterRencontre(iGroupe)"
+            (retirerRencontre)="doc.retirerRencontre(iGroupe, $event)"
+            (deplacerRencontre)="doc.deplacerRencontre(iGroupe, $event.de, $event.vers)"
+            (retirer)="doc.retirerGroupe(iGroupe)"
+            (deplacer)="doc.deplacerGroupe(iGroupe, $event)"
+          />
+        } @empty {
+          <p>Aucun créneau : ajoutez-en un pour saisir les rencontres.</p>
+        }
 
-    <button matButton="outlined" type="button" (click)="doc.ajouterGroupe()">
-      <ppc-icone nom="ajouter" />
-      Ajouter un créneau
-    </button>
-  </mat-card-content>
-</mat-card>
+        <button matButton="outlined" type="button" (click)="doc.ajouterGroupe()">
+          <ppc-icone nom="ajouter" />
+          Ajouter un créneau
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <aside class="colonnes__apercu">
+    <ppc-apercu-affiche />
+  </aside>
+</div>

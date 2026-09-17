@@ -1,0 +1,44 @@
+<div class="apercu__entete">
+  <h2>Aperçu</h2>
+  @if (enCours()) {
+    <span class="apercu__etat">rendu…</span>
+  }
+  <button
+    class="apercu__export"
+    matButton
+    type="button"
+    matTooltip="Tire trois autres partenaires, les emplacements verrouillés exceptés"
+    (click)="doc.relancerSponsors()"
+  >
+    Autres partenaires
+  </button>
+  <button
+    matButton="filled"
+    type="button"
+    [disabled]="!doc.publiable() || exportEnCours()"
+    matTooltip="Télécharge l’affiche en PNG, à 1080 px de large"
+    (click)="telecharger()"
+  >
+    Télécharger le PNG
+  </button>
+</div>
+
+@if (!doc.publiable()) {
+  <p class="apercu__attente">
+    L’aperçu apparaîtra dès que l’affiche sera complète — voir ce qu’il reste à saisir ci-dessus.
+  </p>
+} @else {
+  <canvas #toile class="apercu__toile"></canvas>
+}
+
+@if (erreur()) {
+  <p class="apercu__erreur">Le rendu a échoué : {{ erreur() }}</p>
+}
+
+@if (avertissements().length) {
+  <ul class="apercu__avertissements">
+    @for (message of avertissements(); track message) {
+      <li>{{ message }}</li>
+    }
+  </ul>
+}

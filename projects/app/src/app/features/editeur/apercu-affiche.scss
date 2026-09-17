@@ -1,0 +1,46 @@
+:host {
+  display: block;
+  position: sticky;
+  top: 1rem;
+}
+
+.apercu__entete {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.apercu__etat {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.apercu__export {
+  margin-left: auto;
+}
+
+.apercu__toile {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 18%);
+}
+
+.apercu__attente,
+.apercu__erreur {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.apercu__erreur {
+  color: var(--mat-sys-error);
+}
+
+.apercu__avertissements {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.85rem;
+}

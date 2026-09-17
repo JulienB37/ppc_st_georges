@@ -1,8 +1,29 @@
 :host {
   display: block;
-  max-width: 68rem;
+  max-width: 88rem;
   margin: 0 auto;
   padding: 1.5rem 1rem 6rem;
+}
+
+/*
+ * Saisie a gauche, apercu a droite.
+ *
+ * L'apercu n'est pas un ecran separe : le benevole doit voir l'effet de sa
+ * frappe sans changer de page, c'est tout l'interet d'un rendu a 14 ms. En
+ * dessous de 68rem la colonne d'apercu passe sous la saisie plutot que de
+ * l'ecraser.
+ */
+.colonnes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 68rem) {
+  .colonnes {
+    grid-template-columns: minmax(0, 1fr) 24rem;
+    align-items: start;
+  }
 }
 
 .entete {

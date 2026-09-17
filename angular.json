@@ -28,6 +28,11 @@
               {
                 "glob": "**/*",
                 "input": "projects/app/public"
+              },
+              {
+                "glob": "index_bg.wasm",
+                "input": "node_modules/@resvg/resvg-wasm",
+                "output": "assets/resvg"
               }
             ],
             "styles": ["projects/app/src/styles.scss"]

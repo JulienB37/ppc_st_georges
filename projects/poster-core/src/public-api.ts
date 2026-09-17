@@ -14,6 +14,7 @@ export * from './clubs/resoudre';
 export * from './clubs/registre.generated';
 export * from './clubs/equipes';
 export * from './sponsors/registre.generated';
+export * from './sponsors/tirage';
 
 export * from './model/journee';
 export * from './migrate/v1';

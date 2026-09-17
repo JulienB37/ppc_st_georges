@@ -8,6 +8,7 @@ import {
   nouveauGroupe,
   nouvelleRencontre,
   problemesDe,
+  relancerGraine,
   remplacer,
   retirer,
   versDomaine,
@@ -129,6 +130,24 @@ export class DocumentAffiche {
    */
   commencer(categorie: Categorie, numero = 1): void {
     this.affiche.set(afficheVide(categorie, numero, maintenant()));
+  }
+
+  /**
+   * Relance le tirage des partenaires.
+   *
+   * La graine est INCREMENTEE et non tiree au hasard : le tirage reste
+   * reproductible, donc deux rendus de la meme affiche montrent les memes
+   * partenaires. L'ancien script appelait `Math.random()` sur un parcours de
+   * dossier, et deux generations ne donnaient jamais le meme resultat.
+   *
+   * Les emplacements verrouilles ne bougent pas : ce sont des choix explicites,
+   * pas un effet du tirage.
+   */
+  relancerSponsors(): void {
+    this.affiche.update((a) => ({
+      ...a,
+      sponsors: { ...a.sponsors, graine: relancerGraine(a.sponsors.graine) },
+    }));
   }
 
   // --- Creneaux ----------------------------------------------------------

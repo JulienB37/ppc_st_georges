@@ -14,7 +14,13 @@ import type { MessageDepuisWorker, MessageVersWorker } from './protocole';
  * la bibliotheque de types `webworker` a toute la librairie.
  */
 export interface PorteeWorker {
-  postMessage(message: MessageDepuisWorker, transfert?: ArrayBufferLike[]): void;
+  /**
+   * Deux SURCHARGES et non un parametre optionnel : les signatures du DOM
+   * n'acceptent pas `undefined` en seconde position, et une portee reelle ne
+   * serait alors pas assignable a cette interface.
+   */
+  postMessage(message: MessageDepuisWorker): void;
+  postMessage(message: MessageDepuisWorker, transfert: ArrayBufferLike[]): void;
   addEventListener(type: 'message', ecouteur: (evenement: { data: unknown }) => void): void;
 }
 

@@ -14,9 +14,16 @@ import type { MessageDepuisWorker, MessageVersWorker } from './protocole';
  * `RenduObsolete` — que l'appelant peut ignorer sans risque.
  */
 
-/** Portee minimale attendue d'un worker, cote client. */
+/**
+ * Portee minimale attendue d'un worker, cote client.
+ *
+ * `postMessage` n'y prend qu'un argument : le client ne transfere rien — c'est
+ * le worker qui renvoie les gros tampons, et lui seul a besoin d'une liste de
+ * transfert. Un parametre optionnel rendrait d'ailleurs un `Worker` du
+ * navigateur non assignable, ses surcharges n'acceptant pas `undefined`.
+ */
 export interface PorteeClient {
-  postMessage(message: MessageVersWorker, transfert?: ArrayBufferLike[]): void;
+  postMessage(message: MessageVersWorker): void;
   addEventListener(type: 'message', ecouteur: (evenement: { data: unknown }) => void): void;
   terminate?(): void;
 }

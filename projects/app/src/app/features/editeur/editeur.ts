@@ -10,6 +10,7 @@ import type { Categorie } from 'poster-core';
 
 import { DocumentAffiche } from '../../core/document-affiche';
 import { Icone } from '../../shared/icone';
+import { ApercuAffiche } from './apercu-affiche';
 import { CreneauEditeur } from './creneau-editeur';
 
 /**
@@ -37,6 +38,7 @@ import { CreneauEditeur } from './creneau-editeur';
     MatTooltipModule,
     RouterLink,
     Icone,
+    ApercuAffiche,
     CreneauEditeur,
   ],
   templateUrl: './editeur.html',

@@ -73,6 +73,18 @@ describe('DocumentAffiche', () => {
       expect(avant.groupes).toHaveLength(1);
     });
 
+    it('relance le tirage des partenaires sans le rendre imprevisible', () => {
+      // La graine est incrementee, pas tiree au hasard : deux rendus de la
+      // meme affiche doivent montrer les memes partenaires, sans quoi l'apercu
+      // papilloterait et rien ne serait reproductible.
+      const avant = doc.affiche().sponsors.graine;
+      doc.relancerSponsors();
+      expect(doc.affiche().sponsors.graine).not.toBe(avant);
+      doc.relancerSponsors();
+      // Deterministe : la meme suite d'actions redonne la meme graine.
+      expect(doc.affiche().sponsors.graine).toBe('j1-adultes-3');
+    });
+
     it('repart d une affiche vierge dans la categorie choisie', () => {
       // La categorie decide du document : elle est choisie a la creation et ne
       // se change pas ensuite, les deux championnats n'etant pas a la meme
