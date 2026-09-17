@@ -47,9 +47,9 @@ describe('rangJourneeParties', () => {
   });
 
   it('accorde les deux formes sur toute une saison', () => {
-    // La forme longue de l'affiche et la forme abregee de la prose doivent
-    // designer le meme rang : l'image et le texte de publication ne peuvent pas
-    // se contredire.
+    // La forme longue de l'affiche et la forme abregee de l'interface doivent
+    // designer le meme rang : la liste des affiches enregistrees et l'affiche
+    // elle-meme ne peuvent pas annoncer des journees differentes.
     for (let rang = 1; rang <= 22; rang++) {
       const { chiffre, suffixe } = rangJourneeParties(rang);
       expect(chiffre).toBe(String(rang));

@@ -8,10 +8,11 @@
  * Forme ordinale que prend un rang de journee.
  *
  * Le seul cas particulier est le premier rang, et il vit ICI et nulle part
- * ailleurs : deux fonctions rendent le rang, l'une abregee pour la prose et
- * l'autre longue pour l'affiche. Si chacune portait sa propre liste de cas, il
- * suffirait d'en corriger une pour que l'image et le texte de publication se
- * contredisent.
+ * ailleurs : deux fonctions rendent le rang, l'une abregee pour l'interface —
+ * la liste des affiches enregistrees — et l'autre longue pour l'affiche
+ * elle-meme. Si chacune portait sa propre liste de cas, il suffirait d'en
+ * corriger une pour que la liste et l'affiche designent des journees
+ * differentes.
  *
  * Le rang 2 n'en est PAS un : « seconde » serait recevable, le club prefere
  * « 2eme », qui est aussi la forme reguliere.
@@ -26,7 +27,7 @@ function formeDuRang(rang: number): FormeRang {
 }
 
 /**
- * Rang de journee abrege, pour la prose : `1re`, `2e`, `5e`, `11e`.
+ * Rang de journee abrege, pour l'interface : `1re`, `2e`, `5e`, `11e`.
  *
  * Ce sont les abreviations correctes. « Journee » etant feminin, le rang 1
  * donne `1re` (premiere) et non `1er`.

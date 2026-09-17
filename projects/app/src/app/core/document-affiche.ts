@@ -52,10 +52,9 @@ export class DocumentAffiche {
   /**
    * Vue domaine du document.
    *
-   * Recalculee a chaque frappe, et c'est voulu : c'est elle qui alimentera
-   * l'apercu et le texte de publication, donc l'image et le texte viendront
-   * toujours de la meme conversion. `versDomaine` ne leve jamais, meme sur une
-   * saisie incomplete.
+   * Recalculee a chaque frappe, et c'est voulu : c'est elle qui alimente
+   * l'apercu, l'export et la validation, qui viennent donc tous de la meme
+   * conversion. `versDomaine` ne leve jamais, meme sur une saisie incomplete.
    */
   readonly domaine = computed<Affiche>(() => versDomaine(this.affiche()));
 

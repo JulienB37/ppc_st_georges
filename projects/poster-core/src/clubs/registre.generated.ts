@@ -18,7 +18,7 @@ export const CLUBS = {
     hauteur: 225,
     alias: [],
   },
-  'bourges': {
+  bourges: {
     id: 'bourges',
     libelle: 'Bourges',
     fichier: 'bourges.png',
@@ -26,7 +26,7 @@ export const CLUBS = {
     hauteur: 156,
     alias: [],
   },
-  'chailles': {
+  chailles: {
     id: 'chailles',
     libelle: 'Chailles',
     fichier: 'chailles.png',
@@ -72,7 +72,12 @@ export const CLUBS = {
     fichier: 'asj-la-chaussee-st-victor.png',
     largeur: 211,
     hauteur: 197,
-    alias: ['la-chaussee-st-victor-tt', 'la-chaussee-st-victor', 'asj-la-chaussee-st-victor-tt', 'la-chaussee'],
+    alias: [
+      'la-chaussee-st-victor-tt',
+      'la-chaussee-st-victor',
+      'asj-la-chaussee-st-victor-tt',
+      'la-chaussee',
+    ],
   },
   'ass-clery-st-andre': {
     id: 'ass-clery-st-andre',
@@ -106,7 +111,7 @@ export const CLUBS = {
     hauteur: 215,
     alias: ['blois-ping', 'blois'],
   },
-  'chateauneuf': {
+  chateauneuf: {
     id: 'chateauneuf',
     libelle: 'Châteauneuf',
     fichier: 'chateauneuf.png',
@@ -188,7 +193,7 @@ export const CLUBS = {
   },
   'laigle-sellois-tt': {
     id: 'laigle-sellois-tt',
-    libelle: 'L\'aigle Sellois TT',
+    libelle: "L'aigle Sellois TT",
     fichier: 'laigle-sellois-tt.png',
     largeur: 159,
     hauteur: 160,
@@ -210,7 +215,7 @@ export const CLUBS = {
     hauteur: 256,
     alias: ['neuville'],
   },
-  'orleans': {
+  orleans: {
     id: 'orleans',
     libelle: 'Orléans',
     fichier: 'orleans.png',
@@ -314,7 +319,7 @@ export const CLUBS = {
     hauteur: 256,
     alias: ['usm-olivet', 'olivet'],
   },
-  'vierzon': {
+  vierzon: {
     id: 'vierzon',
     libelle: 'Vierzon',
     fichier: 'vierzon.png',

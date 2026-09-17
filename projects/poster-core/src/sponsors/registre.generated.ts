@@ -11,7 +11,7 @@ export interface EntreeSponsor {
 }
 
 export const SPONSORS = {
-  'carrefour': {
+  carrefour: {
     id: 'carrefour',
     libelle: 'Carrefour',
     fichier: 'carrefour.jpg',
@@ -19,7 +19,7 @@ export const SPONSORS = {
     hauteur: 225,
     actif: true,
   },
-  'desloges': {
+  desloges: {
     id: 'desloges',
     libelle: 'Desloges',
     fichier: 'desloges.jpg',
@@ -139,7 +139,7 @@ export const SPONSORS = {
     hauteur: 82,
     actif: true,
   },
-  'misterping': {
+  misterping: {
     id: 'misterping',
     libelle: 'Misterping',
     fichier: 'misterping.png',
@@ -155,7 +155,7 @@ export const SPONSORS = {
     hauteur: 88,
     actif: true,
   },
-  'sirap': {
+  sirap: {
     id: 'sirap',
     libelle: 'Sirap',
     fichier: 'sirap.jpg',
