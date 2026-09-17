@@ -18,7 +18,7 @@ export const CLUBS = {
     hauteur: 225,
     alias: [],
   },
-  bourges: {
+  'bourges': {
     id: 'bourges',
     libelle: 'Bourges',
     fichier: 'bourges.png',
@@ -26,7 +26,7 @@ export const CLUBS = {
     hauteur: 156,
     alias: [],
   },
-  chailles: {
+  'chailles': {
     id: 'chailles',
     libelle: 'Chailles',
     fichier: 'chailles.png',
@@ -72,12 +72,15 @@ export const CLUBS = {
     fichier: 'asj-la-chaussee-st-victor.png',
     largeur: 211,
     hauteur: 197,
-    alias: [
-      'la-chaussee-st-victor-tt',
-      'la-chaussee-st-victor',
-      'asj-la-chaussee-st-victor-tt',
-      'la-chaussee',
-    ],
+    alias: ['la-chaussee-st-victor-tt', 'la-chaussee-st-victor', 'asj-la-chaussee-st-victor-tt', 'la-chaussee'],
+  },
+  'ass-clery-st-andre': {
+    id: 'ass-clery-st-andre',
+    libelle: 'ASS Cléry St André',
+    fichier: 'ass-clery-st-andre.png',
+    largeur: 256,
+    hauteur: 250,
+    alias: ['clery-st-andre', 'clery'],
   },
   'aze-tt': {
     id: 'aze-tt',
@@ -87,6 +90,14 @@ export const CLUBS = {
     hauteur: 202,
     alias: ['aze'],
   },
+  'berri-chateauroux': {
+    id: 'berri-chateauroux',
+    libelle: 'Berri Châteauroux',
+    fichier: 'berri-chateauroux.png',
+    largeur: 225,
+    hauteur: 224,
+    alias: ['chateauroux', 'berri'],
+  },
   'blois-ping-41': {
     id: 'blois-ping-41',
     libelle: 'Blois Ping 41',
@@ -95,7 +106,7 @@ export const CLUBS = {
     hauteur: 215,
     alias: ['blois-ping', 'blois'],
   },
-  chateauneuf: {
+  'chateauneuf': {
     id: 'chateauneuf',
     libelle: 'Châteauneuf',
     fichier: 'chateauneuf.png',
@@ -118,6 +129,22 @@ export const CLUBS = {
     largeur: 203,
     hauteur: 182,
     alias: ['ouchamps'],
+  },
+  'ent-martizay-buzancais': {
+    id: 'ent-martizay-buzancais',
+    libelle: 'Ent. Martizay Buzançais',
+    fichier: 'ent-martizay-buzancais.png',
+    largeur: 256,
+    hauteur: 255,
+    alias: ['martizay-buzancais', 'martizay', 'buzancais'],
+  },
+  'es-maintenon-pierres': {
+    id: 'es-maintenon-pierres',
+    libelle: 'ES Maintenon Pierres',
+    fichier: 'es-maintenon-pierres.png',
+    largeur: 256,
+    hauteur: 256,
+    alias: ['maintenon-pierres', 'maintenon'],
   },
   'es-mulsans': {
     id: 'es-mulsans',
@@ -143,6 +170,14 @@ export const CLUBS = {
     hauteur: 173,
     alias: ['st-aignan'],
   },
+  'fr-parassy-tt': {
+    id: 'fr-parassy-tt',
+    libelle: 'FR Parassy TT',
+    fichier: 'fr-parassy-tt.png',
+    largeur: 256,
+    hauteur: 256,
+    alias: ['parassy-tt', 'parassy'],
+  },
   'gien-as-tt': {
     id: 'gien-as-tt',
     libelle: 'Gien AS TT',
@@ -153,7 +188,7 @@ export const CLUBS = {
   },
   'laigle-sellois-tt': {
     id: 'laigle-sellois-tt',
-    libelle: "L'aigle Sellois TT",
+    libelle: 'L\'aigle Sellois TT',
     fichier: 'laigle-sellois-tt.png',
     largeur: 159,
     hauteur: 160,
@@ -167,7 +202,15 @@ export const CLUBS = {
     hauteur: 92,
     alias: ['montpreschambord', 'mont-pres-chambord-tt'],
   },
-  orleans: {
+  'neuville-sports': {
+    id: 'neuville-sports',
+    libelle: 'Neuville Sports',
+    fichier: 'neuville-sports.png',
+    largeur: 255,
+    hauteur: 256,
+    alias: ['neuville'],
+  },
+  'orleans': {
     id: 'orleans',
     libelle: 'Orléans',
     fichier: 'orleans.png',
@@ -239,6 +282,22 @@ export const CLUBS = {
     hauteur: 139,
     alias: ['sud-loire-tt', 'sud-loire'],
   },
+  'tt-aubigny-sure-nere': {
+    id: 'tt-aubigny-sure-nere',
+    libelle: 'TT Aubigny-sur-Nère',
+    fichier: 'tt-aubigny-sure-nere.png',
+    largeur: 256,
+    hauteur: 256,
+    alias: ['tt-aubigny-sur-nere', 'aubigny-sur-nere', 'aubigny'],
+  },
+  'tt-germinois': {
+    id: 'tt-germinois',
+    libelle: 'TT Germinois',
+    fichier: 'tt-germinois.png',
+    largeur: 256,
+    hauteur: 178,
+    alias: ['germinois'],
+  },
   'us-chouzy-tt': {
     id: 'us-chouzy-tt',
     libelle: 'US Chouzy TT',
@@ -247,7 +306,15 @@ export const CLUBS = {
     hauteur: 216,
     alias: ['chouzy', 'chouzy-tt'],
   },
-  vierzon: {
+  'usm-olivet-tt': {
+    id: 'usm-olivet-tt',
+    libelle: 'USM Olivet TT',
+    fichier: 'usm-olivet-tt.png',
+    largeur: 256,
+    hauteur: 256,
+    alias: ['usm-olivet', 'olivet'],
+  },
+  'vierzon': {
     id: 'vierzon',
     libelle: 'Vierzon',
     fichier: 'vierzon.png',
