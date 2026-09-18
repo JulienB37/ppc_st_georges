@@ -694,7 +694,7 @@ function rangee(
       moteur,
       ctx.decoupes,
       `clip-r-${indice}`,
-      COULEURS.blanc,
+      COULEURS.anneauAdverse,
     ),
   );
 
@@ -870,7 +870,7 @@ function rangeeDuel(
       moteur,
       ctx.decoupes,
       `clip-dr-${indice}`,
-      COULEURS.blanc,
+      COULEURS.anneauAdverse,
     ),
   );
 

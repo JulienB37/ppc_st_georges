@@ -123,6 +123,19 @@ export const COULEURS = {
   carte: '#0C1B31',
   encre: '#101820',
   blanc: '#FFFFFF',
+  /**
+   * Anneau des logos adverses.
+   *
+   * Il etait en blanc pur, ce qui le posait a 17,3:1 sur le fond de carte
+   * (#0C1B31) quand l'anneau du club — celui qui, lui, porte une information —
+   * tient entre 1,7 et 3,0:1 selon la teinte du creneau. Le trait muet etait
+   * donc six a dix fois plus fort que le trait signifiant, et c'est lui qu'on
+   * voyait d'abord.
+   *
+   * A 7,4:1 il reste un cerne net, qui detache un logo heterogene du fond
+   * sombre, sans prendre le pas sur la couleur du creneau.
+   */
+  anneauAdverse: '#9FAABC',
   ivoire: '#F4F6F8',
   grisLigne: '#D9DEE5',
   /** Texte secondaire sur fond sombre. */
