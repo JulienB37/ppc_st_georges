@@ -1,0 +1,59 @@
+{
+  "genere": "tools/build-fonts.mjs",
+  "faces": [
+    {
+      "fichier": "Anton-400.woff2",
+      "famille": "Anton",
+      "graisse": 400,
+      "role": "display",
+      "octets": 20032,
+      "unitsPerEm": 2048,
+      "source": "Anton-Regular.ttf"
+    },
+    {
+      "fichier": "BarlowSemiCondensed-400.woff2",
+      "famille": "Barlow Semi Condensed",
+      "graisse": 400,
+      "role": "texte",
+      "octets": 22924,
+      "unitsPerEm": 1000,
+      "source": "BarlowSemiCondensed-Regular.ttf"
+    },
+    {
+      "fichier": "BarlowSemiCondensed-500.woff2",
+      "famille": "Barlow Semi Condensed",
+      "graisse": 500,
+      "role": "texte",
+      "octets": 22832,
+      "unitsPerEm": 1000,
+      "source": "BarlowSemiCondensed-Medium.ttf"
+    },
+    {
+      "fichier": "BarlowSemiCondensed-600.woff2",
+      "famille": "Barlow Semi Condensed",
+      "graisse": 600,
+      "role": "texte",
+      "octets": 23504,
+      "unitsPerEm": 1000,
+      "source": "BarlowSemiCondensed-SemiBold.ttf"
+    },
+    {
+      "fichier": "BarlowSemiCondensed-700.woff2",
+      "famille": "Barlow Semi Condensed",
+      "graisse": 700,
+      "role": "texte",
+      "octets": 23832,
+      "unitsPerEm": 1000,
+      "source": "BarlowSemiCondensed-Bold.ttf"
+    },
+    {
+      "fichier": "Caveat-700.woff2",
+      "famille": "Caveat",
+      "graisse": 700,
+      "role": "manuscrit",
+      "octets": 50436,
+      "unitsPerEm": 1000,
+      "source": "Caveat[wght].ttf"
+    }
+  ]
+}

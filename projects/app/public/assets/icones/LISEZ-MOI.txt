@@ -1,0 +1,1 @@
+Genere par tools/build-icones.mts depuis le blason du club. Ne pas modifier a la main.

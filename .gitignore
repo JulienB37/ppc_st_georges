@@ -1,36 +1,64 @@
-# dependencies (bun install)
-node_modules
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-# output
-out
-dist
-*.tgz
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
 
-# code coverage
-coverage
-*.lcov
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
 
-# logs
-logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+.history/*
 
-# caches
-.eslintcache
-.cache
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+__screenshots__/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Rendus generes (non versionnes)
+resultats
+legacy/resultats
+
+# Dependances du script legacy (bun)
+legacy/node_modules
+
+# Sorties de tsc -b (npm run typecheck)
 *.tsbuildinfo
 
-# IntelliJ based IDEs
-.idea
+# Polices proprietaires Microsoft/Monotype : non redistribuables.
+# Conservees sur le poste pour rejouer legacy/, jamais versionnees.
+/fonts/
 
-# Finder (MacOS) folder config
-.DS_Store
+# Bundles temporaires des outils
+.tmp
 
-resultats
+# Captures et instantanes de Playwright MCP, produits pendant la verification manuelle.
+.playwright-mcp/

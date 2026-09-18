@@ -1,0 +1,27 @@
+<div class="seuil">
+  <h1 class="titre">Quelle affiche préparez-vous&nbsp;?</h1>
+  <p class="intro">
+    Une affiche par championnat. Les adultes et les jeunes n’en sont pas à la même journée, chacun
+    garde donc la sienne.
+  </p>
+
+  <div class="choix">
+    <button class="carte" type="button" (click)="commencer('adultes')">
+      <span class="carte__nom">Adultes</span>
+      <span class="carte__detail">Jusqu’à huit équipes engagées, sur un ou deux créneaux.</span>
+      <span class="carte__action">Préparer l’affiche adultes</span>
+    </button>
+
+    <button class="carte carte--jeunes" type="button" (click)="commencer('jeunes')">
+      <span class="carte__nom">Jeunes</span>
+      <span class="carte__detail">Les rencontres jeunes, avec leur propre numéro de journée.</span>
+      <span class="carte__action">Préparer l’affiche jeunes</span>
+    </button>
+  </div>
+
+  <p class="reprise">
+    Vous voulez reprendre la journée précédente&nbsp;?
+    <a routerLink="/historique">Ouvrez une affiche enregistrée</a> et choisissez «&nbsp;Journée
+    suivante&nbsp;».
+  </p>
+</div>

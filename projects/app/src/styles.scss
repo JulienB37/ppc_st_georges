@@ -1,0 +1,191 @@
+@use '@angular/material' as mat;
+
+/*
+ * Habillage : une feuille de match posee sur la table.
+ *
+ * L'affiche du club est nocturne, peinte, contrastee. L'editeur en reprend le
+ * monde plutot que d'etre un formulaire gris a cote : fond de table dans
+ * l'ombre, feuille en encart, lignes peintes en guise de separateurs, et les
+ * trois teintes de creneau de l'affiche comme seuls accents.
+ *
+ * Les polices sont celles de l'AFFICHE, deja livrees en woff2 par
+ * `tools/build-fonts.mjs` : l'interface et le produit parlent la meme langue
+ * typographique, sans un octet de plus a telecharger.
+ *
+ * Les chemins visent le fichier SUR DISQUE, et non l'URL servie.
+ *
+ * Deux raisons. D'abord `/assets/...` viserait la racine du domaine, alors que
+ * l'application est servie sous un sous-chemin sur GitHub Pages — le site
+ * serait livre sans police. Ensuite, et surtout, un chemin que le build peut
+ * resoudre est un chemin que le build VERIFIE : une police renommee casse la
+ * compilation, au lieu de laisser le navigateur se rabattre en silence sur une
+ * autre famille. C'est precisement le defaut que ce depot combat.
+ *
+ * Le fichier est donc emis une seconde fois par la chaine de styles, sous
+ * `media/`, empreinte incluse. 176 Ko pour les cinq faces : le prix d'une
+ * verification, et `ngsw-config.json` met ce dossier en cache comme le reste
+ * du moteur.
+ */
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('../public/assets/fonts/BarlowSemiCondensed-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('../public/assets/fonts/BarlowSemiCondensed-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('../public/assets/fonts/BarlowSemiCondensed-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('../public/assets/fonts/BarlowSemiCondensed-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Anton';
+  src: url('../public/assets/fonts/Anton-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+html {
+  /* Material fournit le comportement des widgets ; la peau vient d'ici. */
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$red-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: (
+        plain-family: 'Barlow Semi Condensed',
+        brand-family: 'Anton',
+      ),
+      density: -1,
+    )
+  );
+
+  color-scheme: dark;
+
+  /* --- La table et la feuille -------------------------------------- */
+  --table: #0a1524;
+  --feuille: #0f1f35;
+  --feuille-creuse: #0b1729;
+  --ligne: #21385c;
+  --ligne-vive: #2f4f7d;
+  --craie: #e8eef6;
+  --craie-basse: #8aa0bc;
+
+  /*
+   * Les trois teintes de creneau de l'affiche, dans leur version VIVE.
+   * L'affiche les utilise foncees, parce qu'elle y pose du texte blanc ; ici
+   * elles servent de traits et de reperes sur un fond sombre, ou c'est la
+   * version vive qui se detache.
+   */
+  --creneau-1: #de1b4b;
+  --creneau-2: #1fa9b4;
+  --creneau-3: #8b3fae;
+  --creneau-4: #e08a1e;
+
+  /* Material lit ces variables : on les rabat sur la palette de la table. */
+  --mat-sys-surface: var(--table);
+  --mat-sys-surface-container-low: var(--feuille);
+  --mat-sys-surface-container: var(--feuille);
+  --mat-sys-surface-container-high: #16273f;
+  --mat-sys-surface-container-highest: #1b2e49;
+  --mat-sys-surface-variant: var(--feuille-creuse);
+  --mat-sys-on-surface: var(--craie);
+  --mat-sys-on-surface-variant: var(--craie-basse);
+  --mat-sys-outline: var(--ligne-vive);
+  --mat-sys-outline-variant: var(--ligne);
+  --mat-sys-primary: var(--creneau-1);
+  --mat-sys-on-primary: #ffffff;
+
+  background: var(--table);
+  color: var(--craie);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Barlow Semi Condensed', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  /*
+   * Lumiere de gymnase : une lueur froide tombe du haut, comme sur la photo de
+   * l'affiche. Un seul degrade, tres discret — c'est le fond, pas un motif.
+   */
+  background:
+    radial-gradient(120rem 40rem at 50% -18rem, #16314f 0%, transparent 62%), var(--table);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Anton n'apparait qu'a deux endroits : ils sont nommes, pas globaux. */
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+a {
+  color: var(--creneau-2);
+}
+
+/* --- Champs de saisie : on ecrit sur une ligne reglee ---------------- */
+
+.mat-mdc-form-field {
+  --mat-form-field-container-height: 48px;
+  --mat-form-field-filled-with-label-container-padding-top: 22px;
+  --mat-form-field-filled-with-label-container-padding-bottom: 6px;
+}
+
+.mat-mdc-text-field-wrapper {
+  background: var(--feuille-creuse) !important;
+  border-radius: 3px 3px 0 0 !important;
+}
+
+/* Le soulignement est la ligne du formulaire : discret au repos, vif au focus. */
+.mdc-line-ripple::before {
+  border-bottom-color: var(--ligne-vive) !important;
+}
+
+.mat-mdc-form-field-focus-overlay,
+.mat-mdc-text-field-wrapper:hover .mat-mdc-form-field-focus-overlay {
+  background: transparent !important;
+}
+
+input.mat-mdc-input-element {
+  caret-color: var(--creneau-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Focus visible, partout ----------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--creneau-2);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

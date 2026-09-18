@@ -1,0 +1,70 @@
+<h1 class="titre">Mes affiches</h1>
+
+@if (entrees.isLoading()) {
+  <p class="etat">Lecture…</p>
+} @else if (entrees.error()) {
+  <p class="etat">La base locale n’a pas pu être lue.</p>
+} @else if (!entrees.value()?.length) {
+  <div class="vide">
+    <p class="vide__titre">Rien d’enregistré pour l’instant.</p>
+    <p>
+      Chaque affiche est enregistrée automatiquement dès qu’elle est complète.
+      <a routerLink="/nouvelle">Commencez une affiche</a> et elle apparaîtra ici.
+    </p>
+  </div>
+} @else {
+  <ul class="liste">
+    @for (entree of entrees.value(); track entree.type === 'ok' ? entree.affiche.id : entree.id) {
+      @if (entree.type === 'ok') {
+        <li class="ligne" [style.--teinte]="teinte(entree.affiche)">
+          <span class="ligne__rang">{{ rang(entree.affiche) }}</span>
+
+          <span class="ligne__quoi">
+            <span class="ligne__quand">{{ libelleCreneau(entree.affiche) }}</span>
+            <span class="ligne__detail">
+              {{ entree.affiche.categorie === 'jeunes' ? 'Jeunes' : 'Adultes' }}, saison
+              {{ entree.affiche.saison }}, {{ compter(entree.affiche) }}
+              {{ compter(entree.affiche) === 1 ? 'rencontre' : 'rencontres' }}
+            </span>
+          </span>
+
+          <span class="ligne__actions">
+            <button class="lien-action" type="button" (click)="ouvrir(entree.affiche)">
+              Ouvrir
+            </button>
+            <button
+              class="lien-action lien-action--fort"
+              type="button"
+              title="Reprend cette affiche pour la journée suivante, dates avancées d’une semaine"
+              (click)="dupliquer(entree.affiche)"
+            >
+              Journée suivante
+            </button>
+            <button
+              class="outil"
+              type="button"
+              title="Supprimer"
+              aria-label="Supprimer cette affiche"
+              (click)="supprimer(entree.affiche.id)"
+            >
+              <ppc-icone nom="supprimer" />
+            </button>
+          </span>
+        </li>
+      } @else {
+        <li class="ligne ligne--illisible">
+          <span class="ligne__rang">?</span>
+          <span class="ligne__quoi">
+            <span class="ligne__quand">Document illisible</span>
+            <span class="ligne__detail">{{ entree.raison }}</span>
+          </span>
+          <span class="ligne__actions">
+            <button class="lien-action" type="button" (click)="supprimer(entree.id)">
+              Supprimer
+            </button>
+          </span>
+        </li>
+      }
+    }
+  </ul>
+}

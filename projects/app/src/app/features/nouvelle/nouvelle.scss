@@ -1,0 +1,99 @@
+/*
+ * L'ecran d'ouverture occupe la page.
+ *
+ * Aligne en haut, son contenu — une question et deux choix — laissait les deux
+ * tiers de l'ecran vides et avait l'air tronque. Centre dans ce qui reste sous
+ * le bandeau, il a l'air d'un seuil : on choisit, et on entre.
+ */
+:host {
+  display: grid;
+  align-content: center;
+  min-height: calc(100vh - 4.5rem);
+  padding: clamp(2rem, 6vh, 4rem) clamp(1rem, 4vw, 3rem);
+}
+
+.seuil {
+  width: 100%;
+  max-width: 54rem;
+  margin-inline: auto;
+}
+
+/* Anton, second et dernier emploi : la question posee a l'ouverture. */
+.titre {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(1.9rem, 4.5vw, 2.9rem);
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.intro {
+  margin: 0.9rem 0 2.5rem;
+  color: var(--craie-basse);
+  /* Mesure de lecture, alignee sur le titre et non centree sous lui. */
+  max-width: 62ch;
+}
+
+.choix {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.25rem;
+}
+
+/*
+ * Les deux cartes sont des BOUTONS, pas des cartes avec un bouton dedans :
+ * toute la surface est cliquable, ce qui evite la cible minuscule d'un lien
+ * perdu au fond d'un encart.
+ */
+.carte {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  padding: 1.5rem;
+  text-align: left;
+  font: inherit;
+  color: var(--craie);
+  background: var(--feuille);
+  border: 1px solid var(--ligne);
+  /* La barre peinte, comme un creneau sur l'affiche. */
+  border-left: 4px solid var(--creneau-1);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.carte--jeunes {
+  border-left-color: var(--creneau-2);
+}
+
+.carte:hover {
+  border-color: var(--ligne-vive);
+  background: #142540;
+}
+
+.carte__nom {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.carte__detail {
+  color: var(--craie-basse);
+  font-size: 0.95rem;
+}
+
+.carte__action {
+  margin-top: 0.75rem;
+  font-weight: 600;
+  color: var(--creneau-1);
+}
+
+.carte--jeunes .carte__action {
+  color: var(--creneau-2);
+}
+
+.reprise {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ligne);
+  color: var(--craie-basse);
+  font-size: 0.95rem;
+}

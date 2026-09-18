@@ -1,0 +1,153 @@
+:host {
+  display: block;
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: clamp(1.75rem, 5vh, 3rem) clamp(1rem, 4vw, 3rem) 4rem;
+}
+
+.titre {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.etat {
+  color: var(--craie-basse);
+}
+
+.vide {
+  max-width: 46ch;
+}
+
+.vide__titre {
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.vide p:last-child {
+  margin: 0;
+  color: var(--craie-basse);
+}
+
+/*
+ * Une liste reglee, pas une pile de cartes.
+ *
+ * Ces affiches forment une suite de journees : des lignes separees par un trait
+ * le disent, la ou des encarts identiques les presenteraient comme des objets
+ * sans rapport.
+ */
+.liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--ligne);
+}
+
+.ligne {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 0.25rem;
+  border-bottom: 1px solid var(--ligne);
+}
+
+.ligne:hover {
+  background: color-mix(in srgb, var(--feuille) 60%, transparent);
+}
+
+/* Le rang porte la teinte que l'affiche donne a son premier creneau. */
+.ligne__rang {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--teinte, var(--craie-basse));
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ligne__quoi {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+/*
+ * La DATE tient la place forte.
+ *
+ * C'est elle qui distingue deux affiches ; la categorie, identique sur presque
+ * toutes les lignes, n'apprend rien en gras et se lit tres bien en second rang,
+ * ou la couleur du rang la porte deja.
+ */
+.ligne__quand {
+  font-weight: 600;
+}
+
+.ligne__detail {
+  color: var(--craie-basse);
+  font-size: 0.92rem;
+}
+
+.ligne__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lien-action {
+  border: 0;
+  background: transparent;
+  padding: 0.35rem 0;
+  font: inherit;
+  font-weight: 500;
+  color: var(--craie-basse);
+  cursor: pointer;
+}
+
+.lien-action:hover {
+  color: var(--craie);
+  text-decoration: underline;
+}
+
+.lien-action--fort {
+  color: var(--creneau-2);
+}
+
+.lien-action--fort:hover {
+  color: #3fc6d1;
+}
+
+.outil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #5f7592;
+  cursor: pointer;
+}
+
+.outil:hover {
+  background: var(--feuille);
+  color: var(--craie);
+}
+
+.ligne--illisible .ligne__rang,
+.ligne--illisible .ligne__quand {
+  color: var(--creneau-4);
+}
+
+@media (max-width: 40rem) {
+  .ligne {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    row-gap: 0.5rem;
+  }
+
+  .ligne__actions {
+    grid-column: 2;
+  }
+}

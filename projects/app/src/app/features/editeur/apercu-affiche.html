@@ -1,0 +1,38 @@
+<div class="cadre">
+  @if (!doc.publiable()) {
+    <div class="attente">
+      <p>L’affiche se dessine ici, à chaque frappe.</p>
+      <p class="attente__detail">
+        Elle apparaîtra dès que la journée sera complète. Ce qu’il reste à saisir est listé à
+        gauche.
+      </p>
+    </div>
+  } @else {
+    <canvas #toile class="toile" [class.toile--attente]="enCours()"></canvas>
+  }
+</div>
+
+<div class="actions">
+  <button
+    class="bouton bouton--fort"
+    type="button"
+    [disabled]="!doc.publiable() || exportEnCours()"
+    (click)="telecharger()"
+  >
+    {{ exportEnCours() ? 'Préparation…' : 'Enregistrer l’affiche' }}
+  </button>
+</div>
+
+@if (erreur()) {
+  <p class="alerte">Le rendu a échoué : {{ erreur() }}</p>
+}
+
+<ppc-partenaires />
+
+@if (avertissements().length) {
+  <ul class="remarques">
+    @for (message of avertissements(); track message) {
+      <li>{{ message }}</li>
+    }
+  </ul>
+}

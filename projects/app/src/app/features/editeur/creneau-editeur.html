@@ -1,0 +1,171 @@
+<div class="creneau" [style.--teinte]="teinte()">
+  <div class="creneau__entete">
+    <div class="creneau__quand">
+      <input
+        class="creneau__date"
+        type="date"
+        aria-label="Date du créneau"
+        [formField]="champs().date"
+      />
+      <input
+        class="creneau__heure"
+        type="time"
+        aria-label="Heure de début"
+        [formField]="champs().heure"
+      />
+
+      <label class="lieu">
+        <input type="checkbox" [formField]="champs().domicile" />
+        <span>{{ champs().domicile().value() ? 'À domicile' : 'À l’extérieur' }}</span>
+      </label>
+    </div>
+
+    <div class="creneau__outils">
+      <button
+        class="outil"
+        type="button"
+        title="Monter ce créneau"
+        aria-label="Monter ce créneau"
+        [disabled]="index() === 0"
+        (click)="deplacer.emit(index() - 1)"
+      >
+        <ppc-icone nom="monter" />
+      </button>
+      <button
+        class="outil"
+        type="button"
+        title="Descendre ce créneau"
+        aria-label="Descendre ce créneau"
+        [disabled]="dernier()"
+        (click)="deplacer.emit(index() + 1)"
+      >
+        <ppc-icone nom="descendre" />
+      </button>
+      <button
+        class="outil"
+        type="button"
+        title="Supprimer ce créneau"
+        aria-label="Supprimer ce créneau"
+        (click)="retirer.emit()"
+      >
+        <ppc-icone nom="supprimer" />
+      </button>
+    </div>
+  </div>
+
+  <p class="creneau__apercu">
+    Sur l’affiche : <strong>{{ apercuDate(champs()().value()) }}</strong>
+  </p>
+
+  <details class="remplacer">
+    <summary>Remplacer ce libellé</summary>
+    <input
+      class="remplacer__champ"
+      type="text"
+      placeholder="Samedi 19 septembre à 18h00"
+      aria-label="Libellé imposé"
+      [formField]="champs().libelleOverride"
+    />
+  </details>
+
+  @for (rencontre of champs().rencontres; track rencontre().value().id; let i = $index) {
+    <div class="duel">
+      <div class="duel__nous">
+        <select class="equipe" aria-label="Notre équipe" [formField]="rencontre.division">
+          @for (equipe of options(rencontre.division().value()); track equipe.division) {
+            <option [value]="equipe.division">
+              {{ equipe.division }}{{ equipe.numero ? ' — équipe ' + equipe.numero : '' }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <span class="duel__filet" aria-hidden="true"></span>
+
+      <div class="duel__eux">
+        <input
+          class="adversaire"
+          type="text"
+          placeholder="Nom du club adverse"
+          aria-label="Équipe adverse"
+          [formField]="rencontre.adversaireLibelle"
+          [matAutocomplete]="liste"
+          (input)="accorderClub(rencontre)"
+        />
+        <mat-autocomplete #liste requireSelection="false">
+          @for (club of catalogue.chercher(rencontre.adversaireLibelle().value()); track club.id) {
+            <mat-option [value]="club.libelle" (onSelectionChange)="choisirClub(rencontre, club)">
+              <img class="option__logo" [src]="catalogue.vignette(club)" alt="" />
+              {{ club.libelle }}
+            </mat-option>
+          }
+        </mat-autocomplete>
+
+        <label
+          class="numero-adverse"
+          title="Numéro de l’équipe adverse. Zéro : aucun numéro sur l’affiche."
+        >
+          <span class="numero-adverse__affixe" aria-hidden="true">n°</span>
+          <input
+            type="number"
+            aria-label="Numéro de l’équipe adverse"
+            [formField]="rencontre.adversaireNumero"
+          />
+        </label>
+      </div>
+
+      <div class="duel__blason-eux">
+        @if (clubRetenu(rencontre.adversaireClubId().value()); as club) {
+          <img
+            class="duel__logo"
+            [src]="catalogue.vignette(club)"
+            [alt]="'Logo de ' + club.libelle"
+          />
+        } @else if (rencontre.adversaireLibelle().value()) {
+          <span class="duel__sans-logo" title="L’affiche portera un monogramme">monogramme</span>
+        } @else {
+          <span class="duel__logo duel__logo--vide" aria-hidden="true"></span>
+        }
+      </div>
+
+      <div class="duel__outils">
+        <button
+          class="outil"
+          type="button"
+          title="Monter cette rencontre"
+          aria-label="Monter cette rencontre"
+          [disabled]="i === 0"
+          (click)="deplacerRencontre.emit({ de: i, vers: i - 1 })"
+        >
+          <ppc-icone nom="monter" />
+        </button>
+        <button
+          class="outil"
+          type="button"
+          title="Descendre cette rencontre"
+          aria-label="Descendre cette rencontre"
+          [disabled]="i === champs().rencontres.length - 1"
+          (click)="deplacerRencontre.emit({ de: i, vers: i + 1 })"
+        >
+          <ppc-icone nom="descendre" />
+        </button>
+        <button
+          class="outil"
+          type="button"
+          title="Retirer cette rencontre"
+          aria-label="Retirer cette rencontre"
+          (click)="retirerRencontre.emit(i)"
+        >
+          <ppc-icone nom="fermer" />
+        </button>
+      </div>
+    </div>
+  } @empty {
+    <p class="duel-vide">Aucune rencontre dans ce créneau.</p>
+  }
+
+  <button class="ajout-rencontre" type="button" (click)="ajouterRencontre.emit()">
+    <ppc-icone nom="ajouter" />
+    Ajouter une rencontre
+  </button>
+</div>

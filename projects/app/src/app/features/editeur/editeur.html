@@ -1,0 +1,62 @@
+<div class="plan">
+  <section class="feuille" aria-label="Feuille de match">
+    <div class="feuille__entete">
+      <div class="rang">
+        <input
+          class="rang__champ"
+          type="number"
+          aria-label="Numéro de journée"
+          [formField]="formulaire.numero"
+        />
+        <span class="rang__legende">
+          <span class="rang__mot">journée</span>
+          <span class="rang__categorie">{{ doc.affiche().categorie }}</span>
+        </span>
+      </div>
+
+      <a class="lien-discret" routerLink="/nouvelle">Changer de catégorie</a>
+    </div>
+
+    @if (!doc.publiable()) {
+      <div class="manques" role="status">
+        <p class="manques__titre">À compléter avant de pouvoir enregistrer l’affiche</p>
+        <ul>
+          @for (probleme of doc.problemes(); track probleme.chemin.join('.')) {
+            <li>
+              @if (probleme.ou) {
+                <span class="manques__ou">{{ probleme.ou }}</span>
+              }
+              {{ probleme.quoi }}
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    @for (groupe of formulaire.groupes; track groupe().value().id; let iGroupe = $index) {
+      <ppc-creneau-editeur
+        [champs]="groupe"
+        [index]="iGroupe"
+        [dernier]="iGroupe === formulaire.groupes.length - 1"
+        (ajouterRencontre)="doc.ajouterRencontre(iGroupe)"
+        (retirerRencontre)="doc.retirerRencontre(iGroupe, $event)"
+        (deplacerRencontre)="doc.deplacerRencontre(iGroupe, $event.de, $event.vers)"
+        (retirer)="doc.retirerGroupe(iGroupe)"
+        (deplacer)="doc.deplacerGroupe(iGroupe, $event)"
+      />
+    } @empty {
+      <p class="vide">
+        Aucun créneau. Ajoutez-en un pour commencer à saisir les rencontres de la journée.
+      </p>
+    }
+
+    <button class="ajout-creneau" type="button" (click)="doc.ajouterGroupe()">
+      <ppc-icone nom="ajouter" />
+      Ajouter un créneau
+    </button>
+  </section>
+
+  <aside class="colonne-apercu">
+    <ppc-apercu-affiche />
+  </aside>
+</div>

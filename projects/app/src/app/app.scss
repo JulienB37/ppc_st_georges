@@ -1,0 +1,169 @@
+/*
+ * Bandeau : la ligne de fond de la table.
+ *
+ * Pas de barre d'outils Material : une simple ligne peinte, comme le bord d'une
+ * table de jeu. Elle porte la signature du club et deux liens, rien d'autre.
+ */
+.bandeau {
+  display: flex;
+  align-items: baseline;
+  gap: 2rem;
+  padding: 1.1rem clamp(1rem, 4vw, 3rem) 0.9rem;
+  border-bottom: 2px solid var(--ligne);
+}
+
+.bandeau__marque {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+/*
+ * Le blason du club, a cote de la signature, sur une pastille claire.
+ *
+ * Le dessin est noir et rouge sur fond transparent : pose directement sur le
+ * bleu nuit, le dragon disparaissait et il ne restait que le « PPC » rouge.
+ * C'est exactement ce que l'affiche resout en posant chaque logo sur un fond
+ * clair, et la pastille reprend donc le meme dispositif.
+ *
+ * Elle n'est pas ronde : le dessin fait 1,29:1, et un disque lui imposait une
+ * marge blanche en haut et en bas pour rien. Elle suit son rapport, comme les
+ * vignettes de partenaires.
+ *
+ * Il est decoratif ici — le texte a cote nomme deja le club — donc `alt` vide :
+ * un lecteur d'ecran annoncerait deux fois la meme chose.
+ */
+.bandeau__blason {
+  width: 38px;
+  height: 30px;
+  padding: 3px;
+  border-radius: 4px;
+  background: var(--craie);
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.bandeau__nom {
+  display: flex;
+  align-items: baseline;
+}
+
+/* Anton, premier des deux seuls emplois : la signature. */
+.bandeau__club {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.01em;
+  color: var(--craie);
+}
+
+.bandeau__cher {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.3rem;
+  color: var(--creneau-1);
+}
+
+.bandeau__nav {
+  display: flex;
+  gap: 1.5rem;
+  margin-left: auto;
+}
+
+.bandeau__nav a {
+  color: var(--craie-basse);
+  text-decoration: none;
+  font-weight: 500;
+  padding-bottom: 0.9rem;
+  margin-bottom: -1.1rem;
+  border-bottom: 2px solid transparent;
+}
+
+.bandeau__nav a:hover {
+  color: var(--craie);
+}
+
+/* L'onglet courant est marque par un trait, pas par une pastille. */
+.bandeau__nav a.est-actif {
+  color: var(--craie);
+  border-bottom-color: var(--creneau-1);
+}
+
+/*
+ * Largeur telephone : la signature tient sur une ligne.
+ *
+ * « PPC St Georges/Cher » se cassait en deux, « /Cher » restant seul a cote du
+ * bloc, et le bandeau prenait 60 px de haut pour dire son nom. Une ligne, plus
+ * courte, et deux liens resserres suffisent.
+ */
+@media (max-width: 30rem) {
+  /*
+   * Le repli passe la navigation a la ligne quand elle ne tient plus, et la
+   * garde a cote de la signature quand elle tient. Sur un ecran de 320 px les
+   * deux liens debordaient de 40 px ; un point de rupture de plus aurait
+   * degrade des ecrans ou tout tenait.
+   */
+  .bandeau {
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding-inline: 1rem;
+  }
+
+  .bandeau__nom {
+    white-space: nowrap;
+  }
+
+  .bandeau__club,
+  .bandeau__cher {
+    font-size: 0.95rem;
+  }
+
+  .bandeau__blason {
+    width: 32px;
+    height: 25px;
+    padding: 2px;
+  }
+
+  /* Les deux liens restent entiers : un « Nouvelle / affiche » casse se lit mal. */
+  .bandeau__nav {
+    gap: 0.9rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+}
+
+/*
+ * Annonces de la coquille : mise a jour disponible, ou cache irrecuperable.
+ *
+ * Elles s'inserent dans le flux plutot que de flotter par-dessus : un bandeau
+ * en surimpression masquerait le haut du formulaire, et rien ici n'est urgent
+ * au point de recouvrir la saisie.
+ */
+.annonce {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.7rem clamp(1rem, 4vw, 3rem);
+  background: var(--feuille);
+  border-bottom: 1px solid var(--ligne);
+  font-size: 0.95rem;
+}
+
+.annonce--panne {
+  border-left: 3px solid var(--creneau-4);
+}
+
+.annonce__action {
+  border: 0;
+  background: transparent;
+  padding: 0.2rem 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--creneau-2);
+  cursor: pointer;
+}
+
+.annonce__action:hover {
+  text-decoration: underline;
+}

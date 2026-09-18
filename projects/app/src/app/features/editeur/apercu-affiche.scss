@@ -1,0 +1,132 @@
+/*
+ * L'apercu : le produit, et donc le heros de l'ecran.
+ *
+ * Il est colle en haut pour rester visible pendant qu'on remplit la feuille —
+ * c'est tout l'interet d'un rendu a 14 ms que de le voir bouger.
+ */
+:host {
+  display: block;
+  position: sticky;
+  top: 1.5rem;
+}
+
+.cadre {
+  /*
+   * L'affiche est posee sur la table, pas encadree : une ombre portee et rien
+   * d'autre. Un cadre dessine entrerait en concurrence avec le sien.
+   */
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 6%),
+    0 18px 40px -12px rgb(0 0 0 / 70%);
+  background: var(--feuille-creuse);
+  aspect-ratio: 2 / 3;
+  display: grid;
+  place-items: center;
+}
+
+.toile {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  transition: opacity 120ms ease-out;
+}
+
+/* Pendant un rendu, l'image precedente pâlit : on voit que ça travaille. */
+.toile--attente {
+  opacity: 0.55;
+}
+
+.attente {
+  padding: 2rem 1.75rem;
+  text-align: center;
+  max-width: 30ch;
+}
+
+.attente p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.attente__detail {
+  margin-top: 0.6rem !important;
+  font-weight: 400 !important;
+  color: var(--craie-basse);
+  font-size: 0.95rem;
+}
+
+/* --- Actions ---------------------------------------------------------- */
+
+.actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.bouton {
+  flex: 1 1 auto;
+  padding: 0.7rem 1.1rem;
+  border: 1px solid var(--ligne-vive);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--craie);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.bouton:hover:not(:disabled) {
+  border-color: var(--craie-basse);
+}
+
+.bouton--fort {
+  background: var(--creneau-1);
+  border-color: var(--creneau-1);
+  color: #fff;
+  font-weight: 600;
+}
+
+.bouton--fort:hover:not(:disabled) {
+  background: #f03157;
+  border-color: #f03157;
+}
+
+.bouton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* --- Retours ---------------------------------------------------------- */
+
+.alerte {
+  margin: 0.9rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border-left: 3px solid var(--creneau-1);
+  background: color-mix(in srgb, var(--creneau-1) 12%, transparent);
+  font-size: 0.95rem;
+}
+
+/*
+ * Les remarques du moteur de rendu, alignees sur l'alerte : un filet a gauche
+ * plutot qu'une puce, faute de quoi elles flottaient sous les boutons comme un
+ * reste de liste.
+ */
+.remarques {
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  color: var(--craie-basse);
+}
+
+.remarques li {
+  padding: 0.3rem 0 0.3rem 0.8rem;
+  border-left: 2px solid var(--ligne-vive);
+}
+
+.remarques li + li {
+  margin-top: 0.3rem;
+}

@@ -1,0 +1,36 @@
+<header class="bandeau">
+  <a class="bandeau__marque" routerLink="/nouvelle">
+    <img class="bandeau__blason" src="assets/clubs/pp-st-georgescher.png" alt="" />
+    <span class="bandeau__nom">
+      <span class="bandeau__club">PPC St Georges</span><span class="bandeau__cher">/Cher</span>
+    </span>
+  </a>
+
+  <nav class="bandeau__nav">
+    <a routerLink="/nouvelle" routerLinkActive="est-actif">Nouvelle affiche</a>
+    <a routerLink="/historique" routerLinkActive="est-actif">Mes affiches</a>
+  </nav>
+</header>
+
+@if (maj.disponible()) {
+  <div class="annonce" role="status">
+    <span>Une nouvelle version de l’application est prête.</span>
+    <button class="annonce__action" type="button" (click)="maj.appliquer()">Recharger</button>
+  </div>
+}
+
+@if (maj.cassee()) {
+  <div class="annonce annonce--panne" role="alert">
+    <span>
+      L’application ne se charge plus correctement. Réinitialiser efface son cache&nbsp;; vos
+      affiches enregistrées ne sont pas touchées.
+    </span>
+    <button class="annonce__action" type="button" (click)="maj.reinitialiser()">
+      Réinitialiser l’application
+    </button>
+  </div>
+}
+
+<main>
+  <router-outlet />
+</main>
