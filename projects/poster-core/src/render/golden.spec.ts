@@ -54,11 +54,22 @@ function assets(): AssetsAffiche {
   };
 }
 
-function rencontre(division: string, numero: number, adverse: string): Rencontre {
+/**
+ * Le libelle adverse ne nomme QUE le club, son equipe vivant dans `numero`.
+ *
+ * C'est la convention du modele, et les references doivent l'exercer : l'affiche
+ * recompose les deux a l'impression. La fixture portait auparavant le numero
+ * dans le libelle, ce qui masquait le fait que `numero` ne s'imprimait pas.
+ */
+function rencontre(division: string, numero: number, numeroAdverse: number): Rencontre {
   return {
     id: nouvelId(),
     equipeLocale: { division, numero },
-    adversaire: { clubId: 'club-test', numero: 1, libelle: adverse },
+    adversaire: {
+      clubId: 'club-test',
+      numero: numeroAdverse,
+      libelle: 'ASJ La Chaussée St Victor',
+    },
   };
 }
 
@@ -68,11 +79,7 @@ function groupe(domicile: boolean, nb: number, debutIso: string): Groupe {
     creneau: { debutIso },
     domicile,
     rencontres: Array.from({ length: nb }, (_, i) =>
-      rencontre(
-        ['PR', 'D1', 'D2', 'D3', 'R2'][i % 5]!,
-        i + 1,
-        `ASJ La Chaussée St Victor ${i + 1}`,
-      ),
+      rencontre(['PR', 'D1', 'D2', 'D3', 'R2'][i % 5]!, i + 1, i + 1),
     ),
   };
 }

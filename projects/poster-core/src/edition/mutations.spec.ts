@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import { EQUIPES_CLUB } from '../clubs/equipes';
-import { AfficheSchema, SAISON_INDETERMINEE } from '../model/journee';
+import { AfficheSchema, SAISON_INDETERMINEE, type SelectionSponsors } from '../model/journee';
 import { versDomaine } from './modele';
 import {
-  deplacer,
-  inserer,
   afficheVide,
+  deplacer,
+  equipeLibreDe,
+  fixerSponsor,
+  inserer,
   nouveauGroupe,
   nouvelleRencontre,
-  equipeLibreDe,
   remplacer,
   retirer,
 } from './mutations';
@@ -144,5 +145,44 @@ describe('equipeLibreDe', () => {
     const affiche = afficheVide('adultes', 1, MAINTENANT);
     affiche.groupes[0]!.rencontres = EQUIPES_CLUB.map((e) => nouvelleRencontre(e));
     expect(equipeLibreDe(affiche).numero).toBe(8);
+  });
+});
+
+describe('fixerSponsor', () => {
+  const selection: SelectionSponsors = {
+    graine: 'j1-adultes',
+    emplacements: [
+      { sponsorId: null, verrouille: false },
+      { sponsorId: null, verrouille: false },
+      { sponsorId: null, verrouille: false },
+    ],
+  };
+
+  it('verrouille l emplacement choisi a la main', () => {
+    // Choisir SANS verrouiller ne servirait a rien : le tirage ne regarde le
+    // sponsorId d'un emplacement que s'il est verrouille, et la relance
+    // suivante effacerait le choix.
+    const apres = fixerSponsor(selection, 1, 'carrefour');
+    expect(apres.emplacements[1]).toEqual({ sponsorId: 'carrefour', verrouille: true });
+  });
+
+  it('rend l emplacement au tirage automatique', () => {
+    const fixe = fixerSponsor(selection, 0, 'carrefour');
+    expect(fixerSponsor(fixe, 0, null).emplacements[0]).toEqual({
+      sponsorId: null,
+      verrouille: false,
+    });
+  });
+
+  it('ne touche ni aux autres emplacements ni a la graine', () => {
+    const apres = fixerSponsor(fixerSponsor(selection, 2, 'u'), 0, 'carrefour');
+    expect(apres.emplacements[1]).toEqual({ sponsorId: null, verrouille: false });
+    expect(apres.emplacements[2]).toEqual({ sponsorId: 'u', verrouille: true });
+    expect(apres.graine).toBe('j1-adultes');
+  });
+
+  it('ne modifie pas la selection recue', () => {
+    fixerSponsor(selection, 0, 'carrefour');
+    expect(selection.emplacements[0]).toEqual({ sponsorId: null, verrouille: false });
   });
 });

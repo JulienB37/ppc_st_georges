@@ -94,11 +94,14 @@ describe('migrerDepuisV1', () => {
   });
 
   it('separe club et numero d equipe chez l adversaire', () => {
+    // Le libelle ne nomme QUE le club : le numero vit dans son propre champ, et
+    // l'affiche recompose les deux a l'impression. Les garder tous les deux
+    // dans le libelle faisait imprimer « St Sulpice TT 1 1 ».
     const premiere = resultat.affiches[0]!.groupes[0]!.rencontres[0]!;
     expect(premiere.adversaire).toEqual({
       clubId: 'st-sulpice-tt',
       numero: 1,
-      libelle: 'St Sulpice TT 1',
+      libelle: 'St Sulpice TT',
     });
     expect(premiere.equipeLocale).toEqual({ division: 'D2', numero: 6 });
   });

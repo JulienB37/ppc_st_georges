@@ -183,7 +183,21 @@ function composer(
   const consommeParEntetes = (nbGroupes / colonnes) * (hauteurEnteteGroupe + ecartGroupe);
   const resteRangees = disponible - consommeParEntetes;
 
-  const partEgale = rangeesParColonne > 0 ? resteRangees / rangeesParColonne : Infinity;
+  /*
+   * Un creneau peut n'avoir AUCUNE rencontre : c'est l'etat d'un document qu'on
+   * commence a saisir, et celui d'un creneau qu'on vient d'ajouter.
+   *
+   * Le pas de rangee n'a alors pas de sens, mais il ne doit pas pour autant
+   * valoir l'infini : la variante duel le reprend tel quel, et cet infini se
+   * propageait jusqu'aux coordonnees, ou l'emetteur le voyait arriver en NaN et
+   * refusait la scene. L'utilisateur lisait « Coordonnee non finie dans la
+   * scene : NaN » alors qu'il n'avait encore rien saisi de faux.
+   *
+   * Sans rangee a placer, n'importe quelle valeur finie convient : le nominal
+   * est la moins surprenante, et garde la geometrie continue quand la premiere
+   * rencontre arrive.
+   */
+  const partEgale = rangeesParColonne > 0 ? resteRangees / rangeesParColonne : NOMINAL.pasRangee;
   // Le duel est la seule variante qui *doit* remplir la hauteur offerte : une
   // ou deux rencontres etalees a 115 px laissent les trois quarts du panneau
   // vides. Les autres variantes gardent leur plafond, sans quoi une journee

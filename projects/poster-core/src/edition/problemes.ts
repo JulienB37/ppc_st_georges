@@ -45,29 +45,32 @@ function traduire(affiche: Affiche, chemin: (string | number)[], message: string
   const feuille = chemin[chemin.length - 1];
 
   if (chemin[0] === 'numero' && chemin.length === 1) {
-    return { chemin, ou: '', quoi: 'Le numero de journee doit etre au moins 1.' };
+    return { chemin, ou: '', quoi: 'Le numéro de journée doit être au moins 1.' };
   }
   if (chemin[0] === 'saison') {
     return {
       chemin,
       ou: '',
-      quoi: 'La saison se deduit des dates : renseignez au moins un creneau.',
+      quoi: 'La saison se déduit des dates : renseignez au moins un créneau.',
     };
   }
   if (chemin.length === 1 && chemin[0] === 'groupes') {
-    return { chemin, ou: '', quoi: 'Il faut au moins un creneau.' };
+    return { chemin, ou: '', quoi: 'Il faut au moins un créneau.' };
+  }
+  if (feuille === 'rencontres') {
+    return { chemin, ou, quoi: 'Ce créneau n’a aucune rencontre.' };
   }
   if (feuille === 'debutIso') {
     return { chemin, ou, quoi: 'La date ou l’heure manque.' };
   }
   if (feuille === 'libelle') {
-    return { chemin, ou, quoi: 'L’equipe adverse n’est pas nommee.' };
+    return { chemin, ou, quoi: 'L’équipe adverse n’est pas nommée.' };
   }
   if (feuille === 'clubId') {
     return { chemin, ou, quoi: 'Le club adverse n’est pas choisi.' };
   }
   if (feuille === 'numero') {
-    return { chemin, ou, quoi: 'Le numero d’equipe doit etre au moins 1.' };
+    return { chemin, ou, quoi: 'Le numéro d’équipe doit être au moins 1.' };
   }
 
   // Repli : la phrase reste situee, et le message du schema est repris tel
@@ -80,7 +83,7 @@ function situer(_affiche: Affiche, chemin: (string | number)[]): string {
   const morceaux: string[] = [];
 
   if (chemin[0] === 'groupes' && typeof chemin[1] === 'number') {
-    morceaux.push(`creneau ${chemin[1] + 1}`);
+    morceaux.push(`créneau ${chemin[1] + 1}`);
 
     if (chemin[2] === 'rencontres' && typeof chemin[3] === 'number') {
       morceaux.push(`rencontre ${chemin[3] + 1}`);

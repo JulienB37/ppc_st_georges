@@ -18,7 +18,7 @@ describe('DocumentAffiche', () => {
     // Et le probleme est enonce en clair, avec l'endroit ou regarder : c'est un
     // benevole qui le lit, pas un chemin zod.
     expect(doc.problemes()[0]).toMatchObject({
-      ou: 'creneau 1',
+      ou: 'créneau 1',
       quoi: expect.stringMatching(/date/i),
     });
   });

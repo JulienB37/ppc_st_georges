@@ -150,15 +150,23 @@ export function lireEquipeLocale(libelle: string): EquipeLocale {
   return { division: libelle.trim() || null, numero: 1 };
 }
 
+/**
+ * Le libelle v1 melait le club et son equipe : « St Sulpice TT 1 ».
+ *
+ * On les SEPARE, `libelle` ne nommant plus que le club. C'est la condition pour
+ * que l'affiche recompose les deux a l'impression sans redoubler le numero, et
+ * pour que le libelle migre se compare a ceux que propose le catalogue.
+ */
 function rencontreDepuis(equipeStGeorges: string, equipeAdverse: string): Rencontre {
-  const libelle = equipeAdverse.trim();
+  const saisi = equipeAdverse.trim();
+  const { nom, numero } = separerNumeroEquipe(saisi);
   return {
     id: nouvelId(),
     equipeLocale: lireEquipeLocale(equipeStGeorges),
     adversaire: {
-      clubId: clubIdDepuisLibelle(libelle),
-      numero: separerNumeroEquipe(libelle).numero,
-      libelle,
+      clubId: clubIdDepuisLibelle(saisi),
+      numero,
+      libelle: nom,
     },
   };
 }

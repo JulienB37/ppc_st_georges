@@ -1,7 +1,8 @@
 import { calculerDensite, repartirEnColonnes, type Densite } from '../layout/densite';
 import { echelonsDepuis, type MoteurTexte, type StyleTexte } from '../layout/mesure';
 import { monogramme } from '../clubs/normaliser';
-import { formatCreneau } from '../format/creneau';
+import { creneauValide, formatCreneau } from '../format/creneau';
+import { libelleAdversaire } from '../format/adversaire';
 import { rangJourneeParties } from '../format/ordinal';
 import type { Affiche, Groupe, Rencontre } from '../model/journee';
 import { decorPhoto, type FondPhoto } from './decor';
@@ -441,6 +442,23 @@ interface Contexte {
   diagnostics: Diagnostic[];
 }
 
+/**
+ * Libelle du creneau, ou une attente lisible tant qu'il est incomplet.
+ *
+ * L'apercu se redessine a chaque frappe : la composition voit donc une date a
+ * moitie saisie, « 2026-09-19T » ou « T18:00 ». `formatCreneau` refuse ces
+ * valeurs, a juste titre — c'est un formateur strict. Mais le refus remontait
+ * jusqu'a l'utilisateur sous forme d'erreur de moteur de rendu, alors qu'il
+ * etait simplement en train de taper.
+ *
+ * On imprime donc la meme attente que l'interface montre ailleurs. Ce qui
+ * manque reste dit par la validation du schema, a cote du champ concerne.
+ */
+function libelleCreneauOuAttente(creneau: Groupe['creneau']): string {
+  if (creneau.libelleOverride) return creneau.libelleOverride;
+  return creneauValide(creneau.debutIso) ? formatCreneau(creneau.debutIso) : 'date à compléter';
+}
+
 function enteteGroupe(
   groupe: Groupe,
   x: number,
@@ -454,7 +472,7 @@ function enteteGroupe(
   const h = Math.min(62, densite.hauteurEnteteGroupe * 0.84);
   const cy = y + h / 2;
 
-  const date = groupe.creneau.libelleOverride ?? formatCreneau(groupe.creneau.debutIso);
+  const date = libelleCreneauOuAttente(groupe.creneau);
   const lieu = groupe.domicile ? 'À domicile' : "À l'extérieur";
   const styleDate = styleTexte(Math.max(21, h * 0.42), GRAISSES.fort);
   const styleLieu = styleTexte(Math.max(17, h * 0.34), GRAISSES.appuye);
@@ -741,7 +759,7 @@ function rangee(
   const xDroite = cxDroite - d / 2 - ESPACES.s2;
   const bordDroitVs = cxVs + largeurVs / 2 + ESPACES.s3;
   const adverse = moteur.ajuster(
-    rencontre.adversaire.libelle,
+    libelleAdversaire(rencontre.adversaire),
     xDroite - bordDroitVs,
     styleNom,
     echelons,
@@ -749,12 +767,12 @@ function rangee(
   if (adverse.deborde) {
     ctx.diagnostics.push({
       niveau: 'alerte',
-      message: `« ${rencontre.adversaire.libelle} » est trop long pour sa ligne.`,
+      message: `« ${libelleAdversaire(rencontre.adversaire)} » est trop long pour sa ligne.`,
     });
   }
   noeuds.push(
     texte(
-      rencontre.adversaire.libelle,
+      libelleAdversaire(rencontre.adversaire),
       xDroite,
       moteur.ligneDeBaseCentree({ ...styleNom, taille: adverse.taille }, cy),
       { ...styleNom, taille: adverse.taille },
@@ -882,16 +900,21 @@ function rangeeDuel(
     ),
   );
 
-  const adverse = moteur.ajuster(rencontre.adversaire.libelle, largeurNom, styleNom, echelons);
+  const adverse = moteur.ajuster(
+    libelleAdversaire(rencontre.adversaire),
+    largeurNom,
+    styleNom,
+    echelons,
+  );
   if (adverse.deborde) {
     ctx.diagnostics.push({
       niveau: 'alerte',
-      message: `« ${rencontre.adversaire.libelle} » est trop long pour sa carte.`,
+      message: `« ${libelleAdversaire(rencontre.adversaire)} » est trop long pour sa carte.`,
     });
   }
   noeuds.push(
     texte(
-      rencontre.adversaire.libelle,
+      libelleAdversaire(rencontre.adversaire),
       cxDroite,
       moteur.ligneDeBaseCentree({ ...styleNom, taille: adverse.taille }, cyNom),
       { ...styleNom, taille: adverse.taille },

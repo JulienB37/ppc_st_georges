@@ -78,12 +78,19 @@ export const RencontreSchema = z.object({
   adversaire: AdversaireSchema,
 });
 
-/** Un creneau et un lieu, donc un bloc de l'affiche. */
+/**
+ * Un creneau et un lieu, donc un bloc de l'affiche.
+ *
+ * Au moins une rencontre : un creneau vide imprimerait une bande de date sous
+ * laquelle il n'y a rien a lire. Rien ne l'interdisait, et une affiche sans
+ * aucune rencontre se laissait donc enregistrer et exporter — un panneau noir
+ * avec une date.
+ */
 export const GroupeSchema = z.object({
   id: z.string().min(1),
   creneau: CreneauSchema,
   domicile: z.boolean(),
-  rencontres: z.array(RencontreSchema),
+  rencontres: z.array(RencontreSchema).min(1),
 });
 
 export const EmplacementSponsorSchema = z.object({

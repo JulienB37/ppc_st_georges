@@ -1,3 +1,4 @@
+import type { SelectionSponsors } from '../model/journee';
 import { equipeLibreSuivante, type EquipeClub } from '../clubs/equipes';
 import { emplacementsVides, graineParDefaut, nouvelId, type Categorie } from '../model/journee';
 import type { AfficheEditable, GroupeEditable, RencontreEditable } from './modele';
@@ -119,4 +120,32 @@ export function remplacer<T>(liste: readonly T[], index: number, calculer: (elem
  */
 export function equipeLibreDe(affiche: AfficheEditable): EquipeClub {
   return equipeLibreSuivante(affiche.groupes.flatMap((g) => g.rencontres.map((r) => r.numero)));
+}
+
+/**
+ * Fixe ou libere le partenaire d'un emplacement.
+ *
+ * Un partenaire choisi a la main est VERROUILLE : c'est la seule facon pour le
+ * tirage de le respecter — il ne regarde le `sponsorId` d'un emplacement que
+ * s'il est verrouille, faute de quoi une relance l'effacerait sans prevenir.
+ * Les deux notions n'en font donc qu'une du point de vue de l'utilisateur :
+ * choisir, c'est retenir.
+ *
+ * `null` rend l'emplacement au tirage automatique.
+ */
+export function fixerSponsor(
+  selection: SelectionSponsors,
+  index: number,
+  sponsorId: string | null,
+): SelectionSponsors {
+  // Les emplacements sont un TRIPLET : `map` en perdrait la forme, que le
+  // schema impose. On reconstruit donc le tuple explicitement.
+  const pose = (i: number): SelectionSponsors['emplacements'][number] =>
+    i === index
+      ? sponsorId
+        ? { sponsorId, verrouille: true }
+        : { sponsorId: null, verrouille: false }
+      : selection.emplacements[i]!;
+
+  return { ...selection, emplacements: [pose(0), pose(1), pose(2)] };
 }
