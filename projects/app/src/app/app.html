@@ -1,12 +1,16 @@
-<mat-toolbar class="barre" color="primary">
-  <span class="barre__titre">PPC St Georges/Cher</span>
-  <span class="barre__sous-titre">Affiches de championnat</span>
+<header class="bandeau">
+  <a class="bandeau__marque" routerLink="/nouvelle">
+    <img class="bandeau__blason" src="assets/clubs/pp-st-georgescher.png" alt="" />
+    <span class="bandeau__nom">
+      <span class="bandeau__club">PPC St Georges</span><span class="bandeau__cher">/Cher</span>
+    </span>
+  </a>
 
-  <span class="barre__liens">
-    <a matButton routerLink="/nouvelle">Nouvelle</a>
-    <a matButton routerLink="/historique">Enregistrées</a>
-  </span>
-</mat-toolbar>
+  <nav class="bandeau__nav">
+    <a routerLink="/nouvelle" routerLinkActive="est-actif">Nouvelle affiche</a>
+    <a routerLink="/historique" routerLinkActive="est-actif">Mes affiches</a>
+  </nav>
+</header>
 
 <main>
   <router-outlet />

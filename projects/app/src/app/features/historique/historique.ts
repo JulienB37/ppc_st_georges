@@ -1,8 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, resource, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   compterRencontres,
   formatCreneau,
@@ -14,6 +11,7 @@ import {
 import { DepotAffiches } from '../../core/depot-affiches';
 import { DocumentAffiche } from '../../core/document-affiche';
 import { Icone } from '../../shared/icone';
+import { TEINTES_CRENEAU_UI } from '../../shared/teintes';
 
 /**
  * Historique des affiches enregistrees.
@@ -29,7 +27,7 @@ import { Icone } from '../../shared/icone';
 @Component({
   selector: 'ppc-historique',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatCardModule, MatTooltipModule, Icone],
+  imports: [RouterLink, Icone],
   templateUrl: './historique.html',
   styleUrl: './historique.scss',
 })
@@ -55,6 +53,17 @@ export class Historique {
    */
   protected rang(affiche: Affiche): string {
     return ordinalJournee(affiche.numero);
+  }
+
+  /**
+   * Couleur du rang, par CATEGORIE.
+   *
+   * Elle porte une information : c'est le seul trait qui distingue une affiche
+   * adultes d'une affiche jeunes dans la liste. Les memes deux teintes que
+   * l'ecran de choix, pour qu'un coup d'oeil suffise.
+   */
+  protected teinte(affiche: Affiche): string {
+    return affiche.categorie === 'jeunes' ? TEINTES_CRENEAU_UI[1]! : TEINTES_CRENEAU_UI[0]!;
   }
 
   protected libelleCreneau(affiche: Affiche): string {

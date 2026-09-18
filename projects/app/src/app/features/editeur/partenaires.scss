@@ -1,0 +1,104 @@
+:host {
+  display: block;
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ligne);
+}
+
+.titre {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.intro {
+  margin: 0.3rem 0 1rem;
+  font-size: 0.9rem;
+  color: var(--craie-basse);
+  max-width: 52ch;
+}
+
+.emplacements {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+/*
+ * Un emplacement se lit d'un coup d'oeil : le logo qui partira a l'impression,
+ * et la facon dont il a ete obtenu. Le trait de gauche distingue un choix
+ * assume d'un tirage — c'est la seule difference qui compte ici, puisqu'elle
+ * decide de ce qu'une relance changera.
+ */
+.emplacement {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--feuille);
+  border-left: 3px solid var(--ligne-vive);
+}
+
+.emplacement--choisi {
+  border-left-color: var(--creneau-3);
+}
+
+/*
+ * Fond blanc sous le logo : les visuels de commercants sont dessines pour du
+ * papier et disparaissent sur fond nocturne. C'est ce que fait l'affiche, ou
+ * les partenaires sont poses sur des cartouches clairs.
+ */
+.emplacement__logo {
+  width: 52px;
+  height: 34px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 2px;
+  padding: 2px;
+}
+
+.emplacement__logo--vide {
+  display: inline-block;
+  background: var(--feuille-creuse);
+}
+
+.emplacement__choix {
+  font: inherit;
+  width: 100%;
+  color: var(--craie);
+  background: var(--feuille-creuse);
+  border: 1px solid transparent;
+  border-bottom: 1px solid var(--ligne-vive);
+  border-radius: 3px 3px 0 0;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+}
+
+.emplacement__choix:focus {
+  outline: none;
+  border-bottom-color: var(--creneau-3);
+  background: #13243c;
+}
+
+.relance {
+  margin-top: 0.9rem;
+  padding: 0.35rem 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 500;
+  color: var(--creneau-2);
+  cursor: pointer;
+}
+
+.relance:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.relance:disabled {
+  color: #5f7592;
+  cursor: default;
+}

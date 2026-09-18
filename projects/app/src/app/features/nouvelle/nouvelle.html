@@ -1,26 +1,27 @@
-<h1>Quelle affiche préparez-vous ?</h1>
-<p class="explication">
-  Une affiche par championnat : les adultes et les jeunes ne sont pas à la même journée.
-</p>
+<div class="seuil">
+  <h1 class="titre">Quelle affiche préparez-vous&nbsp;?</h1>
+  <p class="intro">
+    Une affiche par championnat. Les adultes et les jeunes n’en sont pas à la même journée, chacun
+    garde donc la sienne.
+  </p>
 
-<div class="choix">
-  <mat-card class="carte" appearance="outlined">
-    <mat-card-content>
-      <h2>Adultes</h2>
-      <p>Championnat par équipe, jusqu’à huit équipes engagées.</p>
-      <button matButton="filled" type="button" (click)="commencer('adultes')">
-        Préparer l’affiche adultes
-      </button>
-    </mat-card-content>
-  </mat-card>
+  <div class="choix">
+    <button class="carte" type="button" (click)="commencer('adultes')">
+      <span class="carte__nom">Adultes</span>
+      <span class="carte__detail">Jusqu’à huit équipes engagées, sur un ou deux créneaux.</span>
+      <span class="carte__action">Préparer l’affiche adultes</span>
+    </button>
 
-  <mat-card class="carte" appearance="outlined">
-    <mat-card-content>
-      <h2>Jeunes</h2>
-      <p>Rencontres jeunes, avec leur propre numéro de journée.</p>
-      <button matButton="filled" type="button" (click)="commencer('jeunes')">
-        Préparer l’affiche jeunes
-      </button>
-    </mat-card-content>
-  </mat-card>
+    <button class="carte carte--jeunes" type="button" (click)="commencer('jeunes')">
+      <span class="carte__nom">Jeunes</span>
+      <span class="carte__detail">Les rencontres jeunes, avec leur propre numéro de journée.</span>
+      <span class="carte__action">Préparer l’affiche jeunes</span>
+    </button>
+  </div>
+
+  <p class="reprise">
+    Vous voulez reprendre la journée précédente&nbsp;?
+    <a routerLink="/historique">Ouvrez une affiche enregistrée</a> et choisissez «&nbsp;Journée
+    suivante&nbsp;».
+  </p>
 </div>

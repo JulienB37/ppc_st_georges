@@ -7,12 +7,11 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { nomFichierAffiche } from 'poster-core';
 
 import { Apercu } from '../../core/apercu';
+import { Partenaires } from './partenaires';
 import { telechargerBlob } from '../../shared/telechargement';
 import { DocumentAffiche } from '../../core/document-affiche';
 
@@ -28,15 +27,15 @@ const LARGEUR_EXPORT = 1080;
  * resvg produira dans le fichier. C'est la decision centrale du moteur, et elle
  * supprime par construction l'ecart entre ce qu'on voit et ce qu'on publie.
  *
- * Le rendu ne part que si l'affiche est PUBLIABLE. Composer un document
- * incomplet leverait sur un creneau vide, et afficher une erreur a chaque
- * frappe pendant la saisie n'apprendrait rien : le panneau de problemes dit
- * deja ce qui manque.
+ * Le rendu ne part que si l'affiche est PUBLIABLE. La composition accepte
+ * desormais un document incomplet sans lever, mais rasteriser une affiche a
+ * trous n'apprendrait rien : le panneau de problemes dit deja ce qui manque,
+ * a cote du champ concerne.
  */
 @Component({
   selector: 'ppc-apercu-affiche',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatTooltipModule],
+  imports: [Partenaires],
   templateUrl: './apercu-affiche.html',
   styleUrl: './apercu-affiche.scss',
 })

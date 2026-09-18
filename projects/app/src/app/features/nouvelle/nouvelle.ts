@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import type { Categorie } from 'poster-core';
 
 import { DocumentAffiche } from '../../core/document-affiche';
@@ -20,7 +18,7 @@ import { DocumentAffiche } from '../../core/document-affiche';
 @Component({
   selector: 'ppc-nouvelle',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatCardModule],
+  imports: [RouterLink],
   templateUrl: './nouvelle.html',
   styleUrl: './nouvelle.scss',
 })

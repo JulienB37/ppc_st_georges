@@ -1,60 +1,70 @@
-<h1>Affiches enregistrées</h1>
+<h1 class="titre">Mes affiches</h1>
 
 @if (entrees.isLoading()) {
   <p class="etat">Lecture…</p>
 } @else if (entrees.error()) {
   <p class="etat">La base locale n’a pas pu être lue.</p>
 } @else if (!entrees.value()?.length) {
-  <p class="etat">
-    Aucune affiche enregistrée pour l’instant. La sauvegarde est automatique dès qu’une affiche est
-    complète.
-  </p>
+  <div class="vide">
+    <p class="vide__titre">Rien d’enregistré pour l’instant.</p>
+    <p>
+      Chaque affiche est enregistrée automatiquement dès qu’elle est complète.
+      <a routerLink="/nouvelle">Commencez une affiche</a> et elle apparaîtra ici.
+    </p>
+  </div>
 } @else {
-  @for (entree of entrees.value(); track entree.type === 'ok' ? entree.affiche.id : entree.id) {
-    @if (entree.type === 'ok') {
-      <mat-card class="entree" appearance="outlined">
-        <mat-card-content class="entree__corps">
-          <div class="entree__titre">
-            <strong>{{ rang(entree.affiche) }} journée {{ entree.affiche.categorie }}</strong>
-            <span class="entree__detail">
-              {{ libelleCreneau(entree.affiche) }} · {{ compter(entree.affiche) }} rencontre(s) ·
-              saison {{ entree.affiche.saison }}
-            </span>
-          </div>
+  <ul class="liste">
+    @for (entree of entrees.value(); track entree.type === 'ok' ? entree.affiche.id : entree.id) {
+      @if (entree.type === 'ok') {
+        <li class="ligne" [style.--teinte]="teinte(entree.affiche)">
+          <span class="ligne__rang">{{ rang(entree.affiche) }}</span>
 
-          <div class="entree__actions">
-            <button matButton type="button" (click)="ouvrir(entree.affiche)">Ouvrir</button>
+          <span class="ligne__quoi">
+            <span class="ligne__quand">{{ libelleCreneau(entree.affiche) }}</span>
+            <span class="ligne__detail">
+              {{ entree.affiche.categorie === 'jeunes' ? 'Jeunes' : 'Adultes' }}, saison
+              {{ entree.affiche.saison }}, {{ compter(entree.affiche) }}
+              {{ compter(entree.affiche) === 1 ? 'rencontre' : 'rencontres' }}
+            </span>
+          </span>
+
+          <span class="ligne__actions">
+            <button class="lien-action" type="button" (click)="ouvrir(entree.affiche)">
+              Ouvrir
+            </button>
             <button
-              matButton="filled"
+              class="lien-action lien-action--fort"
               type="button"
-              matTooltip="Reprend cette affiche pour la journée suivante"
+              title="Reprend cette affiche pour la journée suivante, dates avancées d’une semaine"
               (click)="dupliquer(entree.affiche)"
             >
               Journée suivante
             </button>
             <button
-              matIconButton
+              class="outil"
               type="button"
-              matTooltip="Supprimer"
+              title="Supprimer"
+              aria-label="Supprimer cette affiche"
               (click)="supprimer(entree.affiche.id)"
             >
               <ppc-icone nom="supprimer" />
             </button>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    } @else {
-      <mat-card class="entree entree--illisible" appearance="outlined">
-        <mat-card-content class="entree__corps">
-          <div class="entree__titre">
-            <strong>Document illisible</strong>
-            <span class="entree__detail">{{ entree.raison }}</span>
-          </div>
-          <div class="entree__actions">
-            <button matButton type="button" (click)="supprimer(entree.id)">Supprimer</button>
-          </div>
-        </mat-card-content>
-      </mat-card>
+          </span>
+        </li>
+      } @else {
+        <li class="ligne ligne--illisible">
+          <span class="ligne__rang">?</span>
+          <span class="ligne__quoi">
+            <span class="ligne__quand">Document illisible</span>
+            <span class="ligne__detail">{{ entree.raison }}</span>
+          </span>
+          <span class="ligne__actions">
+            <button class="lien-action" type="button" (click)="supprimer(entree.id)">
+              Supprimer
+            </button>
+          </span>
+        </li>
+      }
     }
-  }
+  </ul>
 }

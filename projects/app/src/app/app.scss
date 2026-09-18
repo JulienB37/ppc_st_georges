@@ -1,23 +1,120 @@
-.barre {
+/*
+ * Bandeau : la ligne de fond de la table.
+ *
+ * Pas de barre d'outils Material : une simple ligne peinte, comme le bord d'une
+ * table de jeu. Elle porte la signature du club et deux liens, rien d'autre.
+ */
+.bandeau {
   display: flex;
   align-items: baseline;
-  gap: 0.75rem;
+  gap: 2rem;
+  padding: 1.1rem clamp(1rem, 4vw, 3rem) 0.9rem;
+  border-bottom: 2px solid var(--ligne);
 }
 
-.barre__titre {
-  font-family: 'Anton', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-size: 1.15rem;
-}
-
-.barre__sous-titre {
-  font-size: 0.9rem;
-  opacity: 0.85;
-}
-
-.barre__liens {
-  margin-left: auto;
+.bandeau__marque {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+/*
+ * Le blason du club, a cote de la signature.
+ *
+ * Il est decoratif ici — le texte a cote nomme deja le club — donc `alt` vide :
+ * un lecteur d'ecran annoncerait deux fois la meme chose.
+ */
+.bandeau__blason {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.bandeau__nom {
+  display: flex;
+  align-items: baseline;
+}
+
+/* Anton, premier des deux seuls emplois : la signature. */
+.bandeau__club {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.01em;
+  color: var(--craie);
+}
+
+.bandeau__cher {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.3rem;
+  color: var(--creneau-1);
+}
+
+.bandeau__nav {
+  display: flex;
+  gap: 1.5rem;
+  margin-left: auto;
+}
+
+.bandeau__nav a {
+  color: var(--craie-basse);
+  text-decoration: none;
+  font-weight: 500;
+  padding-bottom: 0.9rem;
+  margin-bottom: -1.1rem;
+  border-bottom: 2px solid transparent;
+}
+
+.bandeau__nav a:hover {
+  color: var(--craie);
+}
+
+/* L'onglet courant est marque par un trait, pas par une pastille. */
+.bandeau__nav a.est-actif {
+  color: var(--craie);
+  border-bottom-color: var(--creneau-1);
+}
+
+/*
+ * Largeur telephone : la signature tient sur une ligne.
+ *
+ * « PPC St Georges/Cher » se cassait en deux, « /Cher » restant seul a cote du
+ * bloc, et le bandeau prenait 60 px de haut pour dire son nom. Une ligne, plus
+ * courte, et deux liens resserres suffisent.
+ */
+@media (max-width: 30rem) {
+  /*
+   * Le repli passe la navigation a la ligne quand elle ne tient plus, et la
+   * garde a cote de la signature quand elle tient. Sur un ecran de 320 px les
+   * deux liens debordaient de 40 px ; un point de rupture de plus aurait
+   * degrade des ecrans ou tout tenait.
+   */
+  .bandeau {
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding-inline: 1rem;
+  }
+
+  .bandeau__nom {
+    white-space: nowrap;
+  }
+
+  .bandeau__club,
+  .bandeau__cher {
+    font-size: 0.95rem;
+  }
+
+  .bandeau__blason {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Les deux liens restent entiers : un « Nouvelle / affiche » casse se lit mal. */
+  .bandeau__nav {
+    gap: 0.9rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
 }

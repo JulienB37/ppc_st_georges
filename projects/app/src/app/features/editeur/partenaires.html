@@ -1,0 +1,49 @@
+<h2 class="titre">Partenaires</h2>
+<p class="intro">
+  Trois emplacements sur l’affiche. Laissez-les au tirage, qui fait tourner les partenaires d’une
+  semaine à l’autre, ou choisissez-en un.
+</p>
+
+<ul class="emplacements">
+  @for (emplacement of emplacements(); track emplacement.index) {
+    <li class="emplacement" [class.emplacement--choisi]="emplacement.choisi">
+      @if (emplacement.sponsor) {
+        <img
+          class="emplacement__logo"
+          [src]="catalogue.vignette(emplacement.sponsor)"
+          [alt]="emplacement.sponsor.libelle"
+        />
+      } @else {
+        <span class="emplacement__logo emplacement__logo--vide" aria-hidden="true"></span>
+      }
+
+      <select
+        class="emplacement__choix"
+        [attr.aria-label]="'Partenaire de l’emplacement ' + (emplacement.index + 1)"
+        [value]="emplacement.valeur"
+        (change)="choisir(emplacement.index, $any($event.target).value)"
+      >
+        <option value="">
+          {{ emplacement.sponsor ? 'Au tirage — ' + emplacement.sponsor.libelle : 'Au tirage' }}
+        </option>
+        @for (sponsor of catalogue.proposables; track sponsor.id) {
+          <option [value]="sponsor.id">{{ sponsor.libelle }}</option>
+        }
+      </select>
+    </li>
+  }
+</ul>
+
+<button
+  class="relance"
+  type="button"
+  [disabled]="!auHasard()"
+  (click)="doc.relancerSponsors()"
+  [title]="
+    auHasard()
+      ? 'Tire d’autres partenaires pour les emplacements laissés au tirage'
+      : 'Les trois emplacements sont choisis à la main : il n’y a plus rien à tirer'
+  "
+>
+  Tirer d’autres partenaires
+</button>

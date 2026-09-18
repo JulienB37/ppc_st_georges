@@ -1,66 +1,180 @@
 :host {
   display: block;
-  max-width: 88rem;
-  margin: 0 auto;
-  padding: 1.5rem 1rem 6rem;
+  padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3rem) 5rem;
 }
 
 /*
- * Saisie a gauche, apercu a droite.
+ * Deux colonnes, et l'AFFICHE est la plus large.
  *
- * L'apercu n'est pas un ecran separe : le benevole doit voir l'effet de sa
- * frappe sans changer de page, c'est tout l'interet d'un rendu a 14 ms. En
- * dessous de 68rem la colonne d'apercu passe sous la saisie plutot que de
- * l'ecraser.
+ * C'est le produit : la reduire a une vignette dans un coin, comme au premier
+ * jet, faisait dominer l'ecran par un formulaire terne. Sous 76rem, elle passe
+ * en premier, au-dessus de la saisie.
  */
-.colonnes {
+.plan {
   display: grid;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
   grid-template-columns: minmax(0, 1fr);
-  gap: 1.5rem;
+  max-width: 96rem;
+  margin: 0 auto;
 }
 
-@media (min-width: 68rem) {
-  .colonnes {
-    grid-template-columns: minmax(0, 1fr) 24rem;
+@media (min-width: 76rem) {
+  .plan {
+    grid-template-columns: minmax(0, 1fr) 30rem;
     align-items: start;
   }
 }
 
-.entete {
+/* --- La feuille ------------------------------------------------------ */
+
+/*
+ * La feuille n'est pas une carte.
+ *
+ * Encadree et remplie, elle s'arretait net a mi-hauteur en laissant un vide
+ * sous elle, et ajoutait une boite de plus a un ecran qui en avait deja. Elle
+ * est desormais posee a meme la table : seules ses lignes la structurent.
+ */
+.feuille {
+  padding-top: 0.25rem;
+}
+
+.feuille__entete {
   display: flex;
+  align-items: flex-start;
+  gap: clamp(1.5rem, 4vw, 3rem);
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 1rem 1.5rem;
-  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid var(--ligne);
 }
 
-.entete__numero {
-  width: 9rem;
+/*
+ * Le rang de journee, seul element vraiment grand de l'ecran.
+ *
+ * C'est la chose qui change chaque semaine et qui identifie l'affiche : elle
+ * porte le seul geste typographique de l'interface, et se SAISIT directement —
+ * pas de champ etiquete a cote d'un titre qui repeterait la meme valeur.
+ */
+.rang {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
 }
 
-.compteur {
-  color: var(--mat-sys-on-surface-variant);
+.rang__champ {
+  font-family: 'Anton', sans-serif;
+  /*
+   * Grand, mais pas monumental : c'est le seul chiffre qui change chaque
+   * semaine, il merite d'etre l'ancrage de l'ecran — a 5rem il ecrasait tout
+   * le reste de la feuille.
+   */
+  font-size: clamp(2.2rem, 4.5vw, 2.9rem);
+  line-height: 0.95;
+  width: 2.4ch;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid var(--ligne-vive);
+  background: transparent;
+  color: var(--craie);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+}
+
+.rang__champ::-webkit-inner-spin-button,
+.rang__champ::-webkit-outer-spin-button {
+  appearance: none;
+}
+
+.rang__champ:focus {
+  outline: none;
+  border-bottom-color: var(--creneau-1);
+}
+
+/*
+ * Deux informations de nature differente, sur une seule ligne : « journee »
+ * nomme le nombre, la categorie dit de quel championnat il s'agit. Empilees,
+ * elles se lisaient comme un seul mot casse en deux ; separees par la graisse,
+ * elles restent distinctes sans prendre deux lignes.
+ */
+.rang__legende {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding-bottom: 0.3rem;
+}
+
+.rang__mot {
+  font-size: 0.95rem;
+  color: var(--craie-basse);
+}
+
+.rang__categorie {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--craie);
+}
+
+.lien-discret {
+  margin-left: auto;
+  padding-top: 0.6rem;
+  color: var(--craie-basse);
   font-size: 0.95rem;
 }
 
-.affiche {
-  margin-bottom: 1.5rem;
+.lien-discret:hover {
+  color: var(--craie);
 }
 
-.problemes {
-  border-left: 4px solid var(--mat-sys-error);
-  background: var(--mat-sys-error-container);
-  color: var(--mat-sys-on-error-container);
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.5rem;
-  border-radius: 0 6px 6px 0;
+/* --- Ce qu'il reste a faire ------------------------------------------ */
+
+.manques {
+  margin: 1.25rem 0 0;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--creneau-4);
+  background: color-mix(in srgb, var(--creneau-4) 10%, transparent);
 }
 
-.problemes ul {
-  margin: 0.5rem 0 0;
-  padding-left: 1.25rem;
+.manques__titre {
+  margin: 0 0 0.4rem;
+  font-weight: 600;
 }
 
-.pousser {
-  margin-left: auto;
+.manques ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--craie-basse);
+}
+
+.manques__ou {
+  color: var(--craie);
+  font-weight: 500;
+}
+
+.vide {
+  color: var(--craie-basse);
+  margin: 1.5rem 0;
+  max-width: 44ch;
+}
+
+/* --- Ajouter un creneau ---------------------------------------------- */
+
+.ajout-creneau {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding: 0.6rem 1rem;
+  border: 1px dashed var(--ligne-vive);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--craie);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ajout-creneau:hover {
+  border-color: var(--creneau-2);
+  border-style: solid;
+  color: var(--creneau-2);
 }

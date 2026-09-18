@@ -1,66 +1,62 @@
-<div class="entete">
-  <h1>Affiche {{ libelleCategorie(doc.affiche().categorie) }}</h1>
+<div class="plan">
+  <section class="feuille" aria-label="Feuille de match">
+    <div class="feuille__entete">
+      <div class="rang">
+        <input
+          class="rang__champ"
+          type="number"
+          aria-label="Numéro de journée"
+          [formField]="formulaire.numero"
+        />
+        <span class="rang__legende">
+          <span class="rang__mot">journée</span>
+          <span class="rang__categorie">{{ doc.affiche().categorie }}</span>
+        </span>
+      </div>
 
-  <mat-form-field class="entete__numero">
-    <mat-label>Journée n°</mat-label>
-    <input matInput type="number" [formField]="formulaire.numero" />
-    @if (formulaire.numero().invalid() && formulaire.numero().touched()) {
-      <mat-error>{{ formulaire.numero().errors()[0]?.message }}</mat-error>
-    }
-  </mat-form-field>
+      <a class="lien-discret" routerLink="/nouvelle">Changer de catégorie</a>
+    </div>
 
-  <span class="compteur">
-    {{ doc.nbRencontres() }} rencontre(s) · saison {{ doc.domaine().saison }}
-  </span>
-
-  <a class="pousser" matButton routerLink="/nouvelle">Changer de catégorie</a>
-</div>
-
-@if (!doc.publiable()) {
-  <div class="problemes" role="status">
-    <strong>Il reste à compléter :</strong>
-    <ul>
-      @for (probleme of doc.problemes(); track probleme.chemin.join('.')) {
-        <li>
-          @if (probleme.ou) {
-            <strong>{{ probleme.ou }}</strong>
-            —
+    @if (!doc.publiable()) {
+      <div class="manques" role="status">
+        <p class="manques__titre">À compléter avant de pouvoir enregistrer l’affiche</p>
+        <ul>
+          @for (probleme of doc.problemes(); track probleme.chemin.join('.')) {
+            <li>
+              @if (probleme.ou) {
+                <span class="manques__ou">{{ probleme.ou }}</span>
+              }
+              {{ probleme.quoi }}
+            </li>
           }
-          {{ probleme.quoi }}
-        </li>
-      }
-    </ul>
-  </div>
-}
+        </ul>
+      </div>
+    }
 
-<div class="colonnes">
-  <div class="colonnes__saisie">
-    <mat-card class="affiche">
-      <mat-card-content>
-        @for (groupe of formulaire.groupes; track groupe().value().id; let iGroupe = $index) {
-          <ppc-creneau-editeur
-            [champs]="groupe"
-            [index]="iGroupe"
-            [dernier]="iGroupe === formulaire.groupes.length - 1"
-            (ajouterRencontre)="doc.ajouterRencontre(iGroupe)"
-            (retirerRencontre)="doc.retirerRencontre(iGroupe, $event)"
-            (deplacerRencontre)="doc.deplacerRencontre(iGroupe, $event.de, $event.vers)"
-            (retirer)="doc.retirerGroupe(iGroupe)"
-            (deplacer)="doc.deplacerGroupe(iGroupe, $event)"
-          />
-        } @empty {
-          <p>Aucun créneau : ajoutez-en un pour saisir les rencontres.</p>
-        }
+    @for (groupe of formulaire.groupes; track groupe().value().id; let iGroupe = $index) {
+      <ppc-creneau-editeur
+        [champs]="groupe"
+        [index]="iGroupe"
+        [dernier]="iGroupe === formulaire.groupes.length - 1"
+        (ajouterRencontre)="doc.ajouterRencontre(iGroupe)"
+        (retirerRencontre)="doc.retirerRencontre(iGroupe, $event)"
+        (deplacerRencontre)="doc.deplacerRencontre(iGroupe, $event.de, $event.vers)"
+        (retirer)="doc.retirerGroupe(iGroupe)"
+        (deplacer)="doc.deplacerGroupe(iGroupe, $event)"
+      />
+    } @empty {
+      <p class="vide">
+        Aucun créneau. Ajoutez-en un pour commencer à saisir les rencontres de la journée.
+      </p>
+    }
 
-        <button matButton="outlined" type="button" (click)="doc.ajouterGroupe()">
-          <ppc-icone nom="ajouter" />
-          Ajouter un créneau
-        </button>
-      </mat-card-content>
-    </mat-card>
-  </div>
+    <button class="ajout-creneau" type="button" (click)="doc.ajouterGroupe()">
+      <ppc-icone nom="ajouter" />
+      Ajouter un créneau
+    </button>
+  </section>
 
-  <aside class="colonnes__apercu">
+  <aside class="colonne-apercu">
     <ppc-apercu-affiche />
   </aside>
 </div>

@@ -47,4 +47,13 @@ export class CatalogueClubs {
   vignette(club: EntreeClub): string {
     return `/assets/clubs/${club.fichier}`;
   }
+
+  /**
+   * Blason du club, exclu des adversaires mais affiche dans la saisie.
+   *
+   * Il y tient le meme role que sur l'affiche : marquer notre camp, en face de
+   * celui de l'adversaire. Sans lui, la rangee du formulaire n'est plus le
+   * miroir de la rangee imprimee.
+   */
+  readonly hote = CLUBS[CLUB_HOTE];
 }

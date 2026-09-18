@@ -1,13 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { applyEach, form, FormField, min, required } from '@angular/forms/signals';
-import type { Categorie } from 'poster-core';
-
 import { DocumentAffiche } from '../../core/document-affiche';
 import { Icone } from '../../shared/icone';
 import { ApercuAffiche } from './apercu-affiche';
@@ -29,18 +22,7 @@ import { CreneauEditeur } from './creneau-editeur';
 @Component({
   selector: 'ppc-editeur',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatTooltipModule,
-    RouterLink,
-    Icone,
-    ApercuAffiche,
-    CreneauEditeur,
-  ],
+  imports: [FormField, RouterLink, Icone, ApercuAffiche, CreneauEditeur],
   templateUrl: './editeur.html',
   styleUrl: './editeur.scss',
 })
@@ -54,7 +36,7 @@ export class Editeur {
    * adultes OU une affiche jeunes. Changer d'avis, c'est revenir a l'ecran de
    * choix, et le service repart d'une affiche vierge.
    */
-  readonly categorie = input.required<Categorie>();
+  readonly categorie = input.required<string>();
 
   /**
    * Regles de saisie.
@@ -77,8 +59,4 @@ export class Editeur {
       });
     });
   });
-
-  protected libelleCategorie(categorie: Categorie): string {
-    return categorie === 'jeunes' ? 'jeunes' : 'adultes';
-  }
 }

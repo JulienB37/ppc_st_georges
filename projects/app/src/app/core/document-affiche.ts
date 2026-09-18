@@ -4,6 +4,7 @@ import {
   deplacer,
   dupliquerAffiche,
   equipeLibreDe,
+  fixerSponsor,
   inserer,
   nouveauGroupe,
   nouvelleRencontre,
@@ -147,6 +148,17 @@ export class DocumentAffiche {
       ...a,
       sponsors: { ...a.sponsors, graine: relancerGraine(a.sponsors.graine) },
     }));
+  }
+
+  /**
+   * Pose un partenaire sur un emplacement, ou le rend au tirage.
+   *
+   * Un choix a la main VERROUILLE l'emplacement : sans quoi la relance
+   * suivante l'effacerait, le tirage ne respectant que les emplacements
+   * verrouilles. Choisir et retenir sont donc le meme geste.
+   */
+  fixerSponsor(index: number, sponsorId: string | null): void {
+    this.affiche.update((a) => ({ ...a, sponsors: fixerSponsor(a.sponsors, index, sponsorId) }));
   }
 
   // --- Creneaux ----------------------------------------------------------

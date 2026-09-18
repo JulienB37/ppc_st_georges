@@ -1,14 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { CatalogueClubs } from '../../core/catalogue-clubs';
 import { Icone } from '../../shared/icone';
+import { TEINTES_CRENEAU_UI } from '../../shared/teintes';
 import { FormField, type FieldTree } from '@angular/forms/signals';
 import {
   clubIdDepuisLibelle,
@@ -31,17 +26,7 @@ import {
 @Component({
   selector: 'ppc-creneau-editeur',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    FormField,
-    MatAutocompleteModule,
-    MatButtonModule,
-    MatCheckboxModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatTooltipModule,
-    Icone,
-  ],
+  imports: [FormField, MatAutocompleteModule, Icone],
   templateUrl: './creneau-editeur.html',
   styleUrl: './creneau-editeur.scss',
 })
@@ -49,6 +34,17 @@ export class CreneauEditeur {
   protected readonly catalogue = inject(CatalogueClubs);
 
   readonly champs = input.required<FieldTree<GroupeEditable>>();
+
+  /**
+   * Teinte du creneau, celle qu'il portera sur l'affiche.
+   *
+   * La saisie et le rendu se repondent ainsi : l'oeil retrouve dans l'apercu le
+   * bloc qu'il vient de remplir. Le cycle est le meme que celui du moteur de
+   * rendu — quatre teintes, par rang de creneau.
+   */
+  protected readonly teinte = computed(
+    () => TEINTES_CRENEAU_UI[this.index() % TEINTES_CRENEAU_UI.length]!,
+  );
   /** Rang affiche, et bornes pour griser les fleches de deplacement. */
   readonly index = input.required<number>();
   readonly dernier = input.required<boolean>();
