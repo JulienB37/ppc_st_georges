@@ -61,6 +61,41 @@ L'avance fontkit peut donc servir de base au moteur de mise en page. Sur une cha
 
 **Piège de nommage des polices.** Au-delà de Regular et Bold, une face Google Fonts encode sa graisse dans le nom de famille hérité (`name 1` = « Barlow Semi Condensed Medium ») et ne publie la vraie famille que dans le nom typographique (`name 16`). fontdb — donc resvg — lit bien `name 16`, l'appariement fonctionne. Mais `tools/build-fonts.mjs` doit préserver les identifiants de noms au sous-ensemblage (`preserveNameIds`), faute de quoi la famille disparaît et resvg retombe en silence sur une police par défaut.
 
+## Déploiement — GitHub Pages sous un sous-chemin
+
+Le site est publié par `deploy-web.yml` sur **push sur `master`**, à l'adresse
+`https://<compte>.github.io/ppc_st_georges/`. Deux conséquences structurantes,
+qui ont déjà cassé le paquet une fois :
+
+1. **Aucun chemin d'asset ne doit être absolu.** `/assets/x` viserait la racine
+   du domaine, où il n'y a rien. Le code TypeScript passe par
+   `shared/url-asset.ts`, qui résout contre le `<base href>` que le build
+   injecte. Les `url()` des feuilles de style, elles, visent le fichier **sur
+   disque** (`../public/assets/...`) : le build les vérifie alors, et une police
+   renommée casse la compilation au lieu de laisser le navigateur se rabattre en
+   silence.
+2. **Le routage a besoin d'un repli.** Pages ne connaît pas les routes de
+   l'application : le workflow recopie `index.html` en `404.html`. Une route
+   profonde rechargée arrive donc en **404**, et l'application démarre quand
+   même — c'est vérifié.
+
+Le workflow refuse de publier si le `<base href>` est absent ou si un fichier
+dont le rendu dépend manque du paquet.
+
+## PWA — ce que le cache doit contenir
+
+Le service worker n'est pas décoratif : la saisie se fait en salle, avec un wifi
+médiocre. Les groupes de `projects/app/ngsw-config.json` découlent d'un constat
+mesuré — **une affiche ne se rend pas sans ses logos**. Un groupe `lazy` pour
+les logos laissait l'application se charger hors ligne mais échouer au rendu sur
+« Failed to fetch ». Ils sont donc en `prefetch`, comme les polices, le gabarit
+et les 2,4 Mo de wasm. Seules les icônes du lanceur restent paresseuses : le
+système les récupère à l'installation, donc en ligne.
+
+En complément, un asset introuvable ne fait **plus** échouer le rendu entier :
+un logo manquant devient un monogramme, un partenaire manquant est omis. Un seul
+fichier absent emportait toute l'affiche.
+
 ## Polices propriétaires — action en attente
 
 `fonts/` (Arial, Comic Sans MS) contient des polices Microsoft/Monotype **non redistribuables**. Elles ont été **retirées de l'index git** et sont désormais ignorées : elles restent sur le poste pour rejouer `legacy/`, mais ne sont plus publiées.

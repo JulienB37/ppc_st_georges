@@ -37,8 +37,14 @@ describe('CatalogueClubs', () => {
     expect(catalogue.parLibelle('Blois Ping 41')?.id).toBe('blois-ping-41');
   });
 
-  it('donne un chemin de vignette servi par l application', () => {
+  it('donne une vignette resolue contre la base du document', () => {
+    // Et non un chemin absolu depuis la racine du domaine : l'application est
+    // servie sous un sous-chemin sur GitHub Pages, ou `/assets/...` ne mene a
+    // rien. Voir `urlAsset`.
     const club = catalogue.parLibelle('Blois Ping 41')!;
-    expect(catalogue.vignette(club)).toBe(`/assets/clubs/${club.fichier}`);
+    expect(catalogue.vignette(club)).toBe(
+      new URL(`assets/clubs/${club.fichier}`, document.baseURI).href,
+    );
+    expect(catalogue.vignette(club).startsWith('/')).toBe(false);
   });
 });

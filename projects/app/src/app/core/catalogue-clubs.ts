@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { chercherClubs, CLUBS, construireIndex, resoudreClub, type EntreeClub } from 'poster-core';
 
+import { urlAsset } from '../shared/url-asset';
+
 /** Le club lui-meme : il ne figure pas parmi ses adversaires possibles. */
 const CLUB_HOTE = 'pp-st-georgescher';
 
@@ -45,7 +47,7 @@ export class CatalogueClubs {
 
   /** Chemin de la vignette, servie depuis les assets de l'application. */
   vignette(club: EntreeClub): string {
-    return `/assets/clubs/${club.fichier}`;
+    return urlAsset(`assets/clubs/${club.fichier}`);
   }
 
   /**

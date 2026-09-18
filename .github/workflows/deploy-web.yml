@@ -1,0 +1,84 @@
+name: Deploiement web
+
+# Publie le site sur GitHub Pages a chaque poussee sur la branche principale.
+#
+# `workflow_dispatch` permet de republier sans commit — utile quand Pages a ete
+# active ou reconfigure apres la derniere poussee.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Un seul deploiement a la fois, et on NE l'annule PAS en cours de route :
+# interrompre une publication laisserait le site dans un etat partiel. La CI,
+# elle, s'annule volontiers, n'ayant rien a livrer.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # Meme raison que dans ci.yml : npm 10.9.x plante sur les peer deps de
+      # vitest.
+      - name: Aligner npm sur la version du devbox
+        run: npm install -g npm@12
+
+      - name: Installer les dependances
+        run: npm ci
+
+      # Le site est servi depuis https://<compte>.github.io/<depot>/ et non
+      # depuis une racine de domaine : sans ce prefixe, tous les chemins
+      # absolus du document pointeraient a cote.
+      - name: Build web
+        run: npm run build -- --base-href "/${{ github.event.repository.name }}/"
+
+      # GitHub Pages sert des fichiers statiques et ne connait pas les routes de
+      # l'application : /affiche/adultes rechargé directement renverrait un 404.
+      # Pages sert alors 404.html, et l'application y reprend la main a partir
+      # de l'URL demandee. C'est le repli SPA classique.
+      - name: Repli SPA
+        run: cp dist/app/browser/index.html dist/app/browser/404.html
+
+      # Garde-fou : le site ne part pas s'il manque ce dont le rendu depend, ou
+      # si le prefixe n'a pas ete applique.
+      - name: Verifier le paquet
+        run: |
+          cd dist/app/browser
+          base="/${{ github.event.repository.name }}/"
+          grep -q "<base href=\"$base\">" index.html \
+            || { echo "::error::base href absent ou incorrect dans index.html"; exit 1; }
+          for fichier in ngsw.json ngsw-worker.js manifest.webmanifest 404.html \
+                         assets/resvg/index_bg.wasm assets/fonts/fonts.manifest.json; do
+            test -s "$fichier" || { echo "::error::$fichier manquant ou vide"; exit 1; }
+          done
+          echo "Paquet : $(du -sh . | cut -f1), $(find . -type f | wc -l) fichiers"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/app/browser
+
+  deployer:
+    needs: construire
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - id: deploiement
+        uses: actions/deploy-pages@v4

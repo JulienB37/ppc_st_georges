@@ -8,6 +8,8 @@ import {
   type SponsorResolu,
 } from 'poster-core/render';
 
+import { urlAsset } from '../shared/url-asset';
+
 /**
  * Charge les assets du rendu, et les livre deja resolus.
  *
@@ -29,7 +31,7 @@ export class AssetsAffiches {
 
   /** Octets du module wasm de resvg, servis depuis les assets de l'application. */
   chargerWasm(): Promise<ArrayBuffer> {
-    this.wasmResvg ??= fetch('/assets/resvg/index_bg.wasm').then((r) => r.arrayBuffer());
+    this.wasmResvg ??= fetch(urlAsset('assets/resvg/index_bg.wasm')).then((r) => r.arrayBuffer());
     return this.wasmResvg;
   }
 
@@ -42,7 +44,9 @@ export class AssetsAffiches {
    */
   chargerPolices(): Promise<FacePolice[]> {
     this.polices ??= (async () => {
-      const manifeste = (await (await fetch('/assets/fonts/fonts.manifest.json')).json()) as {
+      const manifeste = (await (
+        await fetch(urlAsset('assets/fonts/fonts.manifest.json'))
+      ).json()) as {
         faces: { fichier: string; famille: string; graisse: number }[];
       };
 
@@ -51,7 +55,7 @@ export class AssetsAffiches {
           famille: face.famille,
           graisse: face.graisse,
           donnees: new Uint8Array(
-            await (await fetch(`/assets/fonts/${face.fichier}`)).arrayBuffer(),
+            await (await fetch(urlAsset(`assets/fonts/${face.fichier}`))).arrayBuffer(),
           ),
         })),
       );
@@ -71,20 +75,49 @@ export class AssetsAffiches {
       affiche.groupes.flatMap((g) => g.rencontres.map((r) => r.adversaire.clubId)),
     );
 
+    /*
+     * Un logo introuvable vaut un logo ABSENT, et non un rendu perdu.
+     *
+     * La composition sait deja poser un monogramme a la place et le signaler :
+     * c'est la degradation prevue pour un club sans logo livre. Laisser la
+     * promesse rejeter aurait fait echouer l'affiche entiere pour un fichier
+     * manquant — et c'est exactement ce qui arrivait hors ligne.
+     */
+    const sansEchec = async (id: string) =>
+      [id, await this.logoDuClub(id).catch(() => undefined)] as const;
+
     const [blason, fond, ...logos] = await Promise.all([
-      this.logoDuClub('pp-st-georgescher'),
-      this.chargerFond(),
-      ...[...clubsUtilises].map(async (id) => [id, await this.logoDuClub(id)] as const),
+      this.logoDuClub('pp-st-georgescher').catch(() => undefined),
+      this.chargerFond().catch(() => undefined),
+      ...[...clubsUtilises].map(sansEchec),
     ]);
 
-    const sponsors: SponsorResolu[] = await Promise.all(
-      tirerSponsors(affiche.sponsors).map(async (entree: EntreeSponsor) => ({
-        id: entree.id,
-        source: await dataUrl(`/assets/sponsors/${entree.fichier}`),
-        largeur: entree.largeur,
-        hauteur: entree.hauteur,
-      })),
-    );
+    /*
+     * Un partenaire dont l'image ne se charge pas est OMIS, et n'emporte pas
+     * le reste.
+     *
+     * Avec `Promise.all` sur des promesses non protegees, un seul fichier
+     * introuvable faisait echouer la composition entiere : l'affiche
+     * disparaissait et l'utilisateur lisait « Le rendu a echoue : Failed to
+     * fetch » sans savoir de quoi. Mieux vaut une affiche a quatre partenaires
+     * qu'aucune affiche, et la composition signale le manque.
+     */
+    const sponsors: SponsorResolu[] = (
+      await Promise.all(
+        tirerSponsors(affiche.sponsors).map(async (entree: EntreeSponsor) => {
+          try {
+            return {
+              id: entree.id,
+              source: await dataUrl(urlAsset(`assets/sponsors/${entree.fichier}`)),
+              largeur: entree.largeur,
+              hauteur: entree.hauteur,
+            };
+          } catch {
+            return undefined;
+          }
+        }),
+      )
+    ).filter((s): s is SponsorResolu => s !== undefined);
 
     return {
       blason: blason as LogoResolu,
@@ -107,10 +140,13 @@ export class AssetsAffiches {
     let promesse = this.logos.get(clubId);
     if (!promesse) {
       promesse = (async () => ({
-        source: await dataUrl(`/assets/clubs/${entree.fichier}`),
+        source: await dataUrl(urlAsset(`assets/clubs/${entree.fichier}`)),
         largeur: entree.largeur,
         hauteur: entree.hauteur,
       }))();
+      // Une promesse rejetee ne doit pas rester en cache : le prochain rendu
+      // doit pouvoir retenter, le reseau ayant pu revenir entre-temps.
+      promesse.catch(() => this.logos.delete(clubId));
       this.logos.set(clubId, promesse);
     }
     return promesse;
@@ -121,7 +157,7 @@ export class AssetsAffiches {
       const entree = fondPour(1080);
       if (!entree) return undefined;
       return {
-        source: await dataUrl(`/assets/fond/${entree.fichier}`),
+        source: await dataUrl(urlAsset(`assets/fond/${entree.fichier}`)),
         largeur: entree.largeur,
         hauteur: entree.hauteur,
       };

@@ -11,34 +11,48 @@
  * Les polices sont celles de l'AFFICHE, deja livrees en woff2 par
  * `tools/build-fonts.mjs` : l'interface et le produit parlent la meme langue
  * typographique, sans un octet de plus a telecharger.
+ *
+ * Les chemins visent le fichier SUR DISQUE, et non l'URL servie.
+ *
+ * Deux raisons. D'abord `/assets/...` viserait la racine du domaine, alors que
+ * l'application est servie sous un sous-chemin sur GitHub Pages — le site
+ * serait livre sans police. Ensuite, et surtout, un chemin que le build peut
+ * resoudre est un chemin que le build VERIFIE : une police renommee casse la
+ * compilation, au lieu de laisser le navigateur se rabattre en silence sur une
+ * autre famille. C'est precisement le defaut que ce depot combat.
+ *
+ * Le fichier est donc emis une seconde fois par la chaine de styles, sous
+ * `media/`, empreinte incluse. 176 Ko pour les cinq faces : le prix d'une
+ * verification, et `ngsw-config.json` met ce dossier en cache comme le reste
+ * du moteur.
  */
 @font-face {
   font-family: 'Barlow Semi Condensed';
-  src: url('/assets/fonts/BarlowSemiCondensed-400.woff2') format('woff2');
+  src: url('../public/assets/fonts/BarlowSemiCondensed-400.woff2') format('woff2');
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
   font-family: 'Barlow Semi Condensed';
-  src: url('/assets/fonts/BarlowSemiCondensed-500.woff2') format('woff2');
+  src: url('../public/assets/fonts/BarlowSemiCondensed-500.woff2') format('woff2');
   font-weight: 500;
   font-display: swap;
 }
 @font-face {
   font-family: 'Barlow Semi Condensed';
-  src: url('/assets/fonts/BarlowSemiCondensed-600.woff2') format('woff2');
+  src: url('../public/assets/fonts/BarlowSemiCondensed-600.woff2') format('woff2');
   font-weight: 600;
   font-display: swap;
 }
 @font-face {
   font-family: 'Barlow Semi Condensed';
-  src: url('/assets/fonts/BarlowSemiCondensed-700.woff2') format('woff2');
+  src: url('../public/assets/fonts/BarlowSemiCondensed-700.woff2') format('woff2');
   font-weight: 700;
   font-display: swap;
 }
 @font-face {
   font-family: 'Anton';
-  src: url('/assets/fonts/Anton-400.woff2') format('woff2');
+  src: url('../public/assets/fonts/Anton-400.woff2') format('woff2');
   font-weight: 400;
   font-display: swap;
 }

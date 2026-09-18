@@ -7,6 +7,8 @@ import {
   type SelectionSponsors,
 } from 'poster-core';
 
+import { urlAsset } from '../shared/url-asset';
+
 /**
  * Partenaires proposables a la main, et resolution des trois emplacements.
  *
@@ -51,6 +53,6 @@ export class CataloguePartenaires {
 
   /** Chemin de la vignette, servie depuis les assets de l'application. */
   vignette(sponsor: EntreeSponsor): string {
-    return `assets/sponsors/${sponsor.fichier}`;
+    return urlAsset(`assets/sponsors/${sponsor.fichier}`);
   }
 }

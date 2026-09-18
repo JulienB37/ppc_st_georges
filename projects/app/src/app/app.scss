@@ -131,3 +131,39 @@
     white-space: nowrap;
   }
 }
+
+/*
+ * Annonces de la coquille : mise a jour disponible, ou cache irrecuperable.
+ *
+ * Elles s'inserent dans le flux plutot que de flotter par-dessus : un bandeau
+ * en surimpression masquerait le haut du formulaire, et rien ici n'est urgent
+ * au point de recouvrir la saisie.
+ */
+.annonce {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.7rem clamp(1rem, 4vw, 3rem);
+  background: var(--feuille);
+  border-bottom: 1px solid var(--ligne);
+  font-size: 0.95rem;
+}
+
+.annonce--panne {
+  border-left: 3px solid var(--creneau-4);
+}
+
+.annonce__action {
+  border: 0;
+  background: transparent;
+  padding: 0.2rem 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--creneau-2);
+  cursor: pointer;
+}
+
+.annonce__action:hover {
+  text-decoration: underline;
+}
