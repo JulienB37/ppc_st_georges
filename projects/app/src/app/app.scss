@@ -21,14 +21,26 @@
 }
 
 /*
- * Le blason du club, a cote de la signature.
+ * Le blason du club, a cote de la signature, sur une pastille claire.
+ *
+ * Le dessin est noir et rouge sur fond transparent : pose directement sur le
+ * bleu nuit, le dragon disparaissait et il ne restait que le « PPC » rouge.
+ * C'est exactement ce que l'affiche resout en posant chaque logo sur un fond
+ * clair, et la pastille reprend donc le meme dispositif.
+ *
+ * Elle n'est pas ronde : le dessin fait 1,29:1, et un disque lui imposait une
+ * marge blanche en haut et en bas pour rien. Elle suit son rapport, comme les
+ * vignettes de partenaires.
  *
  * Il est decoratif ici — le texte a cote nomme deja le club — donc `alt` vide :
  * un lecteur d'ecran annoncerait deux fois la meme chose.
  */
 .bandeau__blason {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 30px;
+  padding: 3px;
+  border-radius: 4px;
+  background: var(--craie);
   object-fit: contain;
   flex: 0 0 auto;
 }
@@ -107,8 +119,9 @@
   }
 
   .bandeau__blason {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 25px;
+    padding: 2px;
   }
 
   /* Les deux liens restent entiers : un « Nouvelle / affiche » casse se lit mal. */
