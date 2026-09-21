@@ -4,7 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Ce que fait ce dépôt
 
-Génère l'affiche des rencontres de championnat par équipe du club PP St Georges/Cher, publiée sur Facebook. Refonte en cours : d'un script Bun sans interface vers une application Angular (web + Electron). Le plan directeur est dans `~/.claude/plans/j-ai-cr-er-ce-petit-vectorized-aho.md`.
+Prépare l'affiche des rencontres de championnat par équipes du club PP St Georges/Cher, publiée sur Facebook.
+
+**La refonte est livrée et le site est en ligne** : <https://julienb37.github.io/ppc_st_georges/>. L'outil est passé d'un script Bun sans interface à une application Angular installable, utilisable hors ligne. `docs/guide.md` l'explique à un bénévole ; le `README.md` s'adresse aux développeurs.
+
+Le plan directeur est dans `~/.claude/plans/j-ai-cr-er-ce-petit-vectorized-aho.md`. **Il a divergé sur trois points**, et c'est le dépôt qui fait foi :
+
+- **Signal Forms** et non Reactive Forms : l'API est stable en Angular 22.1, la raison invoquée par le plan ne tenait plus.
+- **Pas d'Electron**, pas de zip de sauvegarde, pas de texte de publication Facebook : retirés du périmètre par l'utilisateur. Ne pas les reproposer.
+- Le fond n'est **pas** régénéré en vectoriel : l'utilisateur a fourni son propre gabarit, et le design de l'affiche est **gelé** depuis qu'il l'a validé. Ne pas y toucher sans demande explicite.
 
 ## Commandes
 
@@ -40,9 +48,9 @@ Domaine  ──►  Layout  ──►  Émission SVG  ──►  resvg-wasm  ─
 (zod)        (positions)   (chaîne)          (worker)         (aperçu + export)
 ```
 
-- `projects/poster-core/` — **TypeScript pur**. Le même code tourne dans le navigateur, un worker, Node (tests, images de référence) et le renderer Electron. Deux invariants tenus par ESLint (`no-restricted-imports` dans son `eslint.config.js`) : **aucun import Angular**, et **aucun accès au système de fichiers** — les assets arrivent déjà résolus en data URL. C'est précisément ce qui cassait l'ancien script une fois empaqueté.
-- `projects/app/` — application Angular 22, standalone, zoneless, signals.
-- `legacy/` — l'ancien script Bun, **gelé et volontairement non modifié**. C'est le seul oracle de parité visuelle pendant la refonte ; il sera supprimé au dernier lot. Ses `fonts/` et `images/` sont des liens symboliques vers la racine, ce qui lui évite toute modification de code.
+- `projects/poster-core/` — **TypeScript pur**. Le même code tourne dans le navigateur, un worker et Node (tests, images de référence). Deux invariants tenus par ESLint (`no-restricted-imports` dans son `eslint.config.js`) : **aucun import Angular**, et **aucun accès au système de fichiers** — les assets arrivent déjà résolus en data URL. C'est précisément ce qui cassait l'ancien script une fois empaqueté.
+- `projects/app/` — application Angular 22 : standalone, zoneless, signals, **Signal Forms**.
+- `legacy/` — l'ancien script Bun, **gelé et volontairement non modifié**. Son rôle d'oracle de parité visuelle **est terminé**, le gabarit du club ayant été validé : il n'attend plus que sa suppression. Ses `fonts/` et `images/` sont des liens symboliques vers la racine, ce qui lui évite toute modification de code.
 - `tsconfig.json` mappe `poster-core` sur **les sources** (`projects/poster-core/src/public-api.ts`), pas sur `dist/` : aucune étape de build intermédiaire en développement.
 
 ## Décisions validées par la mesure
@@ -60,6 +68,17 @@ Le spike `tools/spikes/resvg-fontkit.mjs` (rejouable) a tranché les trois hypot
 L'avance fontkit peut donc servir de base au moteur de mise en page. Sur une chaîne très courte (« VS ») l'écart monte à 3,7 % : c'est la part proportionnellement plus grande des approches latérales, pas une dérive.
 
 **Piège de nommage des polices.** Au-delà de Regular et Bold, une face Google Fonts encode sa graisse dans le nom de famille hérité (`name 1` = « Barlow Semi Condensed Medium ») et ne publie la vraie famille que dans le nom typographique (`name 16`). fontdb — donc resvg — lit bien `name 16`, l'appariement fonctionne. Mais `tools/build-fonts.mjs` doit préserver les identifiants de noms au sous-ensemblage (`preserveNameIds`), faute de quoi la famille disparaît et resvg retombe en silence sur une police par défaut.
+
+## La composition ne doit jamais échouer sur une saisie incomplète
+
+L'aperçu se redessine **à chaque frappe** : `composerAffiche` voit donc tous les états intermédiaires d'un document qu'on remplit. C'est un contrat, couvert par `render/saisie-en-cours.spec.ts`, et deux défauts l'ont établi :
+
+- un créneau **sans rencontre** — l'état d'un document neuf — donnait un pas de rangée infini, puis des coordonnées non finies. L'utilisateur lisait « Coordonnee non finie dans la scene : NaN » sans avoir rien saisi de faux ;
+- une date **à moitié tapée** faisait lever `formatCreneau`, qui est strict à juste titre. Le rendu imprime désormais une attente.
+
+Corollaire : ce qui manque est dit par la **validation du schéma**, jamais par une exception du moteur. `problemesDe` traduit les erreurs zod en phrases situées, et c'est `AfficheSchema` qui reste l'unique référence de validité — y recopier une règle dans le formulaire laisserait passer un document que l'export refuserait.
+
+Dans le même esprit, un **asset introuvable ne fait pas échouer le rendu** : un logo manquant devient un monogramme, un partenaire manquant est omis. Un seul fichier absent emportait toute l'affiche.
 
 ## Déploiement — GitHub Pages sous un sous-chemin
 
@@ -102,6 +121,8 @@ fichier absent emportait toute l'affiche.
 
 Elles demeurent en revanche **accessibles dans l'historique**, et le dépôt est public. Les en purger réellement demande une réécriture d'historique (`git filter-repo`) suivie d'un push forcé — décision de l'utilisateur, non prise unilatéralement.
 
+À rappeler quand le sujet revient : **`legacy/` est la seule raison de garder ces polices sur le poste**. Le supprimer rend la purge simple, et son rôle d'oracle est terminé.
+
 ## Bugs de l'ancien script (référence, à ne pas reproduire)
 
 Diagnostic complet dans le plan. En résumé :
@@ -116,7 +137,15 @@ Diagnostic complet dans le plan. En résumé :
 - **npm 12 bloque les scripts d'installation** par défaut. Les quatre paquets natifs de la chaîne Angular (`esbuild`, `lmdb`, `msgpackr-extract`, `@parcel/watcher`) sont approuvés via le champ `allowScripts` de `package.json` — versionné, donc reproductible en CI.
 - Pour la même raison, `bun` n'est **pas** installé via npm dans le devbox : son binaire est copié depuis l'image `oven/bun`.
 - TypeScript 6 exige un `rootDir` explicite dès qu'un `outDir` est posé. Tous les `tsconfig.*.json` de projet en ont un, pointant vers `out-tsc/`, sinon `tsc -b` émet du `.js` à côté des sources.
+- `@angular/service-worker` exige la version **exacte** du cœur en peer dep. Installer `^22.1.0` échoue quand `@angular/core` est en 22.1.6 : épingler la même version.
+- **Ni `gh` ni assistant d'identifiants Git** sur ce poste : `git push` échoue sur l'authentification. Pousser et ouvrir les PR revient à l'utilisateur — préparer le travail en local, puis lui donner les commandes.
+- Le **devbox s'arrête entre deux sessions** : `mmadb start` avant tout le reste, sinon `docker exec` rend « No such container ».
+- Le **bac à sable isole le réseau** des appels Bash successifs : un serveur lancé en tâche de fond dans un appel n'est pas joignable depuis le suivant. Pour servir quelque chose à Playwright, passer par le devbox, dont le port 4200 est publié.
 
 ## Conventions
 
 Le code, les commentaires et les messages de commit sont en français. Les identifiants restent sans accents.
+
+En revanche, **tout texte lu par un utilisateur porte ses accents** — messages de validation compris. Ils étaient écrits sans, par contagion de la règle sur les identifiants, et se lisaient mal : « Le numero de journee doit etre au moins 1. »
+
+Une affirmation montrée à l'écran est une affirmation à **tester**. Le nom du fichier téléchargé l'a appris à ce dépôt : trois corrections successives, toutes trouvées par l'utilisateur et non par mes vérifications. Le bouton « Réinitialiser » promet que les affiches enregistrées ne sont pas touchées — et un test le vérifie contre une vraie base.
