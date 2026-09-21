@@ -7,6 +7,23 @@
   </a>
 
   <nav class="bandeau__nav">
+    @if (installation.possible()) {
+      <!--
+        Libelle court : a cote du nom de l'application, « Installer » ne prete
+        pas a confusion, et le texte long faisait passer les deux onglets a la
+        ligne sur un ecran de 320 px. Le sens complet reste porte pour les
+        lecteurs d'ecran et au survol.
+      -->
+      <button
+        class="bandeau__installer"
+        type="button"
+        title="Installer l’application sur cet appareil"
+        aria-label="Installer l’application sur cet appareil"
+        (click)="installation.installer()"
+      >
+        Installer
+      </button>
+    }
     <a routerLink="/nouvelle" routerLinkActive="est-actif">Nouvelle affiche</a>
     <a routerLink="/historique" routerLinkActive="est-actif">Mes affiches</a>
   </nav>
