@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
+import { Installation } from './core/installation';
 import { MiseAJour } from './core/mise-a-jour';
 
 @Component({
@@ -19,4 +20,13 @@ export class App {
    * n'atteindrait jamais un poste qui a deja ouvert le site.
    */
   protected readonly maj = inject(MiseAJour);
+
+  /**
+   * L'installation se propose depuis le bandeau, quand le navigateur y invite.
+   *
+   * Chrome n'affiche plus de banniere : l'entree est dans son menu, ou un
+   * benevole n'ira pas la chercher. Rien n'apparait sur iOS, ou l'evenement
+   * n'existe pas — et c'est voulu.
+   */
+  protected readonly installation = inject(Installation);
 }

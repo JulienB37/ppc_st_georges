@@ -64,9 +64,17 @@
   color: var(--creneau-1);
 }
 
+/*
+ * Trois elements peuvent s'y trouver — deux onglets et, quand le navigateur
+ * l'invite, le bouton d'installation. Ils passent donc a la ligne plutot que
+ * de deborder : a 320 px, le bouton ajoutait un defilement horizontal.
+ */
 .bandeau__nav {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
   margin-left: auto;
 }
 
@@ -81,6 +89,30 @@
 
 .bandeau__nav a:hover {
   color: var(--craie);
+}
+
+/*
+ * Le bouton d'installation.
+ *
+ * Il n'apparait qu'a l'invitation du navigateur, donc rarement et brievement :
+ * il porte un cadre pour se distinguer des deux onglets voisins, sans pour
+ * autant leur disputer la place forte.
+ */
+.bandeau__installer {
+  align-self: center;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--ligne-vive);
+  border-radius: 3px;
+  background: transparent;
+  font: inherit;
+  font-weight: 500;
+  color: var(--craie);
+  cursor: pointer;
+}
+
+.bandeau__installer:hover {
+  border-color: var(--creneau-2);
+  color: var(--creneau-2);
 }
 
 /* L'onglet courant est marque par un trait, pas par une pastille. */
