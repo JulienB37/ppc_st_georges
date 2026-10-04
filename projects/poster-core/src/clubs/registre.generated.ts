@@ -113,7 +113,7 @@ export const CLUBS = {
   },
   chateauneuf: {
     id: 'chateauneuf',
-    libelle: 'Châteauneuf',
+    libelle: 'Châteauneuf TT',
     fichier: 'chateauneuf.png',
     largeur: 225,
     hauteur: 225,
@@ -145,7 +145,7 @@ export const CLUBS = {
   },
   'es-maintenon-pierres': {
     id: 'es-maintenon-pierres',
-    libelle: 'ES Maintenon Pierres',
+    libelle: 'ES Maintenon-Pierres',
     fichier: 'es-maintenon-pierres.png',
     largeur: 256,
     hauteur: 256,

@@ -91,6 +91,22 @@ export const SPONSORS = {
     hauteur: 49,
     actif: true,
   },
+  transept: {
+    id: 'transept',
+    libelle: 'Transept',
+    fichier: 'transept.jpg',
+    largeur: 463,
+    hauteur: 300,
+    actif: true,
+  },
+  amptech: {
+    id: 'amptech',
+    libelle: 'Amptech',
+    fichier: 'amptech.jpg',
+    largeur: 421,
+    hauteur: 300,
+    actif: true,
+  },
   'art-mongolfieres-logo': {
     id: 'art-mongolfieres-logo',
     libelle: 'Art Mongolfieres Logo',
