@@ -37,6 +37,31 @@ describe('DocumentAffiche', () => {
     expect(doc.domaine().saison).toBe('2030-2031');
   });
 
+  describe('categorie', () => {
+    it("repart d'une affiche jeunes quand l'URL demande jeunes apres un rechargement", () => {
+      // Au rechargement, le service est dans son etat initial : une affiche
+      // adultes. L'editeur ouvert sur /affiche/jeunes doit s'y aligner, sans
+      // quoi le menu propose les huit equipes adultes.
+      doc.accorderCategorie('jeunes');
+      expect(doc.affiche().categorie).toBe('jeunes');
+      doc.ajouterRencontre(0);
+      expect(doc.affiche().groupes[0]!.rencontres[0]).toMatchObject({
+        division: 'D1 jeune',
+        numero: 1,
+      });
+    });
+
+    it('garde le document en cours quand la categorie concorde deja', () => {
+      // Le parcours normal : l'historique ouvre l'affiche, PUIS navigue. Rien
+      // ne doit etre efface a l'arrivee dans l'editeur.
+      doc.commencer('jeunes', 8);
+      doc.ajouterRencontre(0);
+      doc.accorderCategorie('jeunes');
+      expect(doc.affiche().numero).toBe(8);
+      expect(doc.nbRencontres()).toBe(1);
+    });
+  });
+
   describe('structure', () => {
     it('ajoute un creneau en reprenant la date du precedent', () => {
       remplir(doc, { date: '2026-09-19', heure: '18:00', adversaire: '' });

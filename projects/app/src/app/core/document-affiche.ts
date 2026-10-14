@@ -133,6 +133,20 @@ export class DocumentAffiche {
   }
 
   /**
+   * Aligne le document sur la categorie demandee par l'URL.
+   *
+   * Les parcours de l'application preparent le document AVANT de naviguer, et
+   * la categorie concorde deja. Mais une page RECHARGEE — ou une adresse
+   * ouverte directement — trouve le service dans son etat initial, une affiche
+   * adultes : l'URL disait « jeunes », l'editeur montrait les equipes adultes.
+   * C'est l'URL qui fait foi, et un document d'une autre categorie est
+   * remplace par une affiche vierge de la bonne.
+   */
+  accorderCategorie(categorie: Categorie): void {
+    if (this.affiche().categorie !== categorie) this.commencer(categorie);
+  }
+
+  /**
    * Relance le tirage des partenaires.
    *
    * La graine est INCREMENTEE et non tiree au hasard : le tirage reste

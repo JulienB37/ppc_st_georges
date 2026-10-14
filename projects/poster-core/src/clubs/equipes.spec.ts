@@ -81,3 +81,17 @@ describe('optionsDivision', () => {
     expect(options.at(-1)).toEqual({ numero: 0, division: 'PR' });
   });
 });
+
+describe('equipes jeunes', () => {
+  it('ne propose que la D1 jeune sur une affiche jeunes', () => {
+    expect(optionsDivision('', 'jeunes')).toEqual([{ numero: 1, division: 'D1 jeune' }]);
+    expect(equipeParDivision('D1 jeune', 'jeunes')).toEqual({ numero: 1, division: 'D1 jeune' });
+    // Les deux tables ne se melent pas : D1 adultes n'est pas une equipe jeunes.
+    expect(equipeParDivision('D1', 'jeunes')).toBeUndefined();
+    expect(equipeParDivision('D1 jeune')).toBeUndefined();
+  });
+
+  it("garde l'etiquette d'un document jeunes anterieur", () => {
+    expect(optionsDivision('R2', 'jeunes').at(-1)).toEqual({ numero: 0, division: 'R2' });
+  });
+});

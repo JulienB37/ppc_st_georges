@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { form } from '@angular/forms/signals';
-import type { GroupeEditable } from 'poster-core';
+import type { Categorie, GroupeEditable } from 'poster-core';
 
 import { CreneauEditeur } from './creneau-editeur';
 
@@ -10,9 +10,15 @@ import { CreneauEditeur } from './creneau-editeur';
  */
 @Component({
   imports: [CreneauEditeur],
-  template: `<ppc-creneau-editeur [champs]="champs" [index]="0" [dernier]="true" />`,
+  template: `<ppc-creneau-editeur
+    [champs]="champs"
+    [categorie]="categorie()"
+    [index]="0"
+    [dernier]="true"
+  />`,
 })
 class Hote {
+  readonly categorie = signal<Categorie>('adultes');
   readonly modele = signal<GroupeEditable>({
     id: 'g1',
     date: '2026-09-19',
@@ -52,5 +58,22 @@ describe('CreneauEditeur', () => {
     const rencontre = fixture.componentInstance.modele().rencontres[0]!;
     expect(rencontre.division).toBe('D4');
     expect(rencontre.numero).toBe(8);
+  });
+
+  it('ne propose que la D1 jeune sur une affiche jeunes', async () => {
+    const fixture = TestBed.createComponent(Hote);
+    fixture.componentInstance.categorie.set('jeunes');
+    fixture.componentInstance.modele.update((g) => ({
+      ...g,
+      rencontres: g.rencontres.map((r) => ({ ...r, division: 'D1 jeune', numero: 1 })),
+    }));
+    await fixture.whenStable();
+
+    const options = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLOptionElement>(
+        'select.equipe option',
+      ),
+    ].map((o) => o.value);
+    expect(options).toEqual(['D1 jeune']);
   });
 });

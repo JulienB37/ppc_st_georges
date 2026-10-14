@@ -119,7 +119,10 @@ export function remplacer<T>(liste: readonly T[], index: number, calculer: (elem
  * dans une table fixe, et une equipe retiree d'un creneau redevient disponible.
  */
 export function equipeLibreDe(affiche: AfficheEditable): EquipeClub {
-  return equipeLibreSuivante(affiche.groupes.flatMap((g) => g.rencontres.map((r) => r.numero)));
+  return equipeLibreSuivante(
+    affiche.groupes.flatMap((g) => g.rencontres.map((r) => r.numero)),
+    affiche.categorie,
+  );
 }
 
 /**

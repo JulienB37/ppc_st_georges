@@ -10,6 +10,7 @@ import {
   equipeParDivision,
   formatCreneau,
   optionsDivision,
+  type Categorie,
   type EntreeClub,
   type GroupeEditable,
   type RencontreEditable,
@@ -34,6 +35,8 @@ export class CreneauEditeur {
   protected readonly catalogue = inject(CatalogueClubs);
 
   readonly champs = input.required<FieldTree<GroupeEditable>>();
+  /** Decide de la table d'equipes proposee : huit chez les adultes, une chez les jeunes. */
+  readonly categorie = input<Categorie>('adultes');
 
   /**
    * Teinte du creneau, celle qu'il portera sur l'affiche.
@@ -64,7 +67,7 @@ export class CreneauEditeur {
    * donnee que l'utilisateur n'a pas demande a changer.
    */
   protected options(division: string) {
-    return optionsDivision(division);
+    return optionsDivision(division, this.categorie());
   }
 
   /**
@@ -79,7 +82,7 @@ export class CreneauEditeur {
    * d'un document existant, dont le rang est deja enregistre.
    */
   protected choisirEquipe(rencontre: FieldTree<RencontreEditable>, division: string): void {
-    const equipe = equipeParDivision(division);
+    const equipe = equipeParDivision(division, this.categorie());
     if (equipe) rencontre.numero().value.set(equipe.numero);
   }
 

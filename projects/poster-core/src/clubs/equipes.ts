@@ -15,7 +15,12 @@
  * avec la configuration historique — « R2 (1) », « R3 (2) », « D1 (5) »... a
  * trois etiquettes pres, que le club a precisees depuis : les deux equipes
  * notees « PR » deviennent PR1 et PR2, et la huitieme passe de D3 a D4.
+ *
+ * Les jeunes n'engagent qu'UNE equipe, en D1 jeune : leur table est distincte,
+ * et c'est la categorie de l'affiche qui choisit laquelle s'applique.
  */
+
+import type { Categorie } from '../model/journee';
 
 export interface EquipeClub {
   /** Rang de l'equipe au sein du club, imprime entre parentheses. */
@@ -35,8 +40,18 @@ export const EQUIPES_CLUB: readonly EquipeClub[] = [
   { numero: 8, division: 'D4' },
 ] as const;
 
-export function equipeParDivision(division: string): EquipeClub | undefined {
-  return EQUIPES_CLUB.find((e) => e.division === division);
+export const EQUIPES_JEUNES: readonly EquipeClub[] = [{ numero: 1, division: 'D1 jeune' }] as const;
+
+/** Table des equipes d'une categorie d'affiche. */
+export function equipesDe(categorie: Categorie): readonly EquipeClub[] {
+  return categorie === 'jeunes' ? EQUIPES_JEUNES : EQUIPES_CLUB;
+}
+
+export function equipeParDivision(
+  division: string,
+  categorie: Categorie = 'adultes',
+): EquipeClub | undefined {
+  return equipesDe(categorie).find((e) => e.division === division);
 }
 
 export function equipeParNumero(numero: number): EquipeClub | undefined {
@@ -48,12 +63,17 @@ export function equipeParNumero(numero: number): EquipeClub | undefined {
  *
  * Une equipe ne joue qu'une fois par journee : proposer la suivante libre evite
  * de choisir a chaque ajout, et evite surtout de l'engager deux fois. Quand les
- * huit sont prises — cas qui n'arrive que par erreur de saisie — on rend la
- * derniere plutot que rien, pour que le bouton reste utilisable.
+ * equipes sont prises — cas qui n'arrive que par erreur de saisie, ou chez les
+ * jeunes qui n'en ont qu'une — on rend la derniere plutot que rien, pour que
+ * le bouton reste utilisable.
  */
-export function equipeLibreSuivante(numerosUtilises: readonly number[]): EquipeClub {
+export function equipeLibreSuivante(
+  numerosUtilises: readonly number[],
+  categorie: Categorie = 'adultes',
+): EquipeClub {
+  const equipes = equipesDe(categorie);
   const pris = new Set(numerosUtilises);
-  return EQUIPES_CLUB.find((e) => !pris.has(e.numero)) ?? EQUIPES_CLUB[EQUIPES_CLUB.length - 1]!;
+  return equipes.find((e) => !pris.has(e.numero)) ?? equipes[equipes.length - 1]!;
 }
 
 /**
@@ -64,7 +84,11 @@ export function equipeLibreSuivante(numerosUtilises: readonly number[]): EquipeC
  * conserver dans la liste evite de l'effacer en silence : l'utilisateur voit ce
  * qui est reellement enregistre et decide lui-meme de l'aligner.
  */
-export function optionsDivision(divisionCourante: string): EquipeClub[] {
-  if (!divisionCourante || equipeParDivision(divisionCourante)) return [...EQUIPES_CLUB];
-  return [...EQUIPES_CLUB, { numero: 0, division: divisionCourante }];
+export function optionsDivision(
+  divisionCourante: string,
+  categorie: Categorie = 'adultes',
+): EquipeClub[] {
+  const equipes = equipesDe(categorie);
+  if (!divisionCourante || equipeParDivision(divisionCourante, categorie)) return [...equipes];
+  return [...equipes, { numero: 0, division: divisionCourante }];
 }

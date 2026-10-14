@@ -117,7 +117,12 @@ async function main(): Promise<void> {
     drapeauJournees >= 0
       ? args[drapeauJournees + 1]!.split(',').map((r) => Number(r.trim()))
       : undefined;
-  const jetons = new Set([String(anneeSaison), args[drapeauJournees + 1] ?? '']);
+  // Sans `--journees`, `args[drapeauJournees + 1]` serait `args[0]` : le chemin
+  // d'entree, qu'on ecarterait alors comme valeur de drapeau.
+  const jetons = new Set([
+    String(anneeSaison),
+    drapeauJournees >= 0 ? (args[drapeauJournees + 1] ?? '') : '',
+  ]);
   const entree = args.find((a) => !a.startsWith('--') && !jetons.has(a));
 
   const chemin = entree

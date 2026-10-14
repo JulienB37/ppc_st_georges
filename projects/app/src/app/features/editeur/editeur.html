@@ -36,6 +36,7 @@
     @for (groupe of formulaire.groupes; track groupe().value().id; let iGroupe = $index) {
       <ppc-creneau-editeur
         [champs]="groupe"
+        [categorie]="doc.affiche().categorie"
         [index]="iGroupe"
         [dernier]="iGroupe === formulaire.groupes.length - 1"
         (ajouterRencontre)="doc.ajouterRencontre(iGroupe)"

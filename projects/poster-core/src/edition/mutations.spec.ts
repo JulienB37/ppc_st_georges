@@ -146,6 +146,15 @@ describe('equipeLibreDe', () => {
     affiche.groupes[0]!.rencontres = EQUIPES_CLUB.map((e) => nouvelleRencontre(e));
     expect(equipeLibreDe(affiche).numero).toBe(8);
   });
+
+  it("propose l'unique equipe jeunes sur une affiche jeunes", () => {
+    // Les jeunes n'engagent qu'une equipe : la table adultes n'a rien a y faire,
+    // pas plus a la premiere rencontre qu'aux suivantes.
+    const affiche = afficheVide('jeunes', 1, MAINTENANT);
+    expect(equipeLibreDe(affiche)).toEqual({ numero: 1, division: 'D1 jeune' });
+    affiche.groupes[0]!.rencontres = [nouvelleRencontre(equipeLibreDe(affiche))];
+    expect(equipeLibreDe(affiche)).toEqual({ numero: 1, division: 'D1 jeune' });
+  });
 });
 
 describe('fixerSponsor', () => {

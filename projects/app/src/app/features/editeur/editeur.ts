@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, input, type OnInit } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { applyEach, form, FormField, min, required } from '@angular/forms/signals';
 import { DocumentAffiche } from '../../core/document-affiche';
 import { Icone } from '../../shared/icone';
 import { ApercuAffiche } from './apercu-affiche';
 import { CreneauEditeur } from './creneau-editeur';
+import { CategorieSchema } from 'poster-core';
 
 /**
  * Page de saisie d'une affiche.
@@ -26,8 +27,9 @@ import { CreneauEditeur } from './creneau-editeur';
   templateUrl: './editeur.html',
   styleUrl: './editeur.scss',
 })
-export class Editeur {
+export class Editeur implements OnInit {
   protected readonly doc = inject(DocumentAffiche);
+  private readonly router = inject(Router);
 
   /**
    * Categorie demandee par la route.
@@ -37,6 +39,21 @@ export class Editeur {
    * choix, et le service repart d'une affiche vierge.
    */
   readonly categorie = input.required<string>();
+
+  /**
+   * L'URL fait foi sur la categorie, y compris apres un rechargement.
+   *
+   * Une categorie inconnue renvoie a l'ecran de choix : la route generique ne
+   * l'intercepte pas, `/affiche/:categorie` acceptant n'importe quel segment.
+   */
+  ngOnInit(): void {
+    const demandee = CategorieSchema.safeParse(this.categorie());
+    if (!demandee.success) {
+      void this.router.navigate(['/nouvelle']);
+      return;
+    }
+    this.doc.accorderCategorie(demandee.data);
+  }
 
   /**
    * Regles de saisie.
