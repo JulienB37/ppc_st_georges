@@ -25,7 +25,7 @@ séparément, de la même façon.
 ![L'éditeur : la saisie à gauche, l'affiche à droite](captures/g2-editeur.png)
 
 L'affiche se dessine **à droite, à chaque frappe**. Ce que vous voyez est exactement ce que vous
-obtiendrez dans le fichier : il n'y a pas de surprise à l'enregistrement.
+obtiendrez dans le fichier : il n'y a pas de surprise au téléchargement.
 
 **Le grand chiffre en haut à gauche est le numéro de journée.** Cliquez-le et tapez le bon numéro.
 
@@ -46,10 +46,10 @@ Ensuite, pour chaque créneau :
 > main. À n'utiliser qu'en dernier recours : le texte calculé est juste, et une date écrite à la
 > main ne se corrige pas toute seule si la rencontre est décalée.
 
-### Si l'application refuse d'enregistrer
+### Si l'application refuse de télécharger
 
 Un encadré liste ce qui manque, en désignant l'endroit : « créneau 1 — La date ou l'heure manque. »
-Le bouton d'enregistrement reste inactif tant que la liste n'est pas vide. Une affiche incomplète
+Le bouton de téléchargement reste inactif tant que la liste n'est pas vide. Une affiche incomplète
 ne peut pas être publiée par accident.
 
 ---
@@ -72,10 +72,10 @@ réglage à garder en temps normal.
 
 ---
 
-## 4. Enregistrer l'affiche
+## 4. Télécharger l'affiche
 
-Cliquez **« Enregistrer l'affiche »**. Votre navigateur vous demande où ranger le fichier, dont le
-nom est déjà rempli :
+Cliquez **« Télécharger l'affiche »**. L'image part directement dans votre dossier
+**Téléchargements**, sous un nom déjà rempli :
 
 ```
 journee-01-adultes-2026-2027.png

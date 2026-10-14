@@ -103,7 +103,7 @@ export class ApercuAffiche {
     try {
       const affiche = this.doc.domaine();
       const png = await this.apercu.exporter(affiche, LARGEUR_EXPORT);
-      await telechargerBlob(
+      telechargerBlob(
         new Blob([png as BlobPart], { type: 'image/png' }),
         // Le nom vient de `poster-core`, ou il est teste : journee completee a
         // deux chiffres, championnat, saison.
