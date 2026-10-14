@@ -71,7 +71,12 @@
   @for (rencontre of champs().rencontres; track rencontre().value().id; let i = $index) {
     <div class="duel">
       <div class="duel__nous">
-        <select class="equipe" aria-label="Notre équipe" [formField]="rencontre.division">
+        <select
+          class="equipe"
+          aria-label="Notre équipe"
+          [formField]="rencontre.division"
+          (change)="choisirEquipe(rencontre, $any($event.target).value)"
+        >
           @for (equipe of options(rencontre.division().value()); track equipe.division) {
             <option [value]="equipe.division">
               {{ equipe.division }}{{ equipe.numero ? ' — équipe ' + equipe.numero : '' }}
